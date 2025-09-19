@@ -1,0 +1,13 @@
+{
+  "name": "better-crud-basic-example",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No build needed'"
+  },
+  "dependencies": {
+    "better-crud": "workspace:*",
+    "better-sqlite3": "^11.1.2"
+  }
+}
