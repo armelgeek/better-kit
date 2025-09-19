@@ -71,11 +71,14 @@ describe("CRUD Plugin", () => {
 		});
 
 		expect(crudPlugin.schema.product).toBeDefined();
-		expect(crudPlugin.schema.product.fields).toBeDefined();
 		
-		// Check that fields is an object (the Zod introspection might not work perfectly in tests)
-		const fields = crudPlugin.schema.product.fields;
-		expect(typeof fields).toBe("object");
-		console.log("Generated fields:", Object.keys(fields));
+		if (crudPlugin.schema.product) {
+			expect(crudPlugin.schema.product.fields).toBeDefined();
+			
+			// Check that fields is an object (the Zod introspection might not work perfectly in tests)
+			const fields = crudPlugin.schema.product.fields;
+			expect(typeof fields).toBe("object");
+			console.log("Generated fields:", Object.keys(fields));
+		}
 	});
 });
