@@ -49,13 +49,17 @@ export const tagSchema = z.object({
 export const orderSchema = z.object({
 	id: z.string().optional(),
 	userId: z.string(),
-	items: z.array(z.object({
-		productId: z.string(),
-		quantity: z.number().int().min(1),
-		price: z.number().min(0),
-	})),
+	items: z.array(
+		z.object({
+			productId: z.string(),
+			quantity: z.number().int().min(1),
+			price: z.number().min(0),
+		}),
+	),
 	total: z.number().min(0),
-	status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"]).default("pending"),
+	status: z
+		.enum(["pending", "processing", "shipped", "delivered", "cancelled"])
+		.default("pending"),
 	shippingAddress: z.object({
 		street: z.string(),
 		city: z.string(),
@@ -76,11 +80,13 @@ export const userSchema = z.object({
 	name: z.string().min(1, "Name is required"),
 	role: z.enum(["user", "admin"]).default("user"),
 	status: z.enum(["active", "inactive", "suspended"]).default("active"),
-	profile: z.object({
-		avatar: z.string().optional(),
-		bio: z.string().optional(),
-		website: z.string().optional(),
-	}).optional(),
+	profile: z
+		.object({
+			avatar: z.string().optional(),
+			bio: z.string().optional(),
+			website: z.string().optional(),
+		})
+		.optional(),
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });

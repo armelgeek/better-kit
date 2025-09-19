@@ -1,5 +1,10 @@
 import { betterAuth } from "better-auth";
-import { crud, createResource, productSchema, categorySchema } from "better-auth/plugins";
+import {
+	categorySchema,
+	createResource,
+	crud,
+	productSchema,
+} from "better-auth/plugins";
 
 export const auth = betterAuth({
 	database: {

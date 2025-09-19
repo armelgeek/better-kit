@@ -1,11 +1,11 @@
-import { Kysely } from "kysely";
-import { FieldAttribute } from "../db";
-import { Adapter, Where } from "../types/adapter";
-import { Dialect, MysqlDialect, PostgresDialect, SqliteDialect } from "kysely";
-import { BetterAuthOptions } from "../types";
-import { createPool } from "mysql2";
 import Database from "better-sqlite3";
+import { Kysely } from "kysely";
+import { Dialect, MysqlDialect, PostgresDialect, SqliteDialect } from "kysely";
+import { createPool } from "mysql2";
 import pg from "pg";
+import { FieldAttribute } from "../db";
+import { BetterAuthOptions } from "../types";
+import { Adapter, Where } from "../types/adapter";
 
 const { Pool } = pg;
 
@@ -100,41 +100,41 @@ export const kyselyAdapter = (
 	config?: KyselyAdapterConfig,
 ): Adapter => {
 	return {
-		   async create(data) {
-			   let { model, data: val, select } = data;
-			   if (config?.transform) {
-				   val = transformFrom(val, config.transform);
-			   }
-			   // Ensure .values() always receives an object (not array or other type)
-			   let insertValue = Array.isArray(val) ? val[0] : val;
-			   let res = await db
-				   .insertInto(model)
-				   .values(insertValue)
-				   .returningAll()
-				   .executeTakeFirst();
+		async create(data) {
+			let { model, data: val, select } = data;
+			if (config?.transform) {
+				val = transformFrom(val, config.transform);
+			}
+			// Ensure .values() always receives an object (not array or other type)
+			let insertValue = Array.isArray(val) ? val[0] : val;
+			let res = await db
+				.insertInto(model)
+				.values(insertValue)
+				.returningAll()
+				.executeTakeFirst();
 
-			   if (config?.transform) {
-				   const schema = config.transform.schema[model];
-				   res = schema ? transformTo(insertValue, schema, config.transform) : res;
-			   }
+			if (config?.transform) {
+				const schema = config.transform.schema[model];
+				res = schema ? transformTo(insertValue, schema, config.transform) : res;
+			}
 
-			   if (select?.length) {
-				   const data = res
-					   ? select.reduce((acc, cur) => {
-							 if (res?.[cur]) {
-								 return {
-									 ...acc,
-									 [cur]: res[cur],
-								 };
-							 }
-							 return acc;
-						 }, {} as any)
-					   : null;
-				   res = data;
-			   }
+			if (select?.length) {
+				const data = res
+					? select.reduce((acc, cur) => {
+							if (res?.[cur]) {
+								return {
+									...acc,
+									[cur]: res[cur],
+								};
+							}
+							return acc;
+						}, {} as any)
+					: null;
+				res = data;
+			}
 
-			   return res as any;
-		   },
+			return res as any;
+		},
 		async findOne(data) {
 			const { model, where, select } = data;
 			const { and, or } = convertWhere(where);

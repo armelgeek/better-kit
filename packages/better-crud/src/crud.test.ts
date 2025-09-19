@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { betterCrud } from "../src";
 import { createResource, productSchema } from "../src";

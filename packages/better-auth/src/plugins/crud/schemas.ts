@@ -38,20 +38,26 @@ export const tagSchema = baseResourceSchema.extend({
 // Order schema
 export const orderSchema = baseResourceSchema.extend({
 	userId: z.string(),
-	items: z.array(z.object({
-		productId: z.string(),
-		quantity: z.number().int().min(1),
-		price: z.number().min(0),
-	})),
+	items: z.array(
+		z.object({
+			productId: z.string(),
+			quantity: z.number().int().min(1),
+			price: z.number().min(0),
+		}),
+	),
 	total: z.number().min(0),
-	status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"]).default("pending"),
-	shippingAddress: z.object({
-		street: z.string(),
-		city: z.string(),
-		state: z.string(),
-		zipCode: z.string(),
-		country: z.string(),
-	}).optional(),
+	status: z
+		.enum(["pending", "processing", "shipped", "delivered", "cancelled"])
+		.default("pending"),
+	shippingAddress: z
+		.object({
+			street: z.string(),
+			city: z.string(),
+			state: z.string(),
+			zipCode: z.string(),
+			country: z.string(),
+		})
+		.optional(),
 });
 
 // Export types

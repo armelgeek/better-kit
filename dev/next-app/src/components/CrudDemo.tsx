@@ -20,7 +20,7 @@ export function CrudDemo() {
 					"Content-Type": "application/json",
 				},
 			});
-			
+
 			if (response.ok) {
 				const data = await response.json();
 				setProducts(data.items || []);
@@ -44,7 +44,7 @@ export function CrudDemo() {
 				},
 				body: JSON.stringify(newProduct),
 			});
-			
+
 			if (response.ok) {
 				const product = await response.json();
 				setProducts([...products, product]);
@@ -68,9 +68,9 @@ export function CrudDemo() {
 					"Content-Type": "application/json",
 				},
 			});
-			
+
 			if (response.ok) {
-				setProducts(products.filter(p => p.id !== id));
+				setProducts(products.filter((p) => p.id !== id));
 			} else {
 				console.error("Failed to delete product:", response.statusText);
 			}
@@ -84,7 +84,7 @@ export function CrudDemo() {
 	return (
 		<div className="p-6 max-w-4xl mx-auto">
 			<h1 className="text-3xl font-bold mb-6">CRUD Demo - Products</h1>
-			
+
 			{/* Create Product Form */}
 			<div className="bg-gray-50 p-4 rounded-lg mb-6">
 				<h2 className="text-xl font-semibold mb-4">Create Product</h2>
@@ -93,26 +93,37 @@ export function CrudDemo() {
 						type="text"
 						placeholder="Product name"
 						value={newProduct.name}
-						onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+						onChange={(e) =>
+							setNewProduct({ ...newProduct, name: e.target.value })
+						}
 						className="px-3 py-2 border rounded-md"
 					/>
 					<input
 						type="number"
 						placeholder="Price"
 						value={newProduct.price}
-						onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
+						onChange={(e) =>
+							setNewProduct({
+								...newProduct,
+								price: parseFloat(e.target.value) || 0,
+							})
+						}
 						className="px-3 py-2 border rounded-md"
 					/>
 					<input
 						type="text"
 						placeholder="Description"
 						value={newProduct.description}
-						onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+						onChange={(e) =>
+							setNewProduct({ ...newProduct, description: e.target.value })
+						}
 						className="px-3 py-2 border rounded-md"
 					/>
 					<select
 						value={newProduct.status}
-						onChange={(e) => setNewProduct({ ...newProduct, status: e.target.value as any })}
+						onChange={(e) =>
+							setNewProduct({ ...newProduct, status: e.target.value as any })
+						}
 						className="px-3 py-2 border rounded-md"
 					>
 						<option value="draft">Draft</option>
@@ -143,22 +154,33 @@ export function CrudDemo() {
 				</div>
 
 				{products.length === 0 ? (
-					<p className="text-gray-500">No products found. Create one above or click refresh to load.</p>
+					<p className="text-gray-500">
+						No products found. Create one above or click refresh to load.
+					</p>
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{products.map((product) => (
-							<div key={product.id} className="border rounded-lg p-4 bg-white shadow">
+							<div
+								key={product.id}
+								className="border rounded-lg p-4 bg-white shadow"
+							>
 								<h3 className="font-semibold text-lg">{product.name}</h3>
 								<p className="text-gray-600">${product.price}</p>
 								{product.description && (
-									<p className="text-sm text-gray-500 mt-2">{product.description}</p>
+									<p className="text-sm text-gray-500 mt-2">
+										{product.description}
+									</p>
 								)}
 								<div className="flex justify-between items-center mt-4">
-									<span className={`px-2 py-1 rounded text-xs ${
-										product.status === 'active' ? 'bg-green-100 text-green-800' :
-										product.status === 'inactive' ? 'bg-red-100 text-red-800' :
-										'bg-gray-100 text-gray-800'
-									}`}>
+									<span
+										className={`px-2 py-1 rounded text-xs ${
+											product.status === "active"
+												? "bg-green-100 text-green-800"
+												: product.status === "inactive"
+													? "bg-red-100 text-red-800"
+													: "bg-gray-100 text-gray-800"
+										}`}
+									>
 										{product.status}
 									</span>
 									<button

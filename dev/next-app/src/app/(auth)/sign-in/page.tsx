@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -12,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/client";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function Page() {
@@ -51,22 +51,29 @@ export default function Page() {
 									Forgot your password?
 								</Link>
 							</div>
-							<Input id="password" type="password" required
+							<Input
+								id="password"
+								type="password"
+								required
 								onChange={(e) => {
 									setPassword(e.target.value);
 								}}
 								value={password}
 							/>
 						</div>
-						<Button type="submit" className="w-full" onClick={async () => {
-							const res = await authClient.signInCredential({
-								body: {
-									email,
-									password,
-									callbackURL: "/"
-								}
-							})
-						}}>
+						<Button
+							type="submit"
+							className="w-full"
+							onClick={async () => {
+								const res = await authClient.signInCredential({
+									body: {
+										email,
+										password,
+										callbackURL: "/",
+									},
+								});
+							}}
+						>
 							Login
 						</Button>
 						<Button

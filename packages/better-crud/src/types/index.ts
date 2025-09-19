@@ -1,5 +1,5 @@
-import { z, ZodSchema } from "zod";
 import { Endpoint } from "better-call";
+import { ZodSchema, z } from "zod";
 
 export type CrudOperation = "create" | "read" | "update" | "delete" | "list";
 

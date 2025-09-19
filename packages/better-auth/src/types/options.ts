@@ -1,8 +1,8 @@
 import { Dialect } from "kysely";
 import type { FieldAttribute } from "../db/field";
-import type { Provider } from "./provider";
-import type { Plugin } from "./plugins";
 import type { Adapter } from "./adapter";
+import type { Plugin } from "./plugins";
+import type { Provider } from "./provider";
 
 export interface BetterAuthOptions {
 	/**

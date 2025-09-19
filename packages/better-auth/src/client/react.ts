@@ -1,7 +1,7 @@
+import { useStore } from "@nanostores/react";
 import { createAuthClient } from ".";
 import { BetterAuth } from "../auth";
 import { ClientOptions } from "./base";
-import { useStore } from "@nanostores/react";
 
 export const createReactAuthClient = <Auth extends BetterAuth = BetterAuth>(
 	options?: ClientOptions,

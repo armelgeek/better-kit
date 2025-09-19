@@ -9,10 +9,11 @@ export class ParsingError extends Error {
 	}
 }
 
-
 type ActionsArray = readonly string[];
 
-export class AccessControl<TStatements extends Record<string, readonly string[]>> {
+export class AccessControl<
+	TStatements extends Record<string, readonly string[]>,
+> {
 	private readonly statements: TStatements;
 	constructor(private readonly s: TStatements) {
 		this.statements = s;
@@ -35,41 +36,41 @@ export class Role<TStatements extends Statements> {
 		this.statements = statements;
 	}
 
-	   public authorize<K extends keyof TStatements>(
-		   request: Subset<K, TStatements>,
-		   connector?: Connector,
-	   ): AuthortizeResponse {
-		   for (const [requestedResource, requestedActions] of Object.entries(
-			   request,
-		   )) {
-			   const allowedActions = this.statements[requestedResource];
-			   if (!allowedActions) {
-				   return {
-					   success: false,
-					   error: `You are not allowed to access resource: ${requestedResource}`,
-				   };
-			   }
-			   const success =
-				   connector === "OR"
-					   ? (requestedActions as ActionsArray).some((requestedAction) =>
-							   allowedActions.includes(requestedAction),
-						   )
-					   : (requestedActions as ActionsArray).every((requestedAction) =>
-							   allowedActions.includes(requestedAction),
-						   );
-			   if (success) {
-				   return { success };
-			   }
-			   return {
-				   success: false,
-				   error: `unauthorized to access resource \"${requestedResource}\"`,
-			   };
-		   }
-		   return {
-			   success: false,
-			   error: "Not authorized",
-		   };
-	   }
+	public authorize<K extends keyof TStatements>(
+		request: Subset<K, TStatements>,
+		connector?: Connector,
+	): AuthortizeResponse {
+		for (const [requestedResource, requestedActions] of Object.entries(
+			request,
+		)) {
+			const allowedActions = this.statements[requestedResource];
+			if (!allowedActions) {
+				return {
+					success: false,
+					error: `You are not allowed to access resource: ${requestedResource}`,
+				};
+			}
+			const success =
+				connector === "OR"
+					? (requestedActions as ActionsArray).some((requestedAction) =>
+							allowedActions.includes(requestedAction),
+						)
+					: (requestedActions as ActionsArray).every((requestedAction) =>
+							allowedActions.includes(requestedAction),
+						);
+			if (success) {
+				return { success };
+			}
+			return {
+				success: false,
+				error: `unauthorized to access resource \"${requestedResource}\"`,
+			};
+		}
+		return {
+			success: false,
+			error: "Not authorized",
+		};
+	}
 
 	static fromString<TStatements extends Statements>(s: string) {
 		const statements = JSON.parse(s) as TStatements;

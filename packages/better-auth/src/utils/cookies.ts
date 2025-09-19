@@ -1,6 +1,6 @@
 import { CookieOptions } from "better-call";
-import { BetterAuthOptions } from "../types/options";
 import { TimeSpan } from "oslo";
+import { BetterAuthOptions } from "../types/options";
 
 export function getCookies(options: BetterAuthOptions) {
 	const secure = !!options.advanced?.useSecureCookies;

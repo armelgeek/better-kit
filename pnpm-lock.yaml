@@ -156,6 +156,18 @@ importers:
         specifier: ^5
         version: 5.5.4
 
+  examples/better-crud-basic:
+    dependencies:
+      better-crud:
+        specifier: workspace:*
+        version: link:../../packages/better-crud
+      better-sqlite3:
+        specifier: ^11.1.2
+        version: 11.1.2
+      zod:
+        specifier: ^3.22.5
+        version: 3.23.8
+
   packages/better-auth:
     dependencies:
       '@better-fetch/fetch':

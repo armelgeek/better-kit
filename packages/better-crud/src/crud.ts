@@ -1,7 +1,11 @@
 import { createRouter } from "better-call";
-import { CrudOptions, CrudContext } from "./types";
-import { createKyselyDatabase, KyselyCrudAdapter, generateCreateTableSQL } from "./adapters/kysely";
+import {
+	KyselyCrudAdapter,
+	createKyselyDatabase,
+	generateCreateTableSQL,
+} from "./adapters/kysely";
 import { createCrudEndpoints } from "./endpoints";
+import { CrudContext, CrudOptions } from "./types";
 import { zodSchemaToFields } from "./utils/schema";
 
 /**
@@ -10,7 +14,7 @@ import { zodSchemaToFields } from "./utils/schema";
 function initCrud(options: CrudOptions): CrudContext {
 	const db = createKyselyDatabase(options.database);
 	const adapter = new KyselyCrudAdapter(db);
-	
+
 	return {
 		db,
 		adapter,
@@ -23,30 +27,30 @@ function initCrud(options: CrudOptions): CrudContext {
  */
 export function betterCrud<O extends CrudOptions>(options: O) {
 	const crudContext = initCrud(options);
-	
+
 	// Generate endpoints for all resources
 	const allEndpoints: Record<string, any> = {};
 	const schema: Record<string, { fields: Record<string, any> }> = {};
-	
+
 	for (const resourceConfig of options.resources) {
 		// Generate CRUD endpoints for this resource
 		const resourceEndpoints = createCrudEndpoints(resourceConfig);
-		
+
 		// Add to combined endpoints
 		Object.assign(allEndpoints, resourceEndpoints);
-		
+
 		// Generate schema fields from Zod schema
 		schema[resourceConfig.name] = {
 			fields: zodSchemaToFields(resourceConfig.schema),
 		};
 	}
-	
+
 	// Apply base path if specified
 	let processedEndpoints = allEndpoints;
 	if (options.basePath) {
 		processedEndpoints = applyBasePath(allEndpoints, options.basePath);
 	}
-	
+
 	// Create API with context shimming (following BetterAuth pattern)
 	const api: Record<string, any> = {};
 	for (const [key, value] of Object.entries(processedEndpoints)) {
@@ -64,7 +68,7 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 		api[key].options = value.options;
 		api[key].headers = value.headers;
 	}
-	
+
 	// Create router using better-call
 	const { handler, endpoints } = createRouter(api, {
 		extraContext: crudContext,
@@ -73,14 +77,14 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 			console.error("CRUD Error:", e);
 		},
 	});
-	
+
 	// Auto-migrate tables if enabled
 	if (options.database.autoMigrate) {
 		initTables(crudContext, schema).catch(console.error);
 	}
-	
+
 	type Endpoint = typeof endpoints;
-	
+
 	return {
 		handler,
 		api: endpoints as Endpoint,
@@ -93,16 +97,19 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 /**
  * Apply base path to all endpoint paths
  */
-function applyBasePath(endpoints: Record<string, any>, basePath: string): Record<string, any> {
+function applyBasePath(
+	endpoints: Record<string, any>,
+	basePath: string,
+): Record<string, any> {
 	const processedEndpoints: Record<string, any> = {};
-	
+
 	for (const [key, endpoint] of Object.entries(endpoints)) {
 		processedEndpoints[key] = {
 			...endpoint,
 			path: `${basePath}${endpoint.path}`,
 		};
 	}
-	
+
 	return processedEndpoints;
 }
 
@@ -111,20 +118,20 @@ function applyBasePath(endpoints: Record<string, any>, basePath: string): Record
  */
 async function initTables(
 	context: CrudContext,
-	schema: Record<string, { fields: Record<string, any> }>
+	schema: Record<string, { fields: Record<string, any> }>,
 ) {
 	try {
 		for (const [resourceName, resourceSchema] of Object.entries(schema)) {
 			const tableName = resourceName;
 			const fields = resourceSchema.fields;
-			
+
 			// Generate and execute CREATE TABLE SQL
 			const createTableSQL = generateCreateTableSQL(
 				tableName,
 				fields,
-				context.options.database.provider
+				context.options.database.provider,
 			);
-			
+
 			// Execute the SQL using Kysely's raw query
 			await context.db.schema.raw(createTableSQL).execute();
 		}

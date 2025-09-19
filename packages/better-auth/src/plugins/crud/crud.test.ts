@@ -1,5 +1,5 @@
-import { describe, test, expect } from "vitest";
-import { crud, createResource, productSchema } from "./index";
+import { describe, expect, test } from "vitest";
+import { createResource, crud, productSchema } from "./index";
 
 describe("CRUD Plugin", () => {
 	test("should create CRUD plugin with endpoints", () => {
@@ -15,7 +15,7 @@ describe("CRUD Plugin", () => {
 		expect(crudPlugin.id).toBe("crud");
 		expect(crudPlugin.endpoints).toBeDefined();
 		expect(crudPlugin.schema).toBeDefined();
-		
+
 		// Check that endpoints are created
 		const endpoints = Object.keys(crudPlugin.endpoints);
 		expect(endpoints).toContain("createProduct");
@@ -71,10 +71,10 @@ describe("CRUD Plugin", () => {
 		});
 
 		expect(crudPlugin.schema.product).toBeDefined();
-		
+
 		if (crudPlugin.schema.product) {
 			expect(crudPlugin.schema.product.fields).toBeDefined();
-			
+
 			// Check that fields is an object (the Zod introspection might not work perfectly in tests)
 			const fields = crudPlugin.schema.product.fields;
 			expect(typeof fields).toBe("object");

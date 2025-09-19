@@ -3,8 +3,8 @@ import type {
 	AlterTableColumnAlteringBuilder,
 	CreateTableBuilder,
 } from "kysely";
-import { BetterAuthError } from "../../error/better-auth-error";
 import { FieldAttribute } from "../../db";
+import { BetterAuthError } from "../../error/better-auth-error";
 
 export function toColumns(
 	fields: Record<string, FieldAttribute>,

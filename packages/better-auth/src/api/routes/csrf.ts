@@ -1,6 +1,6 @@
 import { alphabet, generateRandomString } from "oslo/crypto";
-import { createAuthEndpoint } from "../call";
 import { hs256 } from "../../crypto";
+import { createAuthEndpoint } from "../call";
 
 export const getCSRFToken = createAuthEndpoint(
 	"/csrf",

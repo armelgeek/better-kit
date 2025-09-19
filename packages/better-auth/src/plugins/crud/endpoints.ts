@@ -1,9 +1,9 @@
-import { z, ZodSchema } from "zod";
-import { createAuthEndpoint } from "../../api/call";
-import { generateId } from "../../utils/id";
-import { CrudResourceConfig, CrudContext, CrudOperation } from "./types";
+import { ZodSchema, z } from "zod";
 import { User } from "../../adapters/schema";
+import { createAuthEndpoint } from "../../api/call";
 import { Where } from "../../types/adapter";
+import { generateId } from "../../utils/id";
+import { CrudContext, CrudOperation, CrudResourceConfig } from "./types";
 
 /**
  * Creates CRUD endpoints for a given resource
@@ -11,7 +11,7 @@ import { Where } from "../../types/adapter";
 export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 	const { name, schema, endpoints = {}, permissions = {} } = resourceConfig;
 	const tableName = resourceConfig.tableName || name;
-	
+
 	// Default all endpoints to true if not specified
 	const enabledEndpoints = {
 		create: true,
@@ -28,26 +28,26 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 	const checkPermission = async (
 		operation: CrudOperation,
 		user: User | null,
-		context: Omit<CrudContext, 'user' | 'operation'>
+		context: Omit<CrudContext, "user" | "operation">,
 	): Promise<boolean> => {
 		const permissionFn = permissions[operation];
 		if (!permissionFn) return true; // No permission check means allowed
-		
-		if (!user && operation !== 'read' && operation !== 'list') {
+
+		if (!user && operation !== "read" && operation !== "list") {
 			return false; // Most operations require authentication
 		}
 
 		// Call permission function with appropriate parameters
 		try {
 			switch (operation) {
-				case 'create':
+				case "create":
 					return await (permissionFn as any)(user, context.data);
-				case 'read':
-				case 'delete':
+				case "read":
+				case "delete":
 					return await (permissionFn as any)(user, context.id);
-				case 'update':
+				case "update":
 					return await (permissionFn as any)(user, context.id, context.data);
-				case 'list':
+				case "list":
 					return await (permissionFn as any)(user);
 				default:
 					return false;
@@ -60,26 +60,30 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 	// Helper function to get current user from session
 	const getCurrentUser = async (ctx: any): Promise<User | null> => {
 		if (!ctx.request?.headers) return null;
-		
+
 		const sessionCookieToken = await ctx.getSignedCookie(
 			ctx.context.authCookies.sessionToken.name,
 			ctx.context.options.secret,
 		);
-		
+
 		if (!sessionCookieToken) return null;
-		
-		const session = await ctx.context.internalAdapter.findSession(sessionCookieToken);
+
+		const session =
+			await ctx.context.internalAdapter.findSession(sessionCookieToken);
 		if (!session || session.session.expiresAt < new Date()) {
 			return null;
 		}
-		
+
 		return session.user;
 	};
 
 	// CREATE endpoint
 	if (enabledEndpoints.create) {
-		const createSchema = schema instanceof z.ZodObject ? schema.omit({ id: true, createdAt: true, updatedAt: true }) : schema;
-		
+		const createSchema =
+			schema instanceof z.ZodObject
+				? schema.omit({ id: true, createdAt: true, updatedAt: true })
+				: schema;
+
 		crudEndpoints[`create${capitalize(name)}`] = createAuthEndpoint(
 			`/${name}`,
 			{
@@ -89,7 +93,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			},
 			async (ctx) => {
 				const user = await getCurrentUser(ctx);
-				const canCreate = await checkPermission('create', user, {
+				const canCreate = await checkPermission("create", user, {
 					resource: name,
 					data: ctx.body,
 				});
@@ -129,7 +133,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			async (ctx) => {
 				const { id } = ctx.params;
 				const user = await getCurrentUser(ctx);
-				const canRead = await checkPermission('read', user, {
+				const canRead = await checkPermission("read", user, {
 					resource: name,
 					id,
 				});
@@ -155,8 +159,11 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// UPDATE endpoint
 	if (enabledEndpoints.update) {
-		const updateSchema = schema instanceof z.ZodObject ? schema.omit({ id: true, createdAt: true }).partial() : schema;
-		
+		const updateSchema =
+			schema instanceof z.ZodObject
+				? schema.omit({ id: true, createdAt: true }).partial()
+				: schema;
+
 		crudEndpoints[`update${capitalize(name)}`] = createAuthEndpoint(
 			`/${name}/:id`,
 			{
@@ -167,7 +174,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			async (ctx) => {
 				const { id } = ctx.params;
 				const user = await getCurrentUser(ctx);
-				const canUpdate = await checkPermission('update', user, {
+				const canUpdate = await checkPermission("update", user, {
 					resource: name,
 					id,
 					data: ctx.body,
@@ -178,7 +185,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				}
 
 				const adapter = ctx.context.adapter;
-				
+
 				// Check if resource exists
 				const existing = await adapter.findOne({
 					model: tableName,
@@ -216,7 +223,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			async (ctx) => {
 				const { id } = ctx.params;
 				const user = await getCurrentUser(ctx);
-				const canDelete = await checkPermission('delete', user, {
+				const canDelete = await checkPermission("delete", user, {
 					resource: name,
 					id,
 				});
@@ -226,7 +233,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				}
 
 				const adapter = ctx.context.adapter;
-				
+
 				// Check if resource exists
 				const existing = await adapter.findOne({
 					model: tableName,
@@ -253,17 +260,25 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			`/${name}s`,
 			{
 				method: "GET",
-				query: z.object({
-					page: z.string().optional().transform(val => val ? parseInt(val) : 1),
-					limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
-					search: z.string().optional(),
-					sortBy: z.string().optional(),
-					sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
-				}).optional(),
+				query: z
+					.object({
+						page: z
+							.string()
+							.optional()
+							.transform((val) => (val ? parseInt(val) : 1)),
+						limit: z
+							.string()
+							.optional()
+							.transform((val) => (val ? parseInt(val) : 10)),
+						search: z.string().optional(),
+						sortBy: z.string().optional(),
+						sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+					})
+					.optional(),
 			},
 			async (ctx) => {
 				const user = await getCurrentUser(ctx);
-				const canList = await checkPermission('list', user, {
+				const canList = await checkPermission("list", user, {
 					resource: name,
 				});
 
@@ -271,17 +286,21 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					return ctx.json({ error: "Permission denied" }, { status: 403 });
 				}
 
-				const { page = 1, limit = 10, search, sortBy, sortOrder = 'asc' } = ctx.query || {};
+				const {
+					page = 1,
+					limit = 10,
+					search,
+					sortBy,
+					sortOrder = "asc",
+				} = ctx.query || {};
 
 				const adapter = ctx.context.adapter;
-				
+
 				// Build where clause for search
 				let where: Where[] = [];
 				if (search) {
 					// Simple search implementation - searches in name field if it exists
-					where = [
-						{ field: "name", value: search, operator: "eq" },
-					];
+					where = [{ field: "name", value: search, operator: "eq" }];
 				}
 
 				// For this simplified implementation, we'll just get all matching items

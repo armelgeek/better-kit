@@ -1,20 +1,22 @@
-import { z, ZodSchema, ZodTypeAny } from "zod";
+import { ZodSchema, ZodTypeAny, z } from "zod";
 import { FieldAttribute } from "../types";
 
 /**
  * Convert Zod schema to database field attributes
  */
-export function zodSchemaToFields(zodSchema: ZodSchema): Record<string, FieldAttribute> {
+export function zodSchemaToFields(
+	zodSchema: ZodSchema,
+): Record<string, FieldAttribute> {
 	const fields: Record<string, FieldAttribute> = {};
-	
+
 	if (zodSchema instanceof z.ZodObject) {
 		const shape = zodSchema.shape;
-		
+
 		for (const [key, fieldDef] of Object.entries(shape)) {
 			fields[key] = inferFieldAttribute(fieldDef as ZodTypeAny);
 		}
 	}
-	
+
 	return fields;
 }
 
@@ -26,7 +28,7 @@ export function inferFieldAttribute(fieldDef: ZodTypeAny): FieldAttribute {
 	let required = true;
 	let defaultValue: any = undefined;
 	let length: number | undefined = undefined;
-	
+
 	// Handle optional and nullable fields
 	let innerType = fieldDef;
 	if (fieldDef instanceof z.ZodOptional) {
@@ -41,7 +43,7 @@ export function inferFieldAttribute(fieldDef: ZodTypeAny): FieldAttribute {
 		defaultValue = innerType._def.defaultValue();
 		innerType = innerType.removeDefault();
 	}
-	
+
 	// Determine the base type
 	if (innerType instanceof z.ZodString) {
 		type = "string";
@@ -67,7 +69,7 @@ export function inferFieldAttribute(fieldDef: ZodTypeAny): FieldAttribute {
 	} else if (innerType instanceof z.ZodEnum) {
 		type = "string";
 	}
-	
+
 	return {
 		type,
 		required,
@@ -79,7 +81,10 @@ export function inferFieldAttribute(fieldDef: ZodTypeAny): FieldAttribute {
 /**
  * Generate table name from resource name
  */
-export function getTableName(resourceName: string, customTableName?: string): string {
+export function getTableName(
+	resourceName: string,
+	customTableName?: string,
+): string {
 	return customTableName || resourceName;
 }
 
@@ -95,7 +100,10 @@ export function capitalize(str: string): string {
  */
 export function generateId(): string {
 	// Using a simple implementation here - in a real scenario you'd use cuid2 or similar
-	return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+	return (
+		Math.random().toString(36).substring(2, 15) +
+		Math.random().toString(36).substring(2, 15)
+	);
 }
 
 /**
@@ -110,7 +118,8 @@ export function validateData(schema: ZodSchema, data: any) {
 	} catch (error) {
 		return {
 			success: false,
-			error: error instanceof z.ZodError ? error : new Error("Validation failed"),
+			error:
+				error instanceof z.ZodError ? error : new Error("Validation failed"),
 		};
 	}
 }

@@ -1,4 +1,4 @@
-import { z, ZodSchema } from "zod";
+import { ZodSchema, z } from "zod";
 import { FieldAttribute } from "../db";
 
 export function toZodSchema(fields: Record<string, FieldAttribute>) {

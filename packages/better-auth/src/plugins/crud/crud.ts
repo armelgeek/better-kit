@@ -1,14 +1,14 @@
-import { CrudOptions, CrudPlugin, CrudResourceConfig } from "./types";
-import { createCrudEndpoints } from "./endpoints";
 import { FieldAttribute } from "../../db/field";
 import { shimContext } from "../../utils/shim";
+import { createCrudEndpoints } from "./endpoints";
+import { CrudOptions, CrudPlugin, CrudResourceConfig } from "./types";
 
 /**
  * Creates a CRUD plugin that automatically generates endpoints for multiple resources
  */
 export function crud(options: CrudOptions): CrudPlugin {
 	const { resources, basePath = "", requireAuth = false } = options;
-	
+
 	// Generate endpoints for all resources
 	const allEndpoints: Record<string, any> = {};
 	const schema: Record<string, { fields: Record<string, FieldAttribute> }> = {};
@@ -16,10 +16,10 @@ export function crud(options: CrudOptions): CrudPlugin {
 	for (const resourceConfig of resources) {
 		// Generate CRUD endpoints for this resource
 		const resourceEndpoints = createCrudEndpoints(resourceConfig);
-		
+
 		// Add to combined endpoints
 		Object.assign(allEndpoints, resourceEndpoints);
-		
+
 		// Generate schema fields from Zod schema
 		schema[resourceConfig.name] = {
 			fields: zodSchemaToFields(resourceConfig.schema),
@@ -27,7 +27,7 @@ export function crud(options: CrudOptions): CrudPlugin {
 	}
 
 	// Apply base path if specified
-	const processedEndpoints = basePath 
+	const processedEndpoints = basePath
 		? applyBasePath(allEndpoints, basePath)
 		: allEndpoints;
 
@@ -48,15 +48,15 @@ export function crud(options: CrudOptions): CrudPlugin {
  */
 function zodSchemaToFields(zodSchema: any): Record<string, FieldAttribute> {
 	const fields: Record<string, FieldAttribute> = {};
-	
+
 	// This is a simplified implementation
 	// In a real scenario, you'd need more sophisticated Zod schema introspection
 	const shape = zodSchema._def?.shape || {};
-	
+
 	for (const [fieldName, fieldDef] of Object.entries(shape as any)) {
 		fields[fieldName] = inferFieldAttribute(fieldDef);
 	}
-	
+
 	return fields;
 }
 
@@ -66,7 +66,7 @@ function zodSchemaToFields(zodSchema: any): Record<string, FieldAttribute> {
 function inferFieldAttribute(fieldDef: any): FieldAttribute {
 	// Extract the base type
 	let typeName = fieldDef._def?.typeName;
-	
+
 	// Handle ZodOptional and ZodDefault wrappers
 	if (typeName === "ZodOptional" || typeName === "ZodDefault") {
 		fieldDef = fieldDef._def.innerType;
@@ -97,11 +97,14 @@ function inferFieldAttribute(fieldDef: any): FieldAttribute {
 /**
  * Apply base path to all endpoint paths
  */
-function applyBasePath(endpoints: Record<string, any>, basePath: string): Record<string, any> {
+function applyBasePath(
+	endpoints: Record<string, any>,
+	basePath: string,
+): Record<string, any> {
 	const processedEndpoints: Record<string, any> = {};
-	
+
 	for (const [key, endpoint] of Object.entries(endpoints)) {
-		if (endpoint && typeof endpoint === 'object' && endpoint.path) {
+		if (endpoint && typeof endpoint === "object" && endpoint.path) {
 			processedEndpoints[key] = {
 				...endpoint,
 				path: `${basePath}${endpoint.path}`,
@@ -110,7 +113,7 @@ function applyBasePath(endpoints: Record<string, any>, basePath: string): Record
 			processedEndpoints[key] = endpoint;
 		}
 	}
-	
+
 	return processedEndpoints;
 }
 

@@ -1,5 +1,11 @@
 import { betterAuth } from "better-auth";
-import { crud, createResource, productSchema, categorySchema, tagSchema } from "better-auth/plugins";
+import {
+	categorySchema,
+	createResource,
+	crud,
+	productSchema,
+	tagSchema,
+} from "better-auth/plugins";
 
 // Example usage of the CRUD plugin
 export const auth = betterAuth({

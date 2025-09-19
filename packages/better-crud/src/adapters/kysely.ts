@@ -6,18 +6,18 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async create(params: { model: string; data: Record<string, any> }) {
 		const { model, data } = params;
-		
+
 		// Add timestamps if they don't exist
 		const now = new Date();
 		if (!data.createdAt) data.createdAt = now;
 		if (!data.updatedAt) data.updatedAt = now;
-		
+
 		const result = await this.db
 			.insertInto(model)
 			.values(data)
 			.returningAll()
 			.executeTakeFirst();
-			
+
 		return result;
 	}
 
@@ -26,14 +26,14 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		where?: Array<{ field: string; value: any; operator?: string }>;
 	}) {
 		const { model, where = [] } = params;
-		
+
 		let query = this.db.selectFrom(model).selectAll();
-		
+
 		for (const condition of where) {
 			const operator = condition.operator || "=";
 			query = query.where(condition.field, operator as any, condition.value);
 		}
-		
+
 		return await query.executeTakeFirst();
 	}
 
@@ -45,20 +45,20 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
 	}) {
 		const { model, where = [], limit, offset, orderBy = [] } = params;
-		
+
 		let query = this.db.selectFrom(model).selectAll();
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const operator = condition.operator || "=";
 			query = query.where(condition.field, operator as any, condition.value);
 		}
-		
+
 		// Apply ordering
 		for (const order of orderBy) {
 			query = query.orderBy(order.field, order.direction);
 		}
-		
+
 		// Apply pagination
 		if (limit) {
 			query = query.limit(limit);
@@ -66,7 +66,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		if (offset) {
 			query = query.offset(offset);
 		}
-		
+
 		return await query.execute();
 	}
 
@@ -76,17 +76,17 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		data: Record<string, any>;
 	}) {
 		const { model, where, data } = params;
-		
+
 		// Add updated timestamp
 		data.updatedAt = new Date();
-		
+
 		let query = this.db.updateTable(model).set(data);
-		
+
 		for (const condition of where) {
 			const operator = condition.operator || "=";
 			query = query.where(condition.field, operator as any, condition.value);
 		}
-		
+
 		const result = await query.returningAll().executeTakeFirst();
 		return result;
 	}
@@ -96,14 +96,14 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		where: Array<{ field: string; value: any; operator?: string }>;
 	}) {
 		const { model, where } = params;
-		
+
 		let query = this.db.deleteFrom(model);
-		
+
 		for (const condition of where) {
 			const operator = condition.operator || "=";
 			query = query.where(condition.field, operator as any, condition.value);
 		}
-		
+
 		await query.execute();
 	}
 
@@ -112,14 +112,14 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		where?: Array<{ field: string; value: any; operator?: string }>;
 	}) {
 		const { model, where = [] } = params;
-		
+
 		let query = this.db.selectFrom(model).select(sql`count(*)`.as("count"));
-		
+
 		for (const condition of where) {
 			const operator = condition.operator || "=";
 			query = query.where(condition.field, operator as any, condition.value);
 		}
-		
+
 		const result = await query.executeTakeFirst();
 		return Number(result?.count || 0);
 	}
@@ -136,21 +136,23 @@ export function createKyselyDatabase(config: CrudDatabaseConfig): Kysely<any> {
 			// For SQLite with better-sqlite3
 			const Database = require("better-sqlite3");
 			const { Kysely, SqliteDialect } = require("kysely");
-			
+
 			return new Kysely({
 				dialect: new SqliteDialect({
 					database: new Database(config.url.replace("sqlite:", "")),
 				}),
 			});
 		} catch (error) {
-			throw new Error("better-sqlite3 is required for SQLite support. Please install it: npm install better-sqlite3");
+			throw new Error(
+				"better-sqlite3 is required for SQLite support. Please install it: npm install better-sqlite3",
+			);
 		}
 	} else if (config.provider === "postgres") {
 		try {
 			// For PostgreSQL
 			const { Pool } = require("pg");
 			const { Kysely, PostgresDialect } = require("kysely");
-			
+
 			return new Kysely({
 				dialect: new PostgresDialect({
 					pool: new Pool({
@@ -159,24 +161,28 @@ export function createKyselyDatabase(config: CrudDatabaseConfig): Kysely<any> {
 				}),
 			});
 		} catch (error) {
-			throw new Error("pg is required for PostgreSQL support. Please install it: npm install pg @types/pg");
+			throw new Error(
+				"pg is required for PostgreSQL support. Please install it: npm install pg @types/pg",
+			);
 		}
 	} else if (config.provider === "mysql") {
 		try {
 			// For MySQL
 			const { createPool } = require("mysql2");
 			const { Kysely, MysqlDialect } = require("kysely");
-			
+
 			return new Kysely({
 				dialect: new MysqlDialect({
 					pool: createPool(config.url),
 				}),
 			});
 		} catch (error) {
-			throw new Error("mysql2 is required for MySQL support. Please install it: npm install mysql2");
+			throw new Error(
+				"mysql2 is required for MySQL support. Please install it: npm install mysql2",
+			);
 		}
 	}
-	
+
 	throw new Error(`Unsupported database provider: ${config.provider}`);
 }
 
@@ -186,10 +192,10 @@ export function createKyselyDatabase(config: CrudDatabaseConfig): Kysely<any> {
 export function generateCreateTableSQL(
 	tableName: string,
 	fields: Record<string, FieldAttribute>,
-	provider: string = "sqlite"
+	provider: string = "sqlite",
 ): string {
 	const columns: string[] = [];
-	
+
 	// Always add ID column if not present
 	if (!fields.id) {
 		if (provider === "postgres") {
@@ -198,10 +204,10 @@ export function generateCreateTableSQL(
 			columns.push("id TEXT PRIMARY KEY");
 		}
 	}
-	
+
 	for (const [fieldName, field] of Object.entries(fields)) {
 		let columnDef = fieldName;
-		
+
 		// Handle data types
 		if (provider === "postgres") {
 			switch (field.type) {
@@ -241,16 +247,16 @@ export function generateCreateTableSQL(
 					break;
 			}
 		}
-		
+
 		// Handle constraints
 		if (field.required && !field.default) {
 			columnDef += " NOT NULL";
 		}
-		
+
 		if (field.unique) {
 			columnDef += " UNIQUE";
 		}
-		
+
 		if (field.default !== undefined) {
 			if (typeof field.default === "string") {
 				columnDef += ` DEFAULT '${field.default}'`;
@@ -258,10 +264,10 @@ export function generateCreateTableSQL(
 				columnDef += ` DEFAULT ${field.default}`;
 			}
 		}
-		
+
 		columns.push(columnDef);
 	}
-	
+
 	// Add standard timestamps if not present
 	if (!fields.createdAt) {
 		if (provider === "postgres") {
@@ -270,7 +276,7 @@ export function generateCreateTableSQL(
 			columns.push("created_at TEXT DEFAULT CURRENT_TIMESTAMP");
 		}
 	}
-	
+
 	if (!fields.updatedAt) {
 		if (provider === "postgres") {
 			columns.push("updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
@@ -278,6 +284,8 @@ export function generateCreateTableSQL(
 			columns.push("updated_at TEXT DEFAULT CURRENT_TIMESTAMP");
 		}
 	}
-	
-	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${columns.join(",\n  ")}\n)`;
+
+	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${columns.join(
+		",\n  ",
+	)}\n)`;
 }
