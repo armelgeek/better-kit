@@ -3,7 +3,7 @@ import { Client } from "@/components/client";
 import { SignOut } from "@/components/signout";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { auth } from "@/lib/crud-auth";
+import { authMinimal as auth } from "@/lib/auth-minimal";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";

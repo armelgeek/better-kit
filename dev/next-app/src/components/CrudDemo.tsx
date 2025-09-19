@@ -16,6 +16,34 @@ interface Product {
 	updatedAt?: Date;
 }
 
+// Mock data for demonstration
+const mockProducts: Product[] = [
+	{
+		id: "1",
+		name: "Laptop Pro",
+		description: "High-performance laptop for professionals",
+		price: 1299.99,
+		status: "active",
+		stock: 15,
+	},
+	{
+		id: "2", 
+		name: "Wireless Headphones",
+		description: "Noise-cancelling bluetooth headphones",
+		price: 199.99,
+		status: "active",
+		stock: 32,
+	},
+	{
+		id: "3",
+		name: "Smart Watch",
+		description: "Fitness tracking smartwatch",
+		price: 299.99,
+		status: "draft",
+		stock: 8,
+	},
+];
+
 export function CrudDemo() {
 	const [products, setProducts] = useState<Product[]>([]);
 	const [newProduct, setNewProduct] = useState({
@@ -27,11 +55,16 @@ export function CrudDemo() {
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [useMockData, setUseMockData] = useState(true);
 
 	// Load products on component mount
 	useEffect(() => {
-		fetchProducts();
-	}, []);
+		if (useMockData) {
+			setProducts(mockProducts);
+		} else {
+			fetchProducts();
+		}
+	}, [useMockData]);
 
 	const fetchProducts = async () => {
 		setLoading(true);
@@ -64,6 +97,21 @@ export function CrudDemo() {
 		
 		setLoading(true);
 		setError(null);
+		
+		if (useMockData) {
+			// Mock implementation
+			const mockProduct: Product = {
+				id: Date.now().toString(),
+				...newProduct,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			setProducts([...products, mockProduct]);
+			setNewProduct({ name: "", price: 0, description: "", status: "draft" });
+			setLoading(false);
+			return;
+		}
+		
 		try {
 			const response = await fetch("/api/auth/product", {
 				method: "POST",
@@ -91,6 +139,15 @@ export function CrudDemo() {
 	const updateProduct = async (id: string, updates: Partial<Product>) => {
 		setLoading(true);
 		setError(null);
+		
+		if (useMockData) {
+			// Mock implementation
+			setProducts(products.map(p => p.id === id ? {...p, ...updates, updatedAt: new Date()} : p));
+			setEditingProduct(null);
+			setLoading(false);
+			return;
+		}
+		
 		try {
 			const response = await fetch(`/api/auth/product/${id}`, {
 				method: "PATCH",
@@ -122,6 +179,14 @@ export function CrudDemo() {
 		
 		setLoading(true);
 		setError(null);
+		
+		if (useMockData) {
+			// Mock implementation
+			setProducts(products.filter((p) => p.id !== id));
+			setLoading(false);
+			return;
+		}
+		
 		try {
 			const response = await fetch(`/api/auth/product/${id}`, {
 				method: "DELETE",
@@ -145,7 +210,25 @@ export function CrudDemo() {
 
 	return (
 		<div className="p-6 max-w-6xl mx-auto">
-			<h1 className="text-3xl font-bold mb-6">BetterCRUD Demo - Products</h1>
+			<div className="flex items-center justify-between mb-6">
+				<h1 className="text-3xl font-bold">BetterCRUD Demo - Products</h1>
+				<div className="flex items-center gap-4">
+					<label className="flex items-center gap-2">
+						<input
+							type="checkbox"
+							checked={useMockData}
+							onChange={(e) => setUseMockData(e.target.checked)}
+							className="rounded"
+						/>
+						<span className="text-sm">Use Mock Data</span>
+					</label>
+					{useMockData && (
+						<span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+							Demo Mode
+						</span>
+					)}
+				</div>
+			</div>
 			
 			{/* Error Display */}
 			{error && (
@@ -223,7 +306,7 @@ export function CrudDemo() {
 				<div className="flex justify-between items-center mb-4">
 					<h2 className="text-xl font-semibold">Products ({products.length})</h2>
 					<button
-						onClick={fetchProducts}
+						onClick={() => useMockData ? setProducts(mockProducts) : fetchProducts()}
 						disabled={loading}
 						className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 transition-colors"
 					>
