@@ -129,4 +129,24 @@ describe("BetterCrud", () => {
 
 		expect(crud).toBeDefined();
 	});
+
+	it("should handle auto-migration without errors", () => {
+		// This test specifically checks the initTables function fix
+		expect(() => {
+			const crud = betterCrud({
+				resources: [
+					createResource({
+						name: "product",
+						schema: productSchema,
+					}),
+				],
+				database: {
+					provider: "sqlite",
+					url: ":memory:",
+					autoMigrate: true, // This triggers the initTables function
+				},
+			});
+			expect(crud).toBeDefined();
+		}).not.toThrow();
+	});
 });

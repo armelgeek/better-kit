@@ -1,4 +1,5 @@
 import { createRouter } from "better-call";
+import { sql } from "kysely";
 import {
 	KyselyCrudAdapter,
 	createKyselyDatabase,
@@ -132,8 +133,8 @@ async function initTables(
 				context.options.database.provider,
 			);
 
-			// Execute the SQL using Kysely's raw query
-			await context.db.schema.raw(createTableSQL).execute();
+			// Execute the SQL using Kysely's sql template literal
+			await sql`${sql.raw(createTableSQL)}`.execute(context.db);
 		}
 	} catch (error) {
 		console.error("Error initializing tables:", error);
