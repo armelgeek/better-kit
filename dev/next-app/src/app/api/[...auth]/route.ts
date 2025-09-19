@@ -1,4 +1,4 @@
-import { auth } from "@/lib/crud-auth";
+import { authMinimal as auth } from "@/lib/auth-minimal";
 import { NextRequest } from "next/server";
 
 const handler = auth.handler;
