@@ -12,6 +12,9 @@ export const auth = betterAuth({
 		url: "data.db",
 	},
 	secret: process.env.BETTER_AUTH_SECRET ?? "secret",
+	emailAndPassword: {
+		enabled: true,
+	},
 	plugins: [
 		crud({
 			resources: [
