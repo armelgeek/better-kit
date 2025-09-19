@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Product {
 	id: string;
@@ -27,7 +27,7 @@ const mockProducts: Product[] = [
 		stock: 15,
 	},
 	{
-		id: "2", 
+		id: "2",
 		name: "Wireless Headphones",
 		description: "Noise-cancelling bluetooth headphones",
 		price: 199.99,
@@ -83,7 +83,11 @@ export function CrudDemo() {
 				setError(`Failed to fetch products: ${response.statusText}`);
 			}
 		} catch (error) {
-			setError(`Error fetching products: ${error instanceof Error ? error.message : "Unknown error"}`);
+			setError(
+				`Error fetching products: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -94,10 +98,10 @@ export function CrudDemo() {
 			setError("Product name is required");
 			return;
 		}
-		
+
 		setLoading(true);
 		setError(null);
-		
+
 		if (useMockData) {
 			// Mock implementation
 			const mockProduct: Product = {
@@ -111,7 +115,7 @@ export function CrudDemo() {
 			setLoading(false);
 			return;
 		}
-		
+
 		try {
 			const response = await fetch("/api/auth/product", {
 				method: "POST",
@@ -127,10 +131,16 @@ export function CrudDemo() {
 				setNewProduct({ name: "", price: 0, description: "", status: "draft" });
 			} else {
 				const errorData = await response.json().catch(() => ({}));
-				setError(`Failed to create product: ${errorData.error || response.statusText}`);
+				setError(
+					`Failed to create product: ${errorData.error || response.statusText}`,
+				);
 			}
 		} catch (error) {
-			setError(`Error creating product: ${error instanceof Error ? error.message : "Unknown error"}`);
+			setError(
+				`Error creating product: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -139,15 +149,19 @@ export function CrudDemo() {
 	const updateProduct = async (id: string, updates: Partial<Product>) => {
 		setLoading(true);
 		setError(null);
-		
+
 		if (useMockData) {
 			// Mock implementation
-			setProducts(products.map(p => p.id === id ? {...p, ...updates, updatedAt: new Date()} : p));
+			setProducts(
+				products.map((p) =>
+					p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p,
+				),
+			);
 			setEditingProduct(null);
 			setLoading(false);
 			return;
 		}
-		
+
 		try {
 			const response = await fetch(`/api/auth/product/${id}`, {
 				method: "PATCH",
@@ -159,14 +173,20 @@ export function CrudDemo() {
 
 			if (response.ok) {
 				const updatedProduct = await response.json();
-				setProducts(products.map(p => p.id === id ? updatedProduct : p));
+				setProducts(products.map((p) => (p.id === id ? updatedProduct : p)));
 				setEditingProduct(null);
 			} else {
 				const errorData = await response.json().catch(() => ({}));
-				setError(`Failed to update product: ${errorData.error || response.statusText}`);
+				setError(
+					`Failed to update product: ${errorData.error || response.statusText}`,
+				);
 			}
 		} catch (error) {
-			setError(`Error updating product: ${error instanceof Error ? error.message : "Unknown error"}`);
+			setError(
+				`Error updating product: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -176,17 +196,17 @@ export function CrudDemo() {
 		if (!confirm("Are you sure you want to delete this product?")) {
 			return;
 		}
-		
+
 		setLoading(true);
 		setError(null);
-		
+
 		if (useMockData) {
 			// Mock implementation
 			setProducts(products.filter((p) => p.id !== id));
 			setLoading(false);
 			return;
 		}
-		
+
 		try {
 			const response = await fetch(`/api/auth/product/${id}`, {
 				method: "DELETE",
@@ -199,10 +219,16 @@ export function CrudDemo() {
 				setProducts(products.filter((p) => p.id !== id));
 			} else {
 				const errorData = await response.json().catch(() => ({}));
-				setError(`Failed to delete product: ${errorData.error || response.statusText}`);
+				setError(
+					`Failed to delete product: ${errorData.error || response.statusText}`,
+				);
 			}
 		} catch (error) {
-			setError(`Error deleting product: ${error instanceof Error ? error.message : "Unknown error"}`);
+			setError(
+				`Error deleting product: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -229,12 +255,12 @@ export function CrudDemo() {
 					)}
 				</div>
 			</div>
-			
+
 			{/* Error Display */}
 			{error && (
 				<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
 					{error}
-					<button 
+					<button
 						onClick={() => setError(null)}
 						className="ml-2 text-red-800 hover:text-red-900"
 					>
@@ -304,9 +330,13 @@ export function CrudDemo() {
 			{/* Products List */}
 			<div>
 				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-xl font-semibold">Products ({products.length})</h2>
+					<h2 className="text-xl font-semibold">
+						Products ({products.length})
+					</h2>
 					<button
-						onClick={() => useMockData ? setProducts(mockProducts) : fetchProducts()}
+						onClick={() =>
+							useMockData ? setProducts(mockProducts) : fetchProducts()
+						}
 						disabled={loading}
 						className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 transition-colors"
 					>
@@ -334,7 +364,10 @@ export function CrudDemo() {
 											type="text"
 											value={editingProduct.name}
 											onChange={(e) =>
-												setEditingProduct({ ...editingProduct, name: e.target.value })
+												setEditingProduct({
+													...editingProduct,
+													name: e.target.value,
+												})
 											}
 											className="w-full px-3 py-2 border rounded-md text-lg font-semibold"
 										/>
@@ -342,7 +375,10 @@ export function CrudDemo() {
 											type="number"
 											value={editingProduct.price}
 											onChange={(e) =>
-												setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })
+												setEditingProduct({
+													...editingProduct,
+													price: parseFloat(e.target.value) || 0,
+												})
 											}
 											className="w-full px-3 py-2 border rounded-md"
 											min="0"
@@ -352,7 +388,10 @@ export function CrudDemo() {
 											type="text"
 											value={editingProduct.description || ""}
 											onChange={(e) =>
-												setEditingProduct({ ...editingProduct, description: e.target.value })
+												setEditingProduct({
+													...editingProduct,
+													description: e.target.value,
+												})
 											}
 											placeholder="Description"
 											className="w-full px-3 py-2 border rounded-md"
@@ -360,7 +399,10 @@ export function CrudDemo() {
 										<select
 											value={editingProduct.status}
 											onChange={(e) =>
-												setEditingProduct({ ...editingProduct, status: e.target.value as any })
+												setEditingProduct({
+													...editingProduct,
+													status: e.target.value as any,
+												})
 											}
 											className="w-full px-3 py-2 border rounded-md"
 										>
@@ -370,7 +412,9 @@ export function CrudDemo() {
 										</select>
 										<div className="flex gap-2">
 											<button
-												onClick={() => updateProduct(product.id, editingProduct)}
+												onClick={() =>
+													updateProduct(product.id, editingProduct)
+												}
 												disabled={loading}
 												className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
 											>
@@ -387,8 +431,12 @@ export function CrudDemo() {
 								) : (
 									// View mode
 									<>
-										<h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-										<p className="text-2xl font-bold text-green-600 mb-2">${product.price}</p>
+										<h3 className="font-semibold text-lg mb-2">
+											{product.name}
+										</h3>
+										<p className="text-2xl font-bold text-green-600 mb-2">
+											${product.price}
+										</p>
 										{product.description && (
 											<p className="text-sm text-gray-600 mb-3">
 												{product.description}
