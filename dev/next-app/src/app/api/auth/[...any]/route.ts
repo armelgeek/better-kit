@@ -1,4 +1,4 @@
-import { authMinimal as auth } from "@/lib/auth-minimal";
+import { auth } from "@/lib/crud-auth";
 import { NextRequest } from "next/server";
 
 const handler = auth.handler;
@@ -16,3 +16,4 @@ export const DELETE = async (req: NextRequest) => {
 };
 
 export { handler as GET };
+

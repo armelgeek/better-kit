@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
-import { betterCrud } from "better-crud";
-import { categorySchema, createResource, productSchema } from "better-crud";
+import { betterCrud } from "../../../../packages/better-crud/src/crud";
+import { categorySchema, createResource, productSchema } from "../../../../packages/better-crud/src/";
 
 export const auth = betterAuth({
 	database: {
