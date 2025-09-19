@@ -1,16 +1,16 @@
-import { z, ZodArray, ZodLiteral, ZodObject, ZodOptional } from "zod";
+import { ZodArray, ZodLiteral, ZodObject, ZodOptional, z } from "zod";
 import { User } from "../../adapters/schema";
 import { createAuthEndpoint } from "../../api/call";
 import { Plugin } from "../../types/plugins";
 import { shimContext } from "../../utils/shim";
-import { createOrganization } from "./routes/create-organization";
 import {
 	AccessControl,
+	Role,
 	createAccessControl,
 	defaultRoles,
 	defaultStatements,
-	Role,
 } from "./access";
+import { createOrganization } from "./routes/create-organization";
 
 export interface OrganizationOptions {
 	/**
@@ -49,7 +49,7 @@ export interface OrganizationOptions {
 	 * Configure the roles and permissions for the organization plugin.
 	 *
 	 */
-		ac?: AccessControl<any>;
+	ac?: AccessControl<any>;
 	/**
 	 *
 	 */

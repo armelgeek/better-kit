@@ -1,9 +1,9 @@
-import { betterAuth } from "../auth";
-import { github, google } from "../providers";
-import { beforeAll, afterAll } from "vitest";
-import { type Listener, listen } from "listhen";
 import { toNodeHandler } from "better-call";
 import fs from "fs/promises";
+import { type Listener, listen } from "listhen";
+import { afterAll, beforeAll } from "vitest";
+import { betterAuth } from "../auth";
+import { github, google } from "../providers";
 
 export async function getTestInstance() {
 	const auth = betterAuth({

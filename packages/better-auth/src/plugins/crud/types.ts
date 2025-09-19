@@ -1,7 +1,7 @@
-import { z, ZodSchema } from "zod";
-import { Plugin } from "../../types/plugins";
+import { ZodSchema, z } from "zod";
 import { AuthEndpoint } from "../../api/call";
 import { FieldAttribute } from "../../db/field";
+import { Plugin } from "../../types/plugins";
 
 export interface CrudResourceConfig {
 	name: string;

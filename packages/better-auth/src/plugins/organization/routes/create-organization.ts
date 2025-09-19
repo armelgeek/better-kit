@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { createOrgEndpoint } from "../call";
 import { User } from "../../../adapters/schema";
 import { getSession } from "../../../api/routes";
-import { getOrgAdapter } from "../adapter";
 import { generateId } from "../../../utils/id";
+import { getOrgAdapter } from "../adapter";
+import { createOrgEndpoint } from "../call";
 
 export const createOrganization = createOrgEndpoint(
 	"/organization/create",

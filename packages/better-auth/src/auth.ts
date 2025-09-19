@@ -1,9 +1,9 @@
-import { router } from "./api";
-import type { BetterAuthOptions } from "./types/options";
 import type { UnionToIntersection } from "type-fest";
-import type { Plugin } from "./types/plugins";
+import { router } from "./api";
 import { init } from "./init";
 import type { CustomProvider } from "./providers";
+import type { BetterAuthOptions } from "./types/options";
+import type { Plugin } from "./types/plugins";
 
 export const betterAuth = <O extends BetterAuthOptions>(options: O) => {
 	const authContext = init(options);

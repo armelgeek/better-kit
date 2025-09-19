@@ -5,7 +5,10 @@ export type SubArray<T extends readonly unknown[]> = T[number][];
 
 // Defines a subset similar to Partial, but keys are not optional
 // instead they are either present or not
-export type Subset<K extends keyof R, R extends Record<string, readonly string[]>> = {
+export type Subset<
+	K extends keyof R,
+	R extends Record<string, readonly string[]>,
+> = {
 	[P in K]: SubArray<R[P]>;
 };
 

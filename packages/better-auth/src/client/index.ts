@@ -1,20 +1,20 @@
-import { ClientOptions } from "./base";
-import { BetterAuth } from "../auth";
-import { InferActions } from "./type";
-import { getProxy } from "./proxy";
+import { BetterFetchPlugin, betterFetch } from "@better-fetch/fetch";
+import { Prettify } from "better-call";
 import { createClient } from "better-call/client";
-import { betterFetch, BetterFetchPlugin } from "@better-fetch/fetch";
+import { atom, computed, task } from "nanostores";
+import { Session, User } from "../adapters/schema";
+import { BetterAuth } from "../auth";
+import { FieldAttribute, InferFieldOutput, InferValueType } from "../db";
 import { BetterAuthError } from "../error/better-auth-error";
+import { UnionToIntersection } from "../types/helper";
 import {
 	CustomProvider,
 	OAuthProvider,
 	OAuthProviderList,
 } from "../types/provider";
-import { UnionToIntersection } from "../types/helper";
-import { Prettify } from "better-call";
-import { atom, computed, task } from "nanostores";
-import { FieldAttribute, InferFieldOutput, InferValueType } from "../db";
-import { Session, User } from "../adapters/schema";
+import { ClientOptions } from "./base";
+import { getProxy } from "./proxy";
+import { InferActions } from "./type";
 
 const redirectPlugin = {
 	id: "redirect",

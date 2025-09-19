@@ -3,12 +3,12 @@ import {
 	OAuth2ProviderWithPKCE,
 	Tokens,
 } from "arctic";
-import { LiteralString } from "./helper";
-import { oAuthProviderList } from "../providers";
-import { User } from "../adapters/schema";
-import { FieldAttribute } from "../db";
 import { Migration } from "kysely";
+import { User } from "../adapters/schema";
 import { AuthEndpoint } from "../api/call";
+import { FieldAttribute } from "../db";
+import { oAuthProviderList } from "../providers";
+import { LiteralString } from "./helper";
 
 export interface BaseProvider {
 	id: LiteralString;

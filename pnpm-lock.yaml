@@ -156,6 +156,18 @@ importers:
         specifier: ^5
         version: 5.5.4
 
+  examples/better-crud-basic:
+    dependencies:
+      better-crud:
+        specifier: workspace:*
+        version: link:../../packages/better-crud
+      better-sqlite3:
+        specifier: ^11.1.2
+        version: 11.1.2
+      zod:
+        specifier: ^3.22.5
+        version: 3.23.8
+
   packages/better-auth:
     dependencies:
       '@better-fetch/fetch':
@@ -249,6 +261,40 @@ importers:
       swr:
         specifier: ^2.2.5
         version: 2.2.5(react@18.3.1)
+      tsup:
+        specifier: ^8.2.4
+        version: 8.2.4(jiti@1.21.6)(postcss@8.4.40)(typescript@5.5.4)(yaml@2.5.0)
+      type-fest:
+        specifier: ^4.24.0
+        version: 4.24.0
+      typescript:
+        specifier: ^5.5.0-dev.20240508
+        version: 5.5.4
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.0(@types/node@20.14.12)
+
+  packages/better-crud:
+    dependencies:
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.2
+        version: 2.2.2
+      better-call:
+        specifier: ^0.1.20
+        version: 0.1.20(typescript@5.5.4)
+      kysely:
+        specifier: ^0.27.4
+        version: 0.27.4
+      zod:
+        specifier: ^3.22.5
+        version: 3.23.8
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.11
+        version: 7.6.11
+      better-sqlite3:
+        specifier: ^11.1.2
+        version: 11.1.2
       tsup:
         specifier: ^8.2.4
         version: 8.2.4(jiti@1.21.6)(postcss@8.4.40)(typescript@5.5.4)(yaml@2.5.0)

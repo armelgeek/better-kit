@@ -1,14 +1,14 @@
 import {
+	Endpoint,
+	EndpointResponse,
 	createEndpointCreator,
 	createMiddleware,
 	createMiddlewareCreator,
-	Endpoint,
-	EndpointResponse,
 } from "better-call";
-import { BetterAuthOptions } from "../types/options";
-import { AuthContext } from "../init";
-import { getMigrations } from "../db/migrations/get-migrations";
 import { migrateAll } from "../db/migrations";
+import { getMigrations } from "../db/migrations/get-migrations";
+import { AuthContext } from "../init";
+import { BetterAuthOptions } from "../types/options";
 
 export const optionsMiddleware = createMiddleware(async (ctx) => {
 	/**

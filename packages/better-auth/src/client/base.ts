@@ -1,12 +1,12 @@
-import { Endpoint, Prettify } from "better-call";
-import { BetterAuth } from "../auth";
-import { HasRequiredKeys, UnionToIntersection } from "type-fest";
 import {
 	BetterFetchOption,
 	BetterFetchPlugin,
 	BetterFetchResponse,
 	createFetch,
 } from "@better-fetch/fetch";
+import { Endpoint, Prettify } from "better-call";
+import { HasRequiredKeys, UnionToIntersection } from "type-fest";
+import { BetterAuth } from "../auth";
 import { BetterAuthError } from "../error/better-auth-error";
 
 type InferContext<T> = T extends (ctx: infer Ctx) => any

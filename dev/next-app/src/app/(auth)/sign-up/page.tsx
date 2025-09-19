@@ -4,106 +4,106 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/client";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
-import { authClient } from "@/lib/client";
 
 export default function SignUpForm() {
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    return (
-        <Card className="mx-auto max-w-sm">
-            <CardHeader>
-                <CardTitle className="text-xl">Sign Up</CardTitle>
-                <CardDescription>
-                    Enter your information to create an account
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid gap-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="first-name">First name</Label>
-                            <Input
-                                id="first-name"
-                                placeholder="Max"
-                                required
-                                onChange={(e) => {
-                                    setFirstName(e.target.value);
-                                }}
-                                value={firstName}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="last-name">Last name</Label>
-                            <Input
-                                id="last-name"
-                                placeholder="Robinson"
-                                required
-                                onChange={(e) => {
-                                    setLastName(e.target.value);
-                                }}
-                                value={lastName}
-                            />
-                        </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="m@example.com"
-                            required
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                            }}
-                            value={email}
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                            }}
-                            value={password}
-                        />
-                    </div>
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        onClick={async () => {
-                            if (!email || !password || !firstName || !lastName)
-                                return alert("Please fill all fields");
+	const [firstName, setFirstName] = useState("");
+	const [lastName, setLastName] = useState("");
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	return (
+		<Card className="mx-auto max-w-sm">
+			<CardHeader>
+				<CardTitle className="text-xl">Sign Up</CardTitle>
+				<CardDescription>
+					Enter your information to create an account
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<div className="grid gap-4">
+					<div className="grid grid-cols-2 gap-4">
+						<div className="grid gap-2">
+							<Label htmlFor="first-name">First name</Label>
+							<Input
+								id="first-name"
+								placeholder="Max"
+								required
+								onChange={(e) => {
+									setFirstName(e.target.value);
+								}}
+								value={firstName}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="last-name">Last name</Label>
+							<Input
+								id="last-name"
+								placeholder="Robinson"
+								required
+								onChange={(e) => {
+									setLastName(e.target.value);
+								}}
+								value={lastName}
+							/>
+						</div>
+					</div>
+					<div className="grid gap-2">
+						<Label htmlFor="email">Email</Label>
+						<Input
+							id="email"
+							type="email"
+							placeholder="m@example.com"
+							required
+							onChange={(e) => {
+								setEmail(e.target.value);
+							}}
+							value={email}
+						/>
+					</div>
+					<div className="grid gap-2">
+						<Label htmlFor="password">Password</Label>
+						<Input
+							id="password"
+							type="password"
+							onChange={(e) => {
+								setPassword(e.target.value);
+							}}
+							value={password}
+						/>
+					</div>
+					<Button
+						type="submit"
+						className="w-full"
+						onClick={async () => {
+							if (!email || !password || !firstName || !lastName)
+								return alert("Please fill all fields");
 
-                            const res = await authClient.signUpCredential({
-                                body: {
-                                    email,
-                                    name: `${firstName} ${lastName}`,
-                                    password,
-                                    callbackUrl: "/"
-                                }
-                            })
-                            if (res.error) {
-                                alert(res.error.message)
-                            }
-                        }}
-                    >
-                        Create an account
-                    </Button>
-                    {/* <Button variant="outline" className="w-full gap-2" onClick={() => { }}>
+							const res = await authClient.signUpCredential({
+								body: {
+									email,
+									name: `${firstName} ${lastName}`,
+									password,
+									callbackUrl: "/",
+								},
+							});
+							if (res.error) {
+								alert(res.error.message);
+							}
+						}}
+					>
+						Create an account
+					</Button>
+					{/* <Button variant="outline" className="w-full gap-2" onClick={() => { }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="0.98em"
@@ -147,14 +147,14 @@ export default function SignUpForm() {
                         <GitHubLogoIcon />
                         Signup with Github
                     </Button> */}
-                </div>
-                <div className="mt-4 text-center text-sm">
-                    Already have an account?{" "}
-                    <Link href="/sign-in" className="underline">
-                        Sign in
-                    </Link>
-                </div>
-            </CardContent>
-        </Card>
-    );
+				</div>
+				<div className="mt-4 text-center text-sm">
+					Already have an account?{" "}
+					<Link href="/sign-in" className="underline">
+						Sign in
+					</Link>
+				</div>
+			</CardContent>
+		</Card>
+	);
 }

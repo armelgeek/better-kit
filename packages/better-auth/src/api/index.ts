@@ -1,13 +1,13 @@
 import { createRouter } from "better-call";
-import {
-	signInOAuth,
-	callbackOAuth,
-	getSession,
-	signOut,
-	signInCredential,
-} from "./routes";
 import { AuthContext } from "../init";
 import { csrfMiddleware } from "./middlewares/csrf";
+import {
+	callbackOAuth,
+	getSession,
+	signInCredential,
+	signInOAuth,
+	signOut,
+} from "./routes";
 import { getCSRFToken } from "./routes/csrf";
 import { signUpCredential } from "./routes/signup";
 

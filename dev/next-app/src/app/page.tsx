@@ -1,6 +1,6 @@
+import { CrudDemo } from "@/components/CrudDemo";
 import { Client } from "@/components/client";
 import { SignOut } from "@/components/signout";
-import { CrudDemo } from "@/components/CrudDemo";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";

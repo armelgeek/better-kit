@@ -1,8 +1,8 @@
-import { z } from "zod";
-import { createAuthEndpoint } from "../call";
 import { APIError } from "better-call";
-import { parseState } from "../../utils/state";
+import { z } from "zod";
 import { userSchema } from "../../adapters/schema";
+import { parseState } from "../../utils/state";
+import { createAuthEndpoint } from "../call";
 
 export const callbackOAuth = createAuthEndpoint(
 	"/callback/:id",

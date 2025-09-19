@@ -1,4 +1,4 @@
-import { User, Session } from "better-auth";
+import { Session, User } from "better-auth";
 import { IUser } from "../index";
 
 declare module "better-auth" {

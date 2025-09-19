@@ -9,9 +9,9 @@ export const SignOut = () => {
 			onClick={async () => {
 				await authClient.signOut({
 					body: {
-						callbackURL: "/"
-					}
-				})
+						callbackURL: "/",
+					},
+				});
 			}}
 		>
 			Sign Out

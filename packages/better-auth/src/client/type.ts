@@ -1,11 +1,11 @@
+import { BetterFetchResponse } from "@better-fetch/fetch";
 import { Context, Endpoint } from "better-call";
 import { CamelCase } from "type-fest";
 import {
-	Prettify,
 	HasRequiredKeys,
+	Prettify,
 	UnionToIntersection,
 } from "../types/helper";
-import { BetterFetchResponse } from "@better-fetch/fetch";
 
 export type InferKeys<T> = T extends `/${infer A}/${infer B}`
 	? CamelCase<`${A}-${InferKeys<B>}`>
