@@ -248,6 +248,11 @@ export function generateCreateTableSQL(
 			}
 		}
 
+		// Add PRIMARY KEY for id field
+		if (fieldName === "id") {
+			columnDef += " PRIMARY KEY";
+		}
+
 		// Handle constraints
 		if (field.required && !field.default) {
 			columnDef += " NOT NULL";
@@ -258,10 +263,22 @@ export function generateCreateTableSQL(
 		}
 
 		if (field.default !== undefined) {
+			// Handle different default value types
 			if (typeof field.default === "string") {
 				columnDef += ` DEFAULT '${field.default}'`;
-			} else {
+			} else if (typeof field.default === "number") {
 				columnDef += ` DEFAULT ${field.default}`;
+			} else if (typeof field.default === "boolean") {
+				columnDef += ` DEFAULT ${field.default ? 1 : 0}`; // SQLite boolean representation
+			} else if (field.default instanceof Date) {
+				// For date defaults, use CURRENT_TIMESTAMP instead of the actual date string
+				columnDef += " DEFAULT CURRENT_TIMESTAMP";
+			} else if (Array.isArray(field.default)) {
+				// For array defaults (like tags), serialize to JSON string
+				columnDef += ` DEFAULT '${JSON.stringify(field.default)}'`;
+			} else {
+				// For other objects, serialize to JSON
+				columnDef += ` DEFAULT '${JSON.stringify(field.default)}'`;
 			}
 		}
 
