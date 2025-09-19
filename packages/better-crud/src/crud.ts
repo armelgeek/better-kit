@@ -48,9 +48,8 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 
 	// Apply base path if specified
 	let processedEndpoints = allEndpoints;
-	if (options.basePath) {
-		processedEndpoints = applyBasePath(allEndpoints, options.basePath);
-	}
+	// Note: basePath should NOT be applied to endpoint paths
+	// The router will handle path matching by stripping the basePath
 
 	// Create API with context shimming (following BetterAuth pattern)
 	const api: Record<string, any> = {};

@@ -14,6 +14,7 @@ export const auth = betterAuth({
 });
 
 export const crud = betterCrud({
+	basePath: "/api/crud", // Add basePath back for router to strip prefix
 	database: {
 		provider: "sqlite",
 		url: "data.db",
