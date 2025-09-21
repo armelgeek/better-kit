@@ -1,11 +1,17 @@
-import { BetterFetchOption } from "@better-fetch/fetch";
+import { BetterFetchOption, BetterFetchPlugin } from "@better-fetch/fetch";
 import { createClient } from "better-call/client";
 import { BetterCrud } from "../crud";
 import { CrudResourceConfig } from "../types";
 import { ZodSchema, z } from "zod";
+import { CrudClientPlugin } from "./plugins/types";
 
 export interface CrudClientOptions extends BetterFetchOption {
 	baseURL?: string;
+	/**
+	 * Client-side plugins for CRUD operations
+	 * These plugins extend BetterFetchPlugin with CRUD-specific functionality
+	 */
+	plugins?: (BetterFetchPlugin | CrudClientPlugin)[];
 }
 
 /**
@@ -61,6 +67,7 @@ export function createCrudClient<T extends BetterCrud = BetterCrud>(
 	const client = createClient<API>({
 		...options,
 		baseURL: options?.baseURL || inferBaseURL(),
+		plugins: options?.plugins || [],
 	});
 
 	const proxy = createCrudProxy(client);
@@ -134,7 +141,7 @@ function createCrudProxy(client: any) {
 					},
 					options?: BetterFetchOption,
 				) => {
-					return client(`/${resourceName}s`, {
+					return client(`/${resourceName}`, {
 						method: "GET",
 						query: params,
 						...options,
@@ -142,17 +149,11 @@ function createCrudProxy(client: any) {
 				},
 			};
 
+			// Cache the methods
 			target[resourceName] = resourceMethods;
 			return resourceMethods;
 		},
 	});
-}
-
-/**
- * Capitalize first letter of a string
- */
-function capitalize(str: string): string {
-	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
@@ -249,3 +250,6 @@ export type CrudClient<T extends BetterCrud = BetterCrud> = {
 } & {
 	$ERROR_CODES: typeof CRUD_ERROR_CODES;
 };
+
+// Export client plugins
+export * from "./plugins";
