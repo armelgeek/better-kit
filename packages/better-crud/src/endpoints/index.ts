@@ -110,8 +110,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json(result, { status: 201 });
 				} catch (error) {
+					// Log the actual error for debugging
+					console.error("Error creating resource:", error);
+
 					return ctx.json(
-						{ error: "Failed to create resource" },
+						{
+							error: "Failed to create resource",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -159,8 +165,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json(result);
 				} catch (error) {
+					// Log the actual error for debugging
+					console.error("Error fetching resource:", error);
+
 					return ctx.json(
-						{ error: "Failed to fetch resource" },
+						{
+							error: "Failed to fetch resource",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -229,8 +241,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json(result);
 				} catch (error) {
+					// Log the actual error for debugging
+					console.error("Error updating resource:", error);
+
 					return ctx.json(
-						{ error: "Failed to update resource" },
+						{
+							error: "Failed to update resource",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -284,8 +302,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json({ success: true });
 				} catch (error) {
+					// Log the actual error for debugging
+					console.error("Error deleting resource:", error);
+
 					return ctx.json(
-						{ error: "Failed to delete resource" },
+						{
+							error: "Failed to delete resource",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -384,8 +408,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json(result);
 				} catch (error) {
+					// Log the actual error for debugging
+					console.error("Error fetching resources:", error);
+
 					return ctx.json(
-						{ error: "Failed to fetch resources" },
+						{
+							error: "Failed to fetch resources",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}

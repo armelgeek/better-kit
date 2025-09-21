@@ -16,4 +16,3 @@ export const DELETE = async (req: NextRequest) => {
 };
 
 export { handler as GET };
-
