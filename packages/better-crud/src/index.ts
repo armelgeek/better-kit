@@ -22,7 +22,7 @@ export { RelationshipManager } from "./utils/relationships";
 export * from "./schemas";
 
 // Endpoints
-export { createCrudEndpoints } from "./endpoints";
+export { createCrudEndpoints, createCrudEndpoint } from "./endpoints";
 
 // Relationship examples - export explicitly to avoid conflicts
 export {

@@ -138,6 +138,7 @@ export function createResource(config: {
 		delete?: boolean;
 		list?: boolean;
 	};
+	customEndpoints?: Record<string, any>;
 	permissions?: {
 		create?: (context: any) => Promise<boolean> | boolean;
 		read?: (context: any) => Promise<boolean> | boolean;

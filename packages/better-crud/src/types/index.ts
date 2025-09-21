@@ -47,6 +47,8 @@ export interface CrudResourceConfig {
 		delete?: boolean;
 		list?: boolean;
 	};
+	/** Custom endpoints for the resource */
+	customEndpoints?: Record<string, Endpoint>;
 	/** Permission functions */
 	permissions?: {
 		create?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
