@@ -83,8 +83,9 @@ describe("KyselyCrudAdapter Data Transformation", () => {
 		});
 
 		// Verify array is properly handled
-		expect(Array.isArray(result.tags)).toBe(true);
-		expect(result.tags).toEqual(["electronics", "gadgets", "popular"]);
+		expect(result).toBeDefined();
+		expect(Array.isArray(result && result.tags)).toBe(true);
+		expect(result && result.tags).toEqual(["electronics", "gadgets", "popular"]);
 	});
 
 	it("should transform objects to JSON strings for SQLite", async () => {

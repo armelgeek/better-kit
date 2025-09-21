@@ -48,20 +48,22 @@ describe("BetterCrud", () => {
 		});
 
 		expect(crud.schema.test).toBeDefined();
-		expect(crud.schema.test.fields).toBeDefined();
-		expect(crud.schema.test.fields.name).toEqual({
-			type: "string",
-			required: true,
-		});
-		expect(crud.schema.test.fields.price).toEqual({
-			type: "number",
-			required: true,
-		});
-		expect(crud.schema.test.fields.active).toEqual({
-			type: "boolean",
-			required: true,
-			default: true,
-		});
+		if (crud.schema.test) {
+			expect(crud.schema.test.fields).toBeDefined();
+			expect(crud.schema.test.fields.name).toEqual({
+				type: "string",
+				required: true,
+			});
+			expect(crud.schema.test.fields.price).toEqual({
+				type: "number",
+				required: true,
+			});
+			expect(crud.schema.test.fields.active).toEqual({
+				type: "boolean",
+				required: true,
+				default: true,
+			});
+		}
 	});
 
 	it("should support custom permissions", () => {

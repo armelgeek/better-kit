@@ -58,14 +58,23 @@ export function createCrudClient<T extends BetterCrud = BetterCrud>(
 ): CrudClient<T> {
 	type API = T["api"];
 
-	const client = createClient<API>({
-		...options,
-		baseURL: options?.baseURL || inferBaseURL(),
-	});
+	// Only pass compatible options to createClient to avoid type conflicts
+	const {
+		onRequest,
+		onResponse,
+		onError,
+		...rest
+	} = options || {};
+
+	const client = createClient<API>(
+		{
+			...rest,
+			baseURL: rest.baseURL || inferBaseURL(),
+		} as any
+	);
 
 	const proxy = createCrudProxy(client);
 	
-	// Add error codes to the client (similar to better-auth pattern)
 	(proxy as any).$ERROR_CODES = CRUD_ERROR_CODES;
 	
 	return proxy as CrudClient<T>;

@@ -5,10 +5,10 @@ export default async function Home() {
 
 	try {
 		const result = await crudClient.product.create({
-			name: "Tee shirt",
-			price: 29.99,
-			description: "A comfortable cotton tee shirt",
-			status: "active",
+			name: "Test Product from Next.js",
+			price: 19.99,
+			tags: ["test", "nextjs"],
+			profile: { category: "testing", featured: false },
 		});
 		console.log("Success!", result);
 	} catch (error) {
