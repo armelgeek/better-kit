@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { betterCrud } from "../crud";
+import { adiemus } from "../crud";
 import { CrudAdapter } from "../types/adapter";
 import { z } from "zod";
 
@@ -82,7 +82,7 @@ describe("Custom Adapter Integration", () => {
 		};
 
 		// Create CRUD instance with custom adapter
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				{
 					name: "user",

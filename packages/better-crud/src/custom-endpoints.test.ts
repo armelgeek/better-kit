@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { betterCrud, createResource, createCrudEndpoint } from "./index";
+import { adiemus, createCrudEndpoint, createResource } from "./index";
 
 const testSchema = z.object({
 	id: z.string().optional(),
@@ -58,7 +58,7 @@ describe("Custom Endpoints", () => {
 			}),
 		};
 
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "test",
@@ -107,7 +107,7 @@ describe("Custom Endpoints", () => {
 			}),
 		};
 
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "test",
@@ -135,7 +135,7 @@ describe("Custom Endpoints", () => {
 			}),
 		};
 
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "test",

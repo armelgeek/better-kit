@@ -1,4 +1,4 @@
-import { betterCrud, openApiPlugin } from "better-crud";
+import { adiemus, openApiPlugin } from "better-crud";
 import { z } from "zod";
 
 // Define schemas for your resources
@@ -20,7 +20,7 @@ const productSchema = z.object({
 });
 
 // Create CRUD instance with OpenAPI plugin
-export const crud = betterCrud({
+export const crud = adiemus({
 	database: {
 		provider: "sqlite",
 		url: "database.db",

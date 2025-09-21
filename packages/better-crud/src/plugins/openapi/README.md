@@ -1,6 +1,6 @@
-# Better CRUD OpenAPI Plugin
+# Adiemus OpenAPI Plugin
 
-The OpenAPI plugin for Better CRUD automatically generates OpenAPI 3.1.0 specifications from your CRUD resources and provides an interactive API documentation interface using Scalar.
+The OpenAPI plugin for Adiemus automatically generates OpenAPI 3.1.0 specifications from your CRUD resources and provides an interactive API documentation interface using Scalar.
 
 ## Features
 
@@ -12,16 +12,16 @@ The OpenAPI plugin for Better CRUD automatically generates OpenAPI 3.1.0 specifi
 
 ## Installation
 
-The OpenAPI plugin is included with Better CRUD. Simply import it:
+The OpenAPI plugin is included with Adiemus. Simply import it:
 
 ```typescript
-import { betterCrud, openApiPlugin } from "better-crud";
+import { adiemus, openApiPlugin } from "adiemus";
 ```
 
 ## Basic Usage
 
 ```typescript
-import { betterCrud, openApiPlugin } from "better-crud";
+import { adiemus, openApiPlugin } from "adiemus";
 import { z } from "zod";
 
 const userSchema = z.object({
@@ -30,7 +30,7 @@ const userSchema = z.object({
   age: z.number().optional(),
 });
 
-const crud = betterCrud({
+const crud = adiemus({
   database: {
     provider: "sqlite",
     url: "database.db",
@@ -133,7 +133,7 @@ const productSchema = z.object({
   categoryId: z.string(),
 });
 
-const crud = betterCrud({
+const crud = adiemus({
   resources: [
     {
       name: "product",
@@ -191,8 +191,8 @@ The generated OpenAPI specification includes:
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Better CRUD API",
-    "description": "Auto-generated API documentation for Better CRUD resources",
+    "title": "Adiemus API",
+    "description": "Auto-generated API documentation for Adiemus resources",
     "version": "1.0.0"
   },
   "paths": {
@@ -226,4 +226,4 @@ To contribute to the OpenAPI plugin:
 
 ## License
 
-Part of the Better CRUD package. See the main project license for details.
+Part of the Adiemus package. See the main project license for details.

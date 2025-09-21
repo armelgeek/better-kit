@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { betterCrud, createResource, createCrudEndpoint } from "better-crud";
+import { adiemus, createResource, createCrudEndpoint } from "better-crud";
 
 // Define the resource schema
 const productSchema = z.object({
@@ -138,7 +138,7 @@ const productCustomEndpoints = {
 };
 
 // Create the CRUD instance with custom endpoints
-const crud = betterCrud({
+const crud = adiemus({
 	resources: [
 		createResource({
 			name: "product",

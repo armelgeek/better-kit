@@ -304,7 +304,7 @@ const context = {
 
 ```typescript
 import { z } from "zod";
-import { createCrudEndpoints, HookUtils } from "better-crud";
+import { createCrudEndpoints, HookUtils } from "adiemus";
 
 const productSchema = z.object({
   id: z.string().optional(),

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { betterCrud } from "../../crud";
+import { adiemus } from "../../crud";
 import { openApiPlugin } from "./index";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ describe("OpenAPI Plugin", () => {
 			description: z.string().optional(),
 		});
 
-		crud = betterCrud({
+		crud = adiemus({
 			database: {
 				provider: "sqlite" as const,
 				url: ":memory:",
@@ -48,7 +48,7 @@ describe("OpenAPI Plugin", () => {
 	});
 
 	it("should support custom path for reference", () => {
-		const customCrud = betterCrud({
+		const customCrud = adiemus({
 			database: {
 				provider: "sqlite" as const,
 				url: ":memory:",
@@ -67,7 +67,7 @@ describe("OpenAPI Plugin", () => {
 	});
 
 	it("should support custom theme configuration", () => {
-		const customCrud = betterCrud({
+		const customCrud = adiemus({
 			database: {
 				provider: "sqlite" as const,
 				url: ":memory:",
@@ -86,7 +86,7 @@ describe("OpenAPI Plugin", () => {
 	});
 
 	it("should support disableDefaultReference option", () => {
-		const customCrud = betterCrud({
+		const customCrud = adiemus({
 			database: {
 				provider: "sqlite" as const,
 				url: ":memory:",
@@ -105,7 +105,7 @@ describe("OpenAPI Plugin", () => {
 	});
 
 	it("should handle empty plugin options", () => {
-		const customCrud = betterCrud({
+		const customCrud = adiemus({
 			database: {
 				provider: "sqlite" as const,
 				url: ":memory:",

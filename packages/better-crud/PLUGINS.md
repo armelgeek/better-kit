@@ -5,9 +5,9 @@ The Better-CRUD plugin system is inspired by Better-Auth and provides a powerful
 ## Quick Start
 
 ```typescript
-import { betterCrud, auditPlugin, validationPlugin } from 'better-crud';
+import { adiemus, auditPlugin, validationPlugin } from 'better-crud';
 
-const crud = betterCrud({
+const crud = adiemus({
   database: {
     provider: "sqlite",
     url: "database.db"
@@ -343,7 +343,7 @@ interface CrudHookContext {
 Plugins can build on each other:
 
 ```typescript
-const crud = betterCrud({
+const crud = adiemus({
   // ... config
   plugins: [
     // Order matters - hooks execute in order
@@ -409,7 +409,7 @@ The plugin system is fully typed and provides excellent TypeScript support:
 
 ```typescript
 // Plugin endpoints are automatically typed
-const crud = betterCrud({
+const crud = adiemus({
   plugins: [auditPlugin(), cachePlugin()]
 });
 

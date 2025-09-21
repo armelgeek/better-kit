@@ -1,5 +1,5 @@
 import {
-	betterCrud,
+	adiemus,
 	categorySchema,
 	createResource,
 	productSchema,
