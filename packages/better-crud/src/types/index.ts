@@ -53,6 +53,39 @@ export interface CrudResourceConfig {
 		delete?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
 		list?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
 	};
+	/** Scoped permissions for advanced access control */
+	scopes?: {
+		create?: string[];
+		read?: string[];
+		update?: string[];
+		delete?: string[];
+		list?: string[];
+	};
+	/** Ownership fields for row-level security */
+	ownership?: {
+		field: string; // e.g., "userId", "createdBy"
+		strategy: "strict" | "flexible"; // strict: exact match, flexible: allow admins
+	};
+	/** Lifecycle hooks */
+	hooks?: {
+		onCreate?: (context: CrudHookContext) => Promise<void> | void;
+		onUpdate?: (context: CrudHookContext) => Promise<void> | void;
+		onDelete?: (context: CrudHookContext) => Promise<void> | void;
+		afterCreate?: (context: CrudHookContext) => Promise<void> | void;
+		afterUpdate?: (context: CrudHookContext) => Promise<void> | void;
+		afterDelete?: (context: CrudHookContext) => Promise<void> | void;
+	};
+	/** Input sanitization rules */
+	sanitization?: {
+		fields?: Record<string, SanitizationRule[]>;
+		global?: SanitizationRule[];
+	};
+	/** Search configuration */
+	search?: {
+		fields: string[]; // Fields to search in
+		strategy: "contains" | "startsWith" | "exact" | "fuzzy";
+		caseSensitive?: boolean;
+	};
 }
 
 export interface CrudPermissionContext {
@@ -68,6 +101,42 @@ export interface CrudPermissionContext {
 	id?: string;
 	/** Full request context */
 	request?: any;
+	/** User scopes/roles */
+	scopes?: string[];
+	/** Existing data (for update/delete operations) */
+	existingData?: any;
+}
+
+export interface CrudHookContext {
+	/** User performing the operation */
+	user?: any;
+	/** Resource being accessed */
+	resource: string;
+	/** Operation being performed */
+	operation: CrudOperation;
+	/** Data being created/updated */
+	data?: any;
+	/** ID being accessed (for read/update/delete operations) */
+	id?: string;
+	/** Existing data before operation (for update/delete) */
+	existingData?: any;
+	/** Result after operation (for after hooks) */
+	result?: any;
+	/** Request context */
+	request?: any;
+	/** Adapter instance for custom queries */
+	adapter: CrudAdapter;
+}
+
+export interface SanitizationRule {
+	type: "trim" | "escape" | "lowercase" | "uppercase" | "strip" | "custom";
+	options?: any;
+	customFn?: (value: any) => any;
+}
+
+export interface UserScope {
+	name: string;
+	permissions: string[];
 }
 
 export interface CrudOptions {
@@ -81,6 +150,32 @@ export interface CrudOptions {
 	requireAuth?: boolean;
 	/** Custom middleware */
 	middleware?: CrudMiddleware[];
+	/** Global security settings */
+	security?: {
+		/** Rate limiting configuration */
+		rateLimit?: {
+			windowMs: number; // time window in milliseconds
+			max: number; // max requests per window
+		};
+		/** CORS settings */
+		cors?: {
+			origin: string | string[];
+			credentials?: boolean;
+		};
+		/** Global input sanitization */
+		sanitization?: {
+			enabled: boolean;
+			rules: SanitizationRule[];
+		};
+		/** Global permission checks */
+		globalPermissions?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
+	};
+	/** Audit logging configuration */
+	audit?: {
+		enabled: boolean;
+		logOperations?: CrudOperation[];
+		auditLogger?: (event: AuditEvent) => Promise<void> | void;
+	};
 }
 
 export interface CrudDatabaseConfig {
@@ -227,10 +322,66 @@ export interface CrudQueryParams extends PaginationParams {
 	include?: string[];
 	/** Advanced select with nested includes */
 	select?: Record<string, any>;
-	/** Filter by related data */
+	/** Filter by related data and advanced conditions */
 	where?: Record<string, any>;
 	/** Order by fields in current or related models */
 	orderBy?: Array<{ field: string; direction: "asc" | "desc"; relation?: string }>;
+	/** Advanced search query */
+	q?: string;
+	/** Search in specific fields */
+	searchFields?: string[];
+	/** Filter operators for advanced filtering */
+	filters?: Record<string, {
+		operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "notin" | "like" | "ilike" | "between";
+		value: any;
+	}>;
+	/** Date range filters */
+	dateRange?: {
+		field: string;
+		start?: string;
+		end?: string;
+	};
+}
+
+export interface AuditEvent {
+	/** Timestamp of the event */
+	timestamp: Date;
+	/** User who performed the action */
+	user?: any;
+	/** Resource affected */
+	resource: string;
+	/** Operation performed */
+	operation: CrudOperation;
+	/** ID of the affected record */
+	recordId?: string;
+	/** Data before the operation (for updates/deletes) */
+	dataBefore?: any;
+	/** Data after the operation (for creates/updates) */
+	dataAfter?: any;
+	/** IP address of the request */
+	ipAddress?: string;
+	/** User agent of the request */
+	userAgent?: string;
+	/** Additional metadata */
+	metadata?: Record<string, any>;
+}
+
+export interface SecurityContext {
+	/** Current user */
+	user?: any;
+	/** User scopes/roles */
+	scopes?: string[];
+	/** Request IP address */
+	ipAddress?: string;
+	/** Request user agent */
+	userAgent?: string;
+	/** Session information */
+	session?: any;
+	/** Rate limiting configuration */
+	rateLimit?: {
+		windowMs: number;
+		max: number;
+	};
 }
 
 export interface PaginationResult<T> {
