@@ -15,6 +15,11 @@ import {
 import { ClientOptions } from "./base";
 import { getProxy } from "./proxy";
 import { InferActions } from "./type";
+import { 
+	InferCrudClient, 
+	createCrudResourceMethods, 
+	extractCrudPlugin 
+} from "../plugins/crud/client";
 
 const redirectPlugin = {
 	id: "redirect",
@@ -176,8 +181,42 @@ export const createAuthClient = <Auth extends BetterAuth = BetterAuth>(
 		Omit<InferActions<Actions>, ExcludedPaths>
 	> &
 		typeof actions;
+
 	return {
 		...proxy,
 		$session,
 	};
+};
+
+/**
+ * Create auth client with CRUD extensions when CRUD plugin is present
+ */
+export const createAuthClientWithCrud = <Auth extends BetterAuth = BetterAuth>(
+	authInstance: Auth,
+	options?: ClientOptions,
+) => {
+	// Create the base auth client
+	const authClient = createAuthClient<Auth>(options);
+
+	// Extract CRUD plugin configuration from auth instance
+	const crudPlugin = extractCrudPlugin(authInstance);
+	if (!crudPlugin) {
+		// Return the normal auth client if no CRUD plugin is found
+		return authClient;
+	}
+
+	// Get the underlying client function from the auth client
+	const client = (authClient as any);
+
+	// Create CRUD methods for each resource
+	const crudMethods: any = {};
+	for (const resource of crudPlugin.resources) {
+		crudMethods[resource.name] = createCrudResourceMethods(resource, client);
+	}
+
+	// Return the extended client with CRUD methods
+	return {
+		...authClient,
+		...crudMethods,
+	} as typeof authClient & InferCrudClient<Auth>;
 };

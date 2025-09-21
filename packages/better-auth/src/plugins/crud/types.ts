@@ -39,6 +39,7 @@ export interface CrudPlugin extends Plugin {
 			};
 		};
 	};
+	resources: CrudResourceConfig[];
 }
 
 export type CrudOperation = "create" | "read" | "update" | "delete" | "list";

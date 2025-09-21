@@ -40,6 +40,8 @@ export function crud(options: CrudOptions): CrudPlugin {
 		id: "crud",
 		endpoints: api,
 		schema,
+		// Store the resources for client access
+		resources,
 	};
 }
 

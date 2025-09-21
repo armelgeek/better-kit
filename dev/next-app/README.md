@@ -101,14 +101,68 @@ Set up the React client for type-safe API calls:
 
 ```typescript
 // lib/client.ts
-import { createReactAuthClient } from "better-auth/react";
+import { createAuthClientWithCrud } from "better-auth/client";
 import type { auth } from "./crud-auth";
 
-export const authClient = createReactAuthClient<typeof auth>({
+export const authClient = createAuthClientWithCrud(auth, {
   baseURL: "http://localhost:3000/api/auth",
 });
 
 export const client = authClient;
+
+// Now you can use both auth and CRUD operations:
+
+// Auth operations
+await authClient.signInCredential({ 
+  body: { email, password } 
+});
+
+// CRUD operations
+await authClient.product.create({
+  name: "T-shirt",
+  price: 29.99,
+});
+
+await authClient.product.list({ limit: 10 });
+await authClient.product.read("product-id");
+await authClient.product.update("product-id", { price: 34.99 });
+await authClient.product.delete("product-id");
+```
+
+### 5. React Hook Integration
+
+For React applications, you can create a combined client:
+
+```typescript
+// lib/react-client.ts
+import { createReactAuthClient } from "better-auth/react";
+import { createAuthClientWithCrud } from "better-auth/client";
+import { auth } from "./crud-auth";
+
+function createReactAuthClientWithCrud(authInstance, options) {
+  const baseClient = createAuthClientWithCrud(authInstance, options);
+  const reactClient = createReactAuthClient(options);
+  
+  return {
+    ...baseClient,
+    ...reactClient,
+  };
+}
+
+export const authClient = createReactAuthClientWithCrud(auth, {
+  baseURL: "http://localhost:3000/api/auth",
+});
+
+// Usage in components
+function ProductList() {
+  const session = authClient.useSession();
+  
+  const handleCreate = async (data) => {
+    await authClient.product.create(data);
+  };
+  
+  // ...
+}
 ```
 
 ## Available Endpoints
