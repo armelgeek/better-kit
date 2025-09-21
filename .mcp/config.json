@@ -1,0 +1,93 @@
+{
+  "mcpServers": {
+    "better-crud-openapi": {
+      "command": "npx",
+      "args": ["better-crud"],
+      "env": {
+        "BETTER_CRUD_OPENAPI_ENABLED": "true"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "better-crud-schema-generator",
+      "description": "Generate OpenAPI schema from Better CRUD resources",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resources": {
+            "type": "array",
+            "description": "Array of CRUD resource configurations",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Resource name"
+                },
+                "schema": {
+                  "type": "object",
+                  "description": "Zod schema definition"
+                }
+              }
+            }
+          },
+          "options": {
+            "type": "object",
+            "description": "OpenAPI generation options",
+            "properties": {
+              "basePath": {
+                "type": "string",
+                "description": "Base API path"
+              },
+              "title": {
+                "type": "string",
+                "description": "API title"
+              },
+              "version": {
+                "type": "string",
+                "description": "API version"
+              }
+            }
+          }
+        },
+        "required": ["resources"]
+      }
+    },
+    {
+      "name": "better-crud-endpoint-generator", 
+      "description": "Generate API endpoints documentation for Better CRUD resources",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resourceName": {
+            "type": "string",
+            "description": "Name of the resource to generate endpoints for"
+          },
+          "operations": {
+            "type": "array",
+            "description": "CRUD operations to include",
+            "items": {
+              "type": "string",
+              "enum": ["create", "read", "update", "delete", "list"]
+            },
+            "default": ["create", "read", "update", "delete", "list"]
+          }
+        },
+        "required": ["resourceName"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "better-crud://schemas",
+      "name": "Better CRUD Resource Schemas",
+      "description": "Access to Better CRUD resource schema definitions"
+    },
+    {
+      "uri": "better-crud://openapi",
+      "name": "Better CRUD OpenAPI Specifications", 
+      "description": "Generated OpenAPI specifications for CRUD resources"
+    }
+  ]
+}

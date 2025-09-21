@@ -2,7 +2,7 @@ import { generator } from "./generator";
 import { logo } from "./logo";
 import type { Plugin } from "../../types/plugins";
 import type { LiteralString } from "../../types/plugins";
-import { createEndpointCreator } from "better-call";
+import { createCrudEndpoint } from "../../endpoints/crud-endpoint";
 
 type ScalarTheme =
 	| "alternate"
@@ -76,12 +76,11 @@ export interface OpenAPIOptions {
 
 export const openApiPlugin = <O extends OpenAPIOptions>(options?: O) => {
 	const path = (options?.path ?? "/reference") as "/reference";
-	const createOpenApiEndpoint = createEndpointCreator();
 	
 	return {
 		id: "openapi",
 		endpoints: {
-			generateOpenAPISchema: createOpenApiEndpoint(
+			generateOpenAPISchema: createCrudEndpoint(
 				"/openapi/schema",
 				{
 					method: "GET",
@@ -91,7 +90,7 @@ export const openApiPlugin = <O extends OpenAPIOptions>(options?: O) => {
 					return ctx.json(schema);
 				},
 			),
-			openAPIReference: createOpenApiEndpoint(
+			openAPIReference: createCrudEndpoint(
 				path,
 				{
 					method: "GET",

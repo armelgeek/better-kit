@@ -173,6 +173,14 @@ function getTypeFromZodType(zodType: ZodType<any>): AllowedType {
 			return "array";
 		case "ZodObject":
 			return "object";
+		case "ZodRecord":
+			return "object";
+		case "ZodEnum":
+			return "string";
+		case "ZodUnion":
+			return "string"; // Default for unions
+		case "ZodLiteral":
+			return "string";
 		default:
 			return "string";
 	}
