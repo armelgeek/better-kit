@@ -12,6 +12,7 @@ import {
 	OAuthProvider,
 	OAuthProviderList,
 } from "../types/provider";
+import { PluginWithClient } from "../types/plugin-client";
 import { ClientOptions } from "./base";
 import { getProxy } from "./proxy";
 import { InferActions } from "./type";
@@ -90,6 +91,32 @@ function inferBaeURL() {
 	throw new BetterAuthError(
 		"Could not infer baseURL from environment variables. Please pass it as an option to the createClient function.",
 	);
+}
+
+/**
+ * Initialize plugin-specific client methods
+ * This function creates client methods for plugins that define client configurations
+ */
+function initializePluginClients<Auth extends BetterAuth>(
+	client: any,
+	options?: ClientOptions,
+): Record<string, any> {
+	const pluginClients: Record<string, any> = {};
+	
+	// Initialize CRUD plugin client if configured
+	if (options?.pluginConfigs?.crud) {
+		const { createCrudClient } = require("../plugins/crud/standalone-client");
+		const crudClient = createCrudClient({
+			...options.pluginConfigs.crud,
+			// Use the same base client
+			baseURL: options.pluginConfigs.crud.baseURL || options?.baseURL,
+		});
+		
+		// Add CRUD methods to the plugin clients
+		pluginClients.crud = crudClient;
+	}
+	
+	return pluginClients;
 }
 
 export const createAuthClient = <Auth extends BetterAuth = BetterAuth>(
@@ -172,12 +199,27 @@ export const createAuthClient = <Auth extends BetterAuth = BetterAuth>(
 			} | null;
 		}),
 	);
+
+	// Extract plugin client methods from the auth configuration
+	type PluginClientMethods = Auth["options"]["plugins"] extends Array<infer T>
+		? T extends PluginWithClient
+			? T["client"] extends { id: string; methods: infer M }
+				? M
+				: {}
+			: {}
+		: {};
+
+	// Initialize plugin clients
+	const pluginClients = initializePluginClients<Auth>(client, options);
+
 	const proxy = getProxy(actions, client) as Prettify<
 		Omit<InferActions<Actions>, ExcludedPaths>
 	> &
 		typeof actions;
+
 	return {
 		...proxy,
+		...pluginClients,
 		$session,
-	};
+	} as Prettify<typeof proxy & PluginClientMethods & { $session: typeof $session }>;
 };
