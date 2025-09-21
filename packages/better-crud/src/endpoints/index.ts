@@ -61,6 +61,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 		tableName,
 		endpoints = {},
 		permissions = {},
+		customEndpoints = {},
 	} = resourceConfig;
 	const actualTableName = tableName || name;
 
@@ -708,6 +709,11 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				}
 			},
 		);
+	}
+
+	// Merge custom endpoints if provided
+	if (customEndpoints && Object.keys(customEndpoints).length > 0) {
+		Object.assign(crudEndpoints, customEndpoints);
 	}
 
 	return crudEndpoints;

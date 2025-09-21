@@ -191,6 +191,77 @@ const analyticsPlugin = createPlugin({
 });
 ```
 
+### Resource Custom Endpoints
+
+You can also add custom endpoints directly to resources using the `customEndpoints` property:
+
+```typescript
+import { createResource, createCrudEndpoint } from 'better-crud';
+import { z } from 'zod';
+
+const productCustomEndpoints = {
+  getProductStats: createCrudEndpoint('/products/stats', {
+    method: 'GET',
+    query: z.object({
+      category: z.string().optional(),
+    }),
+  }, async (ctx) => {
+    const { category } = ctx.query;
+    
+    // Access the CRUD context and adapter
+    const adapter = ctx.context.adapter;
+    
+    // Perform custom logic
+    const stats = await adapter.count({
+      model: 'product',
+      where: category ? [{ field: 'category', value: category }] : undefined
+    });
+    
+    return ctx.json({ total: stats, category });
+  }),
+
+  bulkUpdate: createCrudEndpoint('/products/bulk-update', {
+    method: 'POST',
+    body: z.object({
+      updates: z.array(z.object({
+        id: z.string(),
+        data: z.record(z.any())
+      }))
+    }),
+  }, async (ctx) => {
+    const { updates } = ctx.body;
+    const adapter = ctx.context.adapter;
+    
+    const results = [];
+    for (const update of updates) {
+      try {
+        const result = await adapter.update({
+          model: 'product',
+          where: [{ field: 'id', value: update.id }],
+          data: update.data
+        });
+        results.push({ id: update.id, success: true, data: result });
+      } catch (error) {
+        results.push({ id: update.id, success: false, error: error.message });
+      }
+    }
+    
+    return ctx.json({ results });
+  })
+};
+
+const productResource = createResource({
+  name: 'product',
+  schema: productSchema,
+  customEndpoints: productCustomEndpoints
+});
+```
+
+When you add custom endpoints to a resource, they are merged with the standard CRUD endpoints. The API will include both:
+
+- Standard CRUD endpoints: `createProduct`, `getProduct`, `updateProduct`, `deleteProduct`, `listProducts`
+- Custom endpoints: `getProductStats`, `bulkUpdate`
+
 ### Plugin with Schema Extensions
 
 ```typescript
