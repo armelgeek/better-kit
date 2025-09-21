@@ -5,11 +5,36 @@ Complete documentation for Adiemus - A powerful, type-safe CRUD generator for Ty
 ## Table of Contents
 
 - [Introduction](#introduction)
+  - [Key Features](#key-features)
+  - [Why Adiemus?](#why-adiemus)
 - [Concepts](#concepts)
+  - [Core Architecture](#core-architecture)
+  - [Data Flow](#data-flow)
+  - [Type Safety](#type-safety)
 - [Get Started](#get-started)
+  - [Installation](#installation)
+  - [Quick Setup](#quick-setup)
+  - [Generated Endpoints](#generated-endpoints)
+  - [Built-in Schemas](#built-in-schemas)
 - [Database](#database)
+  - [Supported Databases](#supported-databases)
+  - [Configuration](#configuration)
+  - [Auto-Migration](#auto-migration)
+  - [Adapter System](#adapter-system)
+  - [Relationships](#relationships)
 - [Hooks](#hooks)
+  - [Hook Types](#hook-types)
+  - [Hook Context](#hook-context)
+  - [Hook Examples](#hook-examples)
+  - [Built-in Hook Utilities](#built-in-hook-utilities)
+  - [Hook Execution Order](#hook-execution-order)
 - [Plugins](#plugins)
+  - [Plugin Architecture](#plugin-architecture)
+  - [Built-in Plugins](#built-in-plugins)
+  - [Creating Custom Plugins](#creating-custom-plugins)
+  - [Plugin Development Best Practices](#plugin-development-best-practices)
+- [Testing & Development](#testing--development)
+- [Contributing](#contributing)
 
 ---
 
@@ -324,6 +349,69 @@ const crud = adiemus({
   ],
   database: { provider: "sqlite", url: "database.db" }
 });
+```
+
+### Error Handling & Response Format
+
+Adiemus uses a consistent response format across all endpoints:
+
+#### Success Response
+```typescript
+{
+  data: T,           // The actual response data
+  success: true
+}
+```
+
+#### Error Response
+```typescript
+{
+  error: {
+    code: string,    // Error code (e.g., "VALIDATION_FAILED")
+    message: string, // Human-readable error message
+    details?: any    // Additional error details
+  },
+  success: false
+}
+```
+
+#### Client Error Codes
+
+```typescript
+const CRUD_ERROR_CODES = {
+  VALIDATION_FAILED: "VALIDATION_FAILED",
+  FORBIDDEN: "FORBIDDEN", 
+  NOT_FOUND: "NOT_FOUND",
+  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  CONFLICT: "CONFLICT",
+  HOOK_EXECUTION_FAILED: "HOOK_EXECUTION_FAILED",
+} as const;
+```
+
+#### Error Handling in Client
+
+```typescript
+const result = await crudClient.product.create(productData);
+
+if (result.error) {
+  switch (result.error.code) {
+    case "VALIDATION_FAILED":
+      console.error("Validation error:", result.error.details);
+      break;
+    case "FORBIDDEN":
+      console.error("Permission denied");
+      break;
+    case "NOT_FOUND":
+      console.error("Resource not found");
+      break;
+    default:
+      console.error("Unknown error:", result.error.message);
+  }
+} else {
+  console.log("Success:", result.data);
+}
 ```
 
 ---
@@ -1241,5 +1329,106 @@ export const crudClient = createCrudClient<typeof crud>({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
 });
 ```
+
+---
+
+## Testing & Development
+
+### Running Tests
+
+Adiemus includes a comprehensive test suite:
+
+```bash
+cd packages/better-crud
+npm test
+# or for watch mode
+npm run test:watch
+```
+
+### Development Environment
+
+For local development:
+
+```bash
+# Install dependencies
+npm install
+
+# Start development mode (watch)
+npm run dev
+
+# Type checking
+npm run typecheck
+
+# Build the package
+npm run build
+```
+
+### Environment Variables
+
+Adiemus supports automatic base URL inference from environment variables:
+
+```env
+# For standalone usage
+CRUD_URL=http://localhost:3000/api
+
+# For Next.js applications
+NEXT_PUBLIC_CRUD_URL=http://localhost:3000/api
+
+# For Vercel deployments
+VERCEL_URL=https://your-app.vercel.app
+NEXT_PUBLIC_VERCEL_URL=https://your-app.vercel.app
+```
+
+### Browser Compatibility
+
+Adiemus works in any environment that supports:
+- Modern JavaScript (ES2020+)
+- Fetch API or polyfill
+- Web API Request/Response objects
+
+This includes:
+- Node.js 16+ (with polyfills)
+- All modern browsers
+- Edge runtime environments (Vercel Edge, Cloudflare Workers)
+- Bun and Deno runtime environments
+
+---
+
+## Contributing
+
+Adiemus follows the patterns established by Better-Auth. When contributing:
+
+1. **Code Style**: Follow the existing TypeScript patterns and use Biome for formatting
+2. **Testing**: Add tests for new functionality using Vitest
+3. **Documentation**: Update documentation for new features
+4. **Type Safety**: Ensure full TypeScript compatibility
+5. **Database Testing**: Test with multiple database adapters when applicable
+
+### Project Structure
+
+```
+packages/better-crud/
+├── src/
+│   ├── adapters/          # Database adapters
+│   ├── client/            # Client SDK
+│   ├── endpoints/         # Endpoint generators
+│   ├── plugins/           # Built-in plugins
+│   ├── schemas/           # Pre-defined schemas
+│   ├── types/             # TypeScript types
+│   ├── utils/             # Utility functions
+│   ├── crud.ts            # Main factory function
+│   └── index.ts           # Package exports
+├── examples/              # Usage examples
+├── tests/                 # Test files
+└── package.json
+```
+
+---
+
+## License
+
+MIT License - same as the Better-Auth project.
+
+---
 
 This documentation provides a comprehensive overview of Adiemus, covering all the essential concepts, setup, and usage patterns. The modular structure makes it easy to navigate and find specific information, while the examples provide practical guidance for implementation.
