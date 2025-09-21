@@ -40,7 +40,7 @@ export const crud = betterCrud({
 });
 
 export const crudClient = createCrudClient<typeof crud>({
-	baseURL: "http://localhost:3000/api",
+	baseURL: "http://localhost:3000/api/crud",
 });
 
 export type Auth = typeof auth;
