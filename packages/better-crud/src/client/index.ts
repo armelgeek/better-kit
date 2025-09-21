@@ -65,30 +65,31 @@ function createCrudProxy(client: any) {
 			// Create resource-specific methods
 			const resourceMethods = {
 				create: async (data: any, options?: BetterFetchOption) => {
-					return client(`create${capitalize(resourceName)}`, {
+					return client(`/${resourceName}`, {
+						method: "POST",
 						body: data,
 						...options,
 					});
 				},
 				
 				read: async (id: string, options?: BetterFetchOption) => {
-					return client(`get${capitalize(resourceName)}`, {
-						params: { id },
+					return client(`/${resourceName}/${id}`, {
+						method: "GET",
 						...options,
 					});
 				},
 				
 				update: async (id: string, data: any, options?: BetterFetchOption) => {
-					return client(`update${capitalize(resourceName)}`, {
-						params: { id },
+					return client(`/${resourceName}/${id}`, {
+						method: "PATCH",
 						body: data,
 						...options,
 					});
 				},
 				
 				delete: async (id: string, options?: BetterFetchOption) => {
-					return client(`delete${capitalize(resourceName)}`, {
-						params: { id },
+					return client(`/${resourceName}/${id}`, {
+						method: "DELETE",
 						...options,
 					});
 				},
@@ -100,7 +101,8 @@ function createCrudProxy(client: any) {
 					sortBy?: string;
 					sortOrder?: "asc" | "desc";
 				}, options?: BetterFetchOption) => {
-					return client(`list${capitalize(resourceName)}s`, {
+					return client(`/${resourceName}s`, {
+						method: "GET",
 						query: params,
 						...options,
 					});
