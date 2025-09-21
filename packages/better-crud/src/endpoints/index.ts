@@ -5,6 +5,7 @@ import {
 	CrudPermissionContext,
 	CrudResourceConfig,
 	PaginationResult,
+	IncludeOptions,
 } from "../types";
 import { capitalize, generateId, validateData } from "../utils/schema";
 
@@ -62,6 +63,33 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 		}
 	};
 
+	// Helper function to parse include options from query parameters
+	const parseIncludeOptions = (query?: any): IncludeOptions | undefined => {
+		if (!query) return undefined;
+
+		const include: IncludeOptions = {};
+
+		if (query.include) {
+			try {
+				// Parse comma-separated include list
+				include.include = query.include.split(",").map((s: string) => s.trim());
+			} catch {
+				// Ignore parsing errors
+			}
+		}
+
+		if (query.select) {
+			try {
+				// Parse JSON select object
+				include.select = JSON.parse(query.select);
+			} catch {
+				// Ignore parsing errors
+			}
+		}
+
+		return Object.keys(include).length > 0 ? include : undefined;
+	};
+
 	// CREATE endpoint
 	if (enabledEndpoints.create) {
 		crudEndpoints[`create${capitalize(name)}`] = createCrudEndpoint(
@@ -69,9 +97,13 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			{
 				method: "POST",
 				body: schema,
+				query: z.object({
+					include: z.string().optional(),
+					select: z.string().optional(),
+				}).optional(),
 			},
 			async (ctx) => {
-				const { body, context } = ctx;
+				const { body, context, query } = ctx;
 				const { adapter } = context;
 
 				// Check permissions
@@ -102,10 +134,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					data.id = generateId();
 				}
 
+				// Parse include options
+				const include = parseIncludeOptions(query);
+
 				try {
 					const result = await adapter.create({
 						model: actualTableName,
 						data,
+						include,
 					});
 
 					return ctx.json(result, { status: 201 });
@@ -134,9 +170,13 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				params: z.object({
 					id: z.string(),
 				}),
+				query: z.object({
+					include: z.string().optional(),
+					select: z.string().optional(),
+				}).optional(),
 			},
 			async (ctx) => {
-				const { params, context } = ctx;
+				const { params, context, query } = ctx;
 				const { adapter } = context;
 				const { id } = params;
 
@@ -153,10 +193,14 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
 
+				// Parse include options
+				const include = parseIncludeOptions(query);
+
 				try {
 					const result = await adapter.findFirst({
 						model: actualTableName,
 						where: [{ field: "id", value: id }],
+						include,
 					});
 
 					if (!result) {
@@ -335,6 +379,8 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					search: z.string().optional(),
 					sortBy: z.string().optional(),
 					sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
+					include: z.string().optional(),
+					select: z.string().optional(),
 				}),
 			},
 			async (ctx) => {
@@ -383,6 +429,9 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 						where,
 					});
 
+					// Parse include options
+					const include = parseIncludeOptions(query);
+
 					// Get items
 					const items = await adapter.findMany({
 						model: actualTableName,
@@ -390,6 +439,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 						limit,
 						offset,
 						orderBy,
+						include,
 					});
 
 					const totalPages = Math.ceil(total / limit);

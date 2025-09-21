@@ -1,5 +1,6 @@
 import { Kysely, sql } from "kysely";
-import { CrudAdapter, CrudDatabaseConfig, FieldAttribute } from "../types";
+import { CrudAdapter, CrudDatabaseConfig, FieldAttribute, IncludeOptions } from "../types";
+import { RelationshipManager } from "../utils/relationships";
 
 /**
  * Transform data before sending to SQLite database
@@ -73,10 +74,16 @@ function transformToData(data: Record<string, any>): Record<string, any> {
 }
 
 export class KyselyCrudAdapter implements CrudAdapter {
+	private relationshipManager?: RelationshipManager;
+
 	constructor(private db: Kysely<any>) {}
 
-	async create(params: { model: string; data: Record<string, any> }) {
-		const { model, data } = params;
+	setRelationshipManager(manager: RelationshipManager) {
+		this.relationshipManager = manager;
+	}
+
+	async create(params: { model: string; data: Record<string, any>; include?: IncludeOptions }) {
+		const { model, data, include } = params;
 
 		// Add timestamps if they don't exist
 		const now = new Date();
@@ -92,25 +99,41 @@ export class KyselyCrudAdapter implements CrudAdapter {
 			.returningAll()
 			.executeTakeFirst();
 
+		if (!result) return result;
+
 		// Transform result back to proper types
-		return result ? transformToData(result) : result;
+		const transformedResult = transformToData(result);
+
+		// Include related data if requested
+		if (include && this.relationshipManager) {
+			return await this.includeRelatedData(model, transformedResult, include);
+		}
+
+		return transformedResult;
 	}
 
 	async findFirst(params: {
 		model: string;
 		where?: Array<{ field: string; value: any; operator?: string }>;
+		include?: IncludeOptions;
 	}) {
-		const { model, where = [] } = params;
+		const { model, where = [], include } = params;
 
-		let query = this.db.selectFrom(model).selectAll();
+		// If no includes, use simple query
+		if (!include || !this.relationshipManager) {
+			let query = this.db.selectFrom(model).selectAll();
 
-		for (const condition of where) {
-			const operator = condition.operator || "=";
-			query = query.where(condition.field, operator as any, condition.value);
+			for (const condition of where) {
+				const operator = condition.operator || "=";
+				query = query.where(condition.field, operator as any, condition.value);
+			}
+
+			const result = await query.executeTakeFirst();
+			return result ? transformToData(result) : result;
 		}
 
-		const result = await query.executeTakeFirst();
-		return result ? transformToData(result) : result;
+		// Use relationship-aware query
+		return await this.findWithRelations(model, { where, include, limit: 1 });
 	}
 
 	async findMany(params: {
@@ -119,39 +142,47 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		limit?: number;
 		offset?: number;
 		orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+		include?: IncludeOptions;
 	}) {
-		const { model, where = [], limit, offset, orderBy = [] } = params;
+		const { model, where = [], limit, offset, orderBy = [], include } = params;
 
-		let query = this.db.selectFrom(model).selectAll();
+		// If no includes, use simple query
+		if (!include || !this.relationshipManager) {
+			let query = this.db.selectFrom(model).selectAll();
 
-		// Apply where conditions
-		for (const condition of where) {
-			const operator = condition.operator || "=";
-			query = query.where(condition.field, operator as any, condition.value);
+			// Apply where conditions
+			for (const condition of where) {
+				const operator = condition.operator || "=";
+				query = query.where(condition.field, operator as any, condition.value);
+			}
+
+			// Apply ordering
+			for (const order of orderBy) {
+				query = query.orderBy(order.field, order.direction);
+			}
+
+			// Apply pagination
+			if (limit) {
+				query = query.limit(limit);
+			}
+			if (offset) {
+				query = query.offset(offset);
+			}
+
+			return (await query.execute()).map((item) => transformToData(item));
 		}
 
-		// Apply ordering
-		for (const order of orderBy) {
-			query = query.orderBy(order.field, order.direction);
-		}
-
-		// Apply pagination
-		if (limit) {
-			query = query.limit(limit);
-		}
-		if (offset) {
-			query = query.offset(offset);
-		}
-
-		return (await query.execute()).map((item) => transformToData(item));
+		// Use relationship-aware query
+		return await this.findWithRelations(model, { where, limit, offset, orderBy, include });
 	}
 
 	async update(params: {
 		model: string;
 		where: Array<{ field: string; value: any; operator?: string }>;
 		data: Record<string, any>;
+		include?: IncludeOptions;
 	}) {
-		const { model, where, data } = params;
+		const { model, where, data, include } = params;
 
 		// Add updated timestamp
 		data.updatedAt = new Date();
@@ -167,14 +198,31 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		}
 
 		const result = await query.returningAll().executeTakeFirst();
-		return result ? transformToData(result) : result;
+		
+		if (!result) return result;
+
+		// Transform result back to proper types
+		const transformedResult = transformToData(result);
+
+		// Include related data if requested
+		if (include && this.relationshipManager) {
+			return await this.includeRelatedData(model, transformedResult, include);
+		}
+
+		return transformedResult;
 	}
 
 	async delete(params: {
 		model: string;
 		where: Array<{ field: string; value: any; operator?: string }>;
+		cascade?: boolean;
 	}) {
-		const { model, where } = params;
+		const { model, where, cascade = false } = params;
+
+		// TODO: Implement cascade delete logic
+		if (cascade && this.relationshipManager) {
+			await this.handleCascadeDelete(model, where);
+		}
 
 		let query = this.db.deleteFrom(model);
 
@@ -201,6 +249,256 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 		const result = await query.executeTakeFirst();
 		return Number(result?.count || 0);
+	}
+
+	async createWithRelations(params: {
+		model: string;
+		data: Record<string, any>;
+		relations?: Record<string, any>;
+		include?: IncludeOptions;
+	}): Promise<any> {
+		const { model, data, relations, include } = params;
+
+		// Start transaction
+		return await this.db.transaction().execute(async (trx) => {
+			// Create main record
+			const adapter = new KyselyCrudAdapter(trx);
+			adapter.setRelationshipManager(this.relationshipManager!);
+			
+			const mainRecord = await adapter.create({ model, data });
+
+			// Create related records if any
+			if (relations && this.relationshipManager) {
+				await this.handleRelationCreation(mainRecord, relations, model, trx);
+			}
+
+			// Return with includes if requested
+			if (include) {
+				return await adapter.includeRelatedData(model, mainRecord, include);
+			}
+
+			return mainRecord;
+		});
+	}
+
+	async updateWithRelations(params: {
+		model: string;
+		where: Array<{ field: string; value: any; operator?: string }>;
+		data: Record<string, any>;
+		relations?: Record<string, any>;
+		include?: IncludeOptions;
+	}): Promise<any> {
+		const { model, where, data, relations, include } = params;
+
+		// Start transaction
+		return await this.db.transaction().execute(async (trx) => {
+			// Update main record
+			const adapter = new KyselyCrudAdapter(trx);
+			adapter.setRelationshipManager(this.relationshipManager!);
+			
+			const mainRecord = await adapter.update({ model, where, data });
+
+			// Update related records if any
+			if (relations && this.relationshipManager) {
+				await this.handleRelationUpdate(mainRecord, relations, model, trx);
+			}
+
+			// Return with includes if requested
+			if (include) {
+				return await adapter.includeRelatedData(model, mainRecord, include);
+			}
+
+			return mainRecord;
+		});
+	}
+
+	async validateReferences(params: {
+		model: string;
+		data: Record<string, any>;
+		operation: "create" | "update" | "delete";
+	}): Promise<{ valid: boolean; errors: string[] }> {
+		const { model, data, operation } = params;
+		const errors: string[] = [];
+
+		if (!this.relationshipManager) {
+			return { valid: true, errors };
+		}
+
+		// TODO: Implement comprehensive referential integrity validation
+		// This would check foreign key references exist, prevent deletion of referenced records, etc.
+
+		return { valid: errors.length === 0, errors };
+	}
+
+	private async findWithRelations(
+		model: string,
+		params: {
+			where?: Array<{ field: string; value: any; operator?: string }>;
+			limit?: number;
+			offset?: number;
+			orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+			include: IncludeOptions;
+		}
+	): Promise<any[]> {
+		if (!this.relationshipManager) return [];
+
+		const { where = [], limit, offset, orderBy = [], include } = params;
+		
+		// Resolve includes
+		const resolvedIncludes = this.relationshipManager.resolveIncludes(model, include);
+		
+		if (resolvedIncludes.length === 0) {
+			// Fall back to simple query
+			return await this.findMany({ model, where, limit, offset, orderBy });
+		}
+
+		// Generate joins
+		const joins = this.relationshipManager.generateJoins(model, resolvedIncludes, "main");
+		
+		// Build complex query with joins
+		let query = this.db.selectFrom(`${model} as main`);
+		
+		// Select main table fields explicitly
+		const mainSchema = this.relationshipManager.relationshipContext.schemas.get(model);
+		if (mainSchema) {
+			for (const fieldName of Object.keys(mainSchema.fields)) {
+				query = query.select(`main.${fieldName} as ${fieldName}`);
+			}
+		}
+		
+		// Add join selects
+		for (const include of resolvedIncludes) {
+			const alias = `main_${include.relationName}`;
+			const targetSchema = this.relationshipManager.relationshipContext.schemas.get(include.relation.target);
+			if (targetSchema) {
+				for (const fieldName of Object.keys(targetSchema.fields)) {
+					query = query.select(`${alias}.${fieldName} as ${alias}_${fieldName}`);
+				}
+			}
+		}
+
+		// Apply joins
+		for (const join of joins) {
+			query = query.leftJoin(
+				`${join.table} as ${join.alias}`,
+				(builder) => {
+					const parts = join.condition.split(" = ");
+					const left = parts[0]?.trim();
+					const right = parts[1]?.trim();
+					if (left && right) {
+						return builder.onRef(left, "=", right);
+					}
+					return builder;
+				}
+			);
+		}
+
+		// Apply where conditions
+		for (const condition of where) {
+			const operator = condition.operator || "=";
+			query = query.where(`main.${condition.field}`, operator as any, condition.value);
+		}
+
+		// Apply ordering
+		for (const order of orderBy) {
+			query = query.orderBy(`main.${order.field}`, order.direction);
+		}
+
+		// Apply pagination
+		if (limit) {
+			query = query.limit(limit);
+		}
+		if (offset) {
+			query = query.offset(offset);
+		}
+
+		const results = await query.execute();
+
+		// Transform flat results into nested structure
+		const transformedResults = results.map(transformToData);
+		const nestedResults = this.relationshipManager.transformJoinedResults(
+			transformedResults,
+			resolvedIncludes,
+			model
+		);
+
+		return limit === 1 ? [nestedResults[0]].filter(Boolean) : nestedResults;
+	}
+
+	private async includeRelatedData(
+		model: string,
+		record: any,
+		include: IncludeOptions
+	): Promise<any> {
+		if (!this.relationshipManager) return record;
+
+		const resolvedIncludes = this.relationshipManager.resolveIncludes(model, include);
+		
+		for (const resolvedInclude of resolvedIncludes) {
+			const { relationName, relation } = resolvedInclude;
+			
+			// Load related data based on relationship type
+			switch (relation.type) {
+				case "belongsTo":
+					if (record[relation.foreignKey || `${relation.target}Id`]) {
+						const related = await this.findFirst({
+							model: relation.target,
+							where: [{ field: "id", value: record[relation.foreignKey || `${relation.target}Id`] }],
+						});
+						record[relationName] = related;
+					}
+					break;
+				case "hasOne":
+					const relatedOne = await this.findFirst({
+						model: relation.target,
+						where: [{ field: relation.foreignKey || `${model}Id`, value: record.id }],
+					});
+					record[relationName] = relatedOne;
+					break;
+				case "hasMany":
+					const relatedMany = await this.findMany({
+						model: relation.target,
+						where: [{ field: relation.foreignKey || `${model}Id`, value: record.id }],
+					});
+					record[relationName] = relatedMany;
+					break;
+				case "belongsToMany":
+					// TODO: Implement many-to-many relationship loading
+					record[relationName] = [];
+					break;
+			}
+		}
+
+		return record;
+	}
+
+	private async handleCascadeDelete(
+		model: string,
+		where: Array<{ field: string; value: any; operator?: string }>
+	): Promise<void> {
+		// TODO: Implement cascade delete logic
+		// This would find all related records that should be deleted
+		// and delete them recursively
+	}
+
+	private async handleRelationCreation(
+		mainRecord: any,
+		relations: Record<string, any>,
+		model: string,
+		trx: Kysely<any>
+	): Promise<void> {
+		// TODO: Implement relation creation logic
+		// This would create related records and update foreign keys
+	}
+
+	private async handleRelationUpdate(
+		mainRecord: any,
+		relations: Record<string, any>,
+		model: string,
+		trx: Kysely<any>
+	): Promise<void> {
+		// TODO: Implement relation update logic
+		// This would update/create/delete related records as needed
 	}
 }
 
@@ -274,6 +572,7 @@ export function generateCreateTableSQL(
 	provider: string = "sqlite",
 ): string {
 	const columns: string[] = [];
+	const foreignKeys: string[] = [];
 
 	// Always add ID column if not present
 	if (!fields.id) {
@@ -361,6 +660,20 @@ export function generateCreateTableSQL(
 			}
 		}
 
+		// Handle foreign key references
+		if (field.references) {
+			if (provider === "postgres") {
+				foreignKeys.push(
+					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+				);
+			} else {
+				// For SQLite, add foreign key constraint separately
+				foreignKeys.push(
+					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+				);
+			}
+		}
+
 		columns.push(columnDef);
 	}
 
@@ -381,7 +694,10 @@ export function generateCreateTableSQL(
 		}
 	}
 
-	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${columns.join(
+	// Combine columns and foreign keys
+	const allConstraints = [...columns, ...foreignKeys];
+
+	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
 		",\n  ",
 	)}\n)`;
 }
