@@ -101,9 +101,9 @@ export class PrismaCrudAdapter implements CrudAdapter {
 		const prismaInclude = this.convertIncludeOptions(include);
 
 		// For single record update, use update
-		if (where.length === 1 && where[0].field === "id") {
+		if (where.length === 1 && where[0]?.field === "id") {
 			return await this.prisma[model].update({
-				where: { id: where[0].value },
+				where: { id: where[0]?.value },
 				data,
 				include: prismaInclude,
 			});
@@ -131,9 +131,9 @@ export class PrismaCrudAdapter implements CrudAdapter {
 		const whereClause = this.convertWhere(where);
 
 		// For single record delete by ID, use delete
-		if (where.length === 1 && where[0].field === "id") {
+		if (where.length === 1 && where[0]?.field === "id") {
 			await this.prisma[model].delete({
-				where: { id: where[0].value },
+				where: { id: where[0]?.value },
 			});
 		} else {
 			// For complex where clauses, use deleteMany
