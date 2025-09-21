@@ -8,6 +8,7 @@ import {
 import { createCrudEndpoints } from "./endpoints";
 import { CrudContext, CrudOptions } from "./types";
 import { zodSchemaToFields } from "./utils/schema";
+import { RelationshipManager } from "./utils/relationships";
 
 /**
  * Initialize CRUD context similar to better-auth's init function
@@ -16,11 +17,23 @@ function initCrud(options: CrudOptions): CrudContext {
 	const db = createKyselyDatabase(options.database);
 	const adapter = new KyselyCrudAdapter(db);
 
-	return {
+	// Initialize relationship and schema registries
+	const relationships = new Map();
+	const schemas = new Map();
+
+	const context: CrudContext = {
 		db,
 		adapter,
 		options,
+		relationships,
+		schemas,
 	};
+
+	// Create relationship manager and attach to adapter
+	const relationshipManager = new RelationshipManager(context);
+	adapter.setRelationshipManager(relationshipManager);
+
+	return context;
 }
 
 /**
@@ -34,16 +47,41 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 	const schema: Record<string, { fields: Record<string, any> }> = {};
 
 	for (const resourceConfig of options.resources) {
+		// Register relationships
+		if (resourceConfig.relationships) {
+			const relationshipManager = new RelationshipManager(crudContext);
+			relationshipManager.registerRelationships(resourceConfig.name, resourceConfig.relationships);
+		}
+
 		// Generate CRUD endpoints for this resource
 		const resourceEndpoints = createCrudEndpoints(resourceConfig);
 
 		// Add to combined endpoints
 		Object.assign(allEndpoints, resourceEndpoints);
 
-		// Generate schema fields from Zod schema
-		schema[resourceConfig.name] = {
+		// Generate schema fields from Zod schema and store in context
+		const resourceSchema = {
 			fields: zodSchemaToFields(resourceConfig.schema),
 		};
+		schema[resourceConfig.name] = resourceSchema;
+		crudContext.schemas.set(resourceConfig.name, resourceSchema);
+	}
+
+	// Validate all relationships after all resources are registered
+	const relationshipManager = new RelationshipManager(crudContext);
+	for (const resourceConfig of options.resources) {
+		if (resourceConfig.relationships) {
+			for (const [relationName, relationConfig] of Object.entries(resourceConfig.relationships)) {
+				const errors = relationshipManager.validateRelationship(
+					resourceConfig.name,
+					relationName,
+					relationConfig
+				);
+				if (errors.length > 0) {
+					console.warn(`Relationship validation errors for ${resourceConfig.name}.${relationName}:`, errors);
+				}
+			}
+		}
 	}
 
 	// Apply base path if specified
