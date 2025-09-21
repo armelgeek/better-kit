@@ -9,6 +9,10 @@ export type { CrudClient, CrudClientOptions } from "./client";
 // Types
 export * from "./types";
 export * from "./types/adapter";
+export * from "./types/plugins";
+
+// Plugins
+export * from "./plugins";
 
 // Utils
 export { createResource, zodSchemaToFields } from "./utils/schema";

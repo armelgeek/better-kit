@@ -1,6 +1,7 @@
 import { Endpoint } from "better-call";
 import { ZodSchema, z } from "zod";
 import { CrudAdapter } from "./adapter";
+import { Plugin } from "./plugins";
 
 export type CrudOperation = "create" | "read" | "update" | "delete" | "list";
 
@@ -125,8 +126,8 @@ export interface CrudHookContext {
 	result?: any;
 	/** Request context */
 	request?: any;
-	/** Adapter instance for custom queries */
-	adapter: CrudAdapter;
+	/** Adapter instance for custom queries - can be extended with context */
+	adapter: CrudAdapter & { context?: any };
 }
 
 export interface SanitizationRule {
@@ -151,6 +152,8 @@ export interface CrudOptions {
 	requireAuth?: boolean;
 	/** Custom middleware */
 	middleware?: CrudMiddleware[];
+	/** Plugins to enable */
+	plugins?: Plugin[];
 	/** Global security settings */
 	security?: {
 		/** Rate limiting configuration */
@@ -211,6 +214,8 @@ export interface CrudContext {
 	relationships: Map<string, Record<string, RelationshipConfig>>;
 	/** Schema registry for field information */
 	schemas: Map<string, { fields: Record<string, FieldAttribute> }>;
+	/** Plugin manager instance */
+	pluginManager?: any;
 }
 
 export interface FieldAttribute {

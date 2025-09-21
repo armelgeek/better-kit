@@ -188,7 +188,7 @@ export async function checkEnhancedPermissions(
  * Rate limiting utility (simple in-memory implementation)
  */
 class RateLimiter {
-	private requests: Map<string, number[]> = new Map();
+	public requests: Map<string, number[]> = new Map();
 
 	public isAllowed(key: string, windowMs: number, maxRequests: number): boolean {
 		const now = Date.now();

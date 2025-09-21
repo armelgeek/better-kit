@@ -224,7 +224,10 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					operation: "create",
 					data,
 					request: ctx,
-					adapter,
+					adapter: {
+						...adapter,
+						context: context, // Pass the full CRUD context
+					},
 				};
 
 				try {
@@ -416,7 +419,10 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					data,
 					existingData: existing,
 					request: ctx,
-					adapter,
+					adapter: {
+						...adapter,
+						context: context, // Pass the full CRUD context
+					},
 				};
 
 				try {
@@ -512,7 +518,10 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					id,
 					existingData: existing,
 					request: ctx,
-					adapter,
+					adapter: {
+						...adapter,
+						context: context, // Pass the full CRUD context
+					},
 				};
 
 				try {
