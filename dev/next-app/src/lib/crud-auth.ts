@@ -25,10 +25,10 @@ export const crud = betterCrud({
 			name: "product",
 			schema: productSchema,
 			permissions: {
-				create: async (context) => !!context.user,
+				create: async (context) => true,
 				read: async () => true,
-				update: async (context) => !!context.user,
-				delete: async (context) => !!context.user,
+				update: async (context) => true,
+				delete: async (context) => true,
 				list: async () => true,
 			},
 		}),
