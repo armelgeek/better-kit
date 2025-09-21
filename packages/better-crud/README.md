@@ -13,6 +13,7 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 - 🔍 **Search**: Basic search functionality for list operations
 - 🏗️ **Database Agnostic**: Works with SQLite, PostgreSQL, and MySQL via Kysely
 - 🌐 **Framework Agnostic**: Works with any framework that supports Web API handlers
+- 🎯 **Type-Safe Client**: Client SDK with full TypeScript support, similar to better-auth
 
 ## Installation
 
@@ -68,7 +69,30 @@ export const crud = betterCrud({
 });
 ```
 
-### 2. Framework Integration
+### 2. Client Setup (NEW!)
+
+Create a type-safe client for your CRUD operations:
+
+```typescript
+import { createCrudClient } from "better-crud";
+
+// Create the client with type inference from your CRUD instance
+export const crudClient = createCrudClient<typeof crud>({
+  baseURL: "http://localhost:3000/api",
+});
+
+// Now you can use the client with full type safety:
+await crudClient.products.create({
+  name: "Tee shirt",
+  price: 29.99,
+}, {
+  headers: {
+    "Authorization": "Bearer your-token",
+  }
+});
+```
+
+### 3. Framework Integration
 
 #### Next.js App Router
 
@@ -118,7 +142,7 @@ app.all("/api/*", async (req, res) => {
 });
 ```
 
-### 3. Generated Endpoints
+### 4. Generated Endpoints
 
 For each resource, the following endpoints are automatically created:
 
@@ -127,6 +151,155 @@ For each resource, the following endpoints are automatically created:
 - `PATCH /api/product/:id` - Update a product
 - `DELETE /api/product/:id` - Delete a product
 - `GET /api/products` - List products (with pagination)
+
+## Client Usage
+
+The client provides a convenient, type-safe way to interact with your CRUD API:
+
+### Creating Resources
+
+```typescript
+// Type-safe creation with custom headers
+const product = await crudClient.products.create({
+  name: "Awesome T-Shirt",
+  price: 29.99,
+  description: "High quality cotton shirt",
+  status: "active",
+}, {
+  headers: {
+    "Authorization": "Bearer your-token",
+    "Content-Type": "application/json",
+  }
+});
+```
+
+### Reading Resources
+
+```typescript
+// Get a specific product
+const product = await crudClient.products.read("product-id", {
+  headers: {
+    "Authorization": "Bearer your-token",
+  }
+});
+```
+
+### Updating Resources
+
+```typescript
+// Partial updates are supported
+const updatedProduct = await crudClient.products.update("product-id", {
+  price: 24.99,
+  status: "active",
+}, {
+  headers: {
+    "Authorization": "Bearer your-token",
+  }
+});
+```
+
+### Deleting Resources
+
+```typescript
+await crudClient.products.delete("product-id", {
+  headers: {
+    "Authorization": "Bearer your-token",
+  }
+});
+```
+
+### Listing Resources with Pagination
+
+```typescript
+const result = await crudClient.products.list({
+  page: 1,
+  limit: 10,
+  search: "shirt",
+  sortBy: "name",
+  sortOrder: "asc",
+}, {
+  headers: {
+    "Authorization": "Bearer your-token",
+  }
+});
+
+console.log(result.data); 
+// {
+//   items: [...products],
+//   pagination: {
+//     page: 1,
+//     limit: 10,
+//     total: 25,
+//     totalPages: 3,
+//     hasNext: true,
+//     hasPrev: false
+//   }
+// }
+```
+
+### React Hook Example
+
+```typescript
+import { useState, useEffect } from 'react';
+import { crudClient } from '@/lib/crud-client';
+
+export function useProducts() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await crudClient.products.list(params, {
+        headers: {
+          "Authorization": `Bearer ${getAuthToken()}`,
+        }
+      });
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      setProducts(result.data.items);
+      return result.data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createProduct = async (productData) => {
+    try {
+      const result = await crudClient.products.create(productData, {
+        headers: {
+          "Authorization": `Bearer ${getAuthToken()}`,
+        }
+      });
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      const newProduct = result.data;
+      setProducts(prev => [...prev, newProduct]);
+      return newProduct;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  return { products, loading, error, fetchProducts, createProduct };
+}
+```
 
 ## Configuration
 
@@ -151,6 +324,16 @@ interface CrudResourceConfig {
     delete?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
     list?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
   };
+}
+```
+
+### Client Configuration
+
+```typescript
+interface CrudClientOptions {
+  baseURL?: string;               // API base URL
+  headers?: Record<string, string>; // Default headers for all requests
+  // ... other BetterFetchOption properties
 }
 ```
 
@@ -194,6 +377,9 @@ const crud = betterCrud({
     url: "sqlite:./users.db",
   },
 });
+
+// Client automatically infers the schema
+const client = createCrudClient<typeof crud>();
 ```
 
 ## Built-in Schemas
@@ -278,48 +464,6 @@ const crud = betterCrud({
 });
 ```
 
-## API Usage Examples
-
-### Creating a Resource
-
-```typescript
-const response = await fetch('/api/product', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    name: 'Awesome Product',
-    price: 29.99,
-    description: 'A really cool product',
-    status: 'active',
-  }),
-});
-
-const product = await response.json();
-```
-
-### Fetching with Pagination
-
-```typescript
-const response = await fetch('/api/products?page=1&limit=10&search=awesome&sortBy=name&sortOrder=asc');
-const { items, pagination } = await response.json();
-
-console.log(pagination);
-// { page: 1, limit: 10, total: 25, totalPages: 3, hasNext: true, hasPrev: false }
-```
-
-### Updating a Resource
-
-```typescript
-const response = await fetch('/api/product/123', {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    price: 24.99,
-    status: 'active',
-  }),
-});
-```
-
 ## Database Support
 
 Better CRUD supports multiple database providers through Kysely:
@@ -355,6 +499,28 @@ Better CRUD returns standard HTTP status codes:
 - `404` - Not Found
 - `500` - Internal Server Error
 
+The client automatically handles these responses:
+
+```typescript
+try {
+  const product = await crudClient.products.create({
+    name: "Test Product",
+    price: 29.99,
+  });
+  
+  if (product.error) {
+    // Handle API errors
+    console.error('API Error:', product.error);
+  } else {
+    // Success - use product.data
+    console.log('Created:', product.data);
+  }
+} catch (error) {
+  // Handle network/other errors
+  console.error('Network Error:', error);
+}
+```
+
 ## Type Safety
 
 The TypeScript integration provides full type safety:
@@ -366,6 +532,26 @@ type Product = z.infer<typeof productSchema>;
 // CRUD instance is fully typed
 const crud = betterCrud({...});
 // crud.api.createProduct, crud.api.getProduct, etc. are all typed
+
+// Client is fully typed based on your CRUD configuration
+const client = createCrudClient<typeof crud>();
+// client.products.create, client.products.list, etc. are all typed
+```
+
+## Environment Variables
+
+The client can automatically infer the base URL from environment variables:
+
+```env
+# Development
+CRUD_URL=http://localhost:3000/api
+# or
+NEXT_PUBLIC_CRUD_URL=http://localhost:3000/api
+
+# Production
+VERCEL_URL=https://your-app.vercel.app/api
+# or
+NEXT_PUBLIC_VERCEL_URL=https://your-app.vercel.app/api
 ```
 
 ## Contributing
