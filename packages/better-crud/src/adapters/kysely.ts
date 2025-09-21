@@ -1,6 +1,77 @@
 import { Kysely, sql } from "kysely";
 import { CrudAdapter, CrudDatabaseConfig, FieldAttribute } from "../types";
 
+/**
+ * Transform data before sending to SQLite database
+ * Converts Date objects to ISO strings and complex objects/arrays to JSON strings
+ */
+function transformFromData(data: Record<string, any>): Record<string, any> {
+	const transformed = { ...data };
+
+	for (const key in transformed) {
+		const value = transformed[key];
+
+		// Convert Date objects to ISO strings
+		if (value instanceof Date) {
+			transformed[key] = value.toISOString();
+		}
+		// Convert arrays to JSON strings
+		else if (Array.isArray(value)) {
+			transformed[key] = JSON.stringify(value);
+		}
+		// Convert objects (but not null) to JSON strings
+		else if (value !== null && typeof value === "object") {
+			transformed[key] = JSON.stringify(value);
+		}
+	}
+
+	return transformed;
+}
+
+/**
+ * Transform data after reading from SQLite database
+ * Converts ISO strings back to Date objects and JSON strings back to objects/arrays
+ */
+function transformToData(data: Record<string, any>): Record<string, any> {
+	const transformed = { ...data };
+
+	for (const key in transformed) {
+		const value = transformed[key];
+
+		// Skip null/undefined values
+		if (value === null || value === undefined) {
+			continue;
+		}
+
+		// Convert ISO date strings back to Date objects for timestamp fields
+		if (
+			typeof value === "string" &&
+			(key === "createdAt" || key === "updatedAt" || key === "publishedAt")
+		) {
+			const dateValue = new Date(value);
+			if (!isNaN(dateValue.getTime())) {
+				transformed[key] = dateValue;
+			}
+		}
+		// Try to parse JSON strings back to objects/arrays for known complex fields
+		else if (
+			typeof value === "string" &&
+			(key === "tags" ||
+				key === "items" ||
+				key === "shippingAddress" ||
+				key === "profile")
+		) {
+			try {
+				transformed[key] = JSON.parse(value);
+			} catch {
+				// If parsing fails, keep as string
+			}
+		}
+	}
+
+	return transformed;
+}
+
 export class KyselyCrudAdapter implements CrudAdapter {
 	constructor(private db: Kysely<any>) {}
 
@@ -12,13 +83,17 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		if (!data.createdAt) data.createdAt = now;
 		if (!data.updatedAt) data.updatedAt = now;
 
+		// Transform data for SQLite compatibility
+		const transformedData = transformFromData(data);
+
 		const result = await this.db
 			.insertInto(model)
-			.values(data)
+			.values(transformedData)
 			.returningAll()
 			.executeTakeFirst();
 
-		return result;
+		// Transform result back to proper types
+		return result ? transformToData(result) : result;
 	}
 
 	async findFirst(params: {
@@ -34,7 +109,8 @@ export class KyselyCrudAdapter implements CrudAdapter {
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
-		return await query.executeTakeFirst();
+		const result = await query.executeTakeFirst();
+		return result ? transformToData(result) : result;
 	}
 
 	async findMany(params: {
@@ -67,7 +143,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 			query = query.offset(offset);
 		}
 
-		return await query.execute();
+		return (await query.execute()).map((item) => transformToData(item));
 	}
 
 	async update(params: {
@@ -80,7 +156,10 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		// Add updated timestamp
 		data.updatedAt = new Date();
 
-		let query = this.db.updateTable(model).set(data);
+		// Transform data for SQLite compatibility
+		const transformedData = transformFromData(data);
+
+		let query = this.db.updateTable(model).set(transformedData);
 
 		for (const condition of where) {
 			const operator = condition.operator || "=";
@@ -88,7 +167,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		}
 
 		const result = await query.returningAll().executeTakeFirst();
-		return result;
+		return result ? transformToData(result) : result;
 	}
 
 	async delete(params: {
