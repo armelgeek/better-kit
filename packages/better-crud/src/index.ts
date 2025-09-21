@@ -11,9 +11,22 @@ export * from "./types";
 
 // Utils
 export { createResource, zodSchemaToFields } from "./utils/schema";
+export { RelationshipManager } from "./utils/relationships";
 
-// Pre-defined schemas
+// Pre-defined schemas (basic)
 export * from "./schemas";
 
 // Endpoints
 export { createCrudEndpoints } from "./endpoints";
+
+// Relationship examples - export explicitly to avoid conflicts
+export {
+  productRelationships,
+  categoryRelationships,
+  reviewRelationships,
+  userRelationships,
+  tagRelationships,
+  orderRelationships,
+  postRelationships,
+  reviewSchema,
+} from "./schemas/relationships";
