@@ -13,22 +13,23 @@
 	"exports": {
 		".": "./dist/index.js",
 		"./client": "./dist/client.js",
-		"./adapters": "./dist/adapters.js"
+		"./adapters": "./dist/adapters.js",
+		"./plugins": "./dist/plugins.js"
 	},
 	"dependencies": {
+		"@better-fetch/fetch": "^1.1.4",
+		"@paralleldrive/cuid2": "^2.2.2",
 		"better-call": "^0.1.20",
 		"kysely": "^0.27.4",
-		"zod": "^3.22.5",
-		"@paralleldrive/cuid2": "^2.2.2",
-		"@better-fetch/fetch": "^1.1.4"
+		"zod": "^3.22.5"
 	},
 	"devDependencies": {
-		"tsup": "^8.2.4",
-		"type-fest": "^4.24.0",
-		"typescript": "^5.5.0-dev.20240508",
-		"vitest": "^1.6.0",
+		"@types/better-sqlite3": "^7.6.11",
 		"better-sqlite3": "^11.1.2",
-		"@types/better-sqlite3": "^7.6.11"
+		"tsup": "^8.2.4",
+		"type-fest": "^4.41.0",
+		"typescript": "^5.5.0-dev.20240508",
+		"vitest": "^1.6.0"
 	},
 	"files": [
 		"dist"

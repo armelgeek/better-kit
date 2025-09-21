@@ -5,6 +5,9 @@ import { createCrudEndpoints } from "./endpoints";
 import { CrudContext, CrudOptions } from "./types";
 import { zodSchemaToFields } from "./utils/schema";
 import { RelationshipManager } from "./utils/relationships";
+import { PluginManager, shimPluginContext } from "./plugins/manager";
+import { PluginInitContext } from "./types/plugins";
+import type { UnionToIntersection } from "type-fest";
 
 /**
  * Initialize CRUD context similar to better-auth's init function
@@ -16,12 +19,16 @@ function initCrud(options: CrudOptions): CrudContext {
 	const relationships = new Map();
 	const schemas = new Map();
 
+	// Initialize plugin manager
+	const pluginManager = new PluginManager();
+
 	const context: CrudContext = {
 		db: null, // For backward compatibility, we keep this but it's not used with the adapter pattern
 		adapter,
 		options,
 		relationships,
 		schemas,
+		pluginManager,
 	};
 
 	// Create relationship manager and attach to adapter if it's a Kysely adapter
@@ -39,11 +46,21 @@ function initCrud(options: CrudOptions): CrudContext {
 export function betterCrud<O extends CrudOptions>(options: O) {
 	const crudContext = initCrud(options);
 
+	// Register plugins
+	if (options.plugins) {
+		crudContext.pluginManager!.registerPlugins(options.plugins);
+	}
+
+	// Collect all resources (original + plugin resources)
+	const allResources = [...options.resources];
+	const pluginResources = crudContext.pluginManager!.getPluginResources();
+	allResources.push(...pluginResources);
+
 	// Generate endpoints for all resources
 	const allEndpoints: Record<string, any> = {};
 	const schema: Record<string, { fields: Record<string, any> }> = {};
 
-	for (const resourceConfig of options.resources) {
+	for (const resourceConfig of allResources) {
 		// Register relationships
 		if (resourceConfig.relationships) {
 			const relationshipManager = new RelationshipManager(crudContext);
@@ -64,9 +81,17 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 		crudContext.schemas.set(resourceConfig.name, resourceSchema);
 	}
 
+	// Add plugin endpoints
+	const pluginEndpoints = crudContext.pluginManager!.getPluginEndpoints();
+	Object.assign(allEndpoints, pluginEndpoints);
+
+	// Add plugin schemas
+	const pluginSchemas = crudContext.pluginManager!.getPluginSchemas();
+	Object.assign(schema, pluginSchemas);
+
 	// Validate all relationships after all resources are registered
 	const relationshipManager = new RelationshipManager(crudContext);
-	for (const resourceConfig of options.resources) {
+	for (const resourceConfig of allResources) {
 		if (resourceConfig.relationships) {
 			for (const [relationName, relationConfig] of Object.entries(resourceConfig.relationships)) {
 				const errors = relationshipManager.validateRelationship(
@@ -104,6 +129,18 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 		api[key].headers = value.headers;
 	}
 
+	// Initialize plugins
+	const pluginInitContext: PluginInitContext = {
+		resources: new Map(allResources.map(r => [r.name, r])),
+		schemas: crudContext.schemas,
+		relationships: crudContext.relationships,
+		adapter: crudContext.adapter,
+		options: options,
+	};
+
+	// Initialize plugins asynchronously
+	crudContext.pluginManager!.initializePlugins(pluginInitContext).catch(console.error);
+
 	// Create router using better-call
 	const { handler, endpoints } = createRouter(api, {
 		extraContext: crudContext,
@@ -119,11 +156,20 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 		initTables(crudContext, schema).catch(console.error);
 	}
 
+	// Type inference for plugin endpoints
+	type PluginEndpoint = UnionToIntersection<
+		O["plugins"] extends Array<infer T>
+			? T extends { endpoints: infer E }
+				? E
+				: Record<string, never>
+			: Record<string, never>
+	>;
+
 	type Endpoint = typeof endpoints;
 
 	return {
 		handler,
-		api: endpoints as Endpoint,
+		api: endpoints as Endpoint & PluginEndpoint,
 		options,
 		context: crudContext,
 		schema,
@@ -178,9 +224,16 @@ async function initTables(
 export type BetterCrud<
 	O extends CrudOptions = CrudOptions,
 	Endpoints extends Record<string, any> = Record<string, any>,
+	PluginEndpoints extends Record<string, any> = UnionToIntersection<
+		O["plugins"] extends Array<infer T>
+			? T extends { endpoints: infer E }
+				? E
+				: Record<string, never>
+			: Record<string, never>
+	>,
 > = {
 	handler: (request: Request) => Promise<Response>;
-	api: Endpoints;
+	api: Endpoints & PluginEndpoints;
 	options: O;
 	context: CrudContext;
 	schema: Record<string, { fields: Record<string, any> }>;

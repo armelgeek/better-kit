@@ -17,12 +17,42 @@ export class HookExecutor {
 	}
 
 	/**
-	 * Execute before hooks (onCreate, onUpdate, onDelete)
+	 * Execute before hooks (onCreate, onUpdate, onDelete) including plugin hooks
 	 */
 	static async executeBefore(
 		hooks: Record<string, any> | undefined,
 		context: CrudHookContext
 	): Promise<void> {
+		// Execute plugin hooks first
+		if (context.adapter?.context?.pluginManager) {
+			const pluginManager = context.adapter.context.pluginManager;
+			const { operation } = context;
+			
+			let hookName: keyof any;
+			switch (operation) {
+				case "create":
+					hookName = "beforeCreate";
+					break;
+				case "update":
+					hookName = "beforeUpdate";
+					break;
+				case "delete":
+					hookName = "beforeDelete";
+					break;
+				case "read":
+					hookName = "beforeRead";
+					break;
+				case "list":
+					hookName = "beforeList";
+					break;
+				default:
+					return;
+			}
+			
+			await pluginManager.executeHook(hookName, context);
+		}
+
+		// Execute resource-specific hooks
 		if (!hooks) return;
 
 		const { operation } = context;
@@ -44,30 +74,60 @@ export class HookExecutor {
 	}
 
 	/**
-	 * Execute after hooks (afterCreate, afterUpdate, afterDelete)
+	 * Execute after hooks (afterCreate, afterUpdate, afterDelete) including plugin hooks
 	 */
 	static async executeAfter(
 		hooks: Record<string, any> | undefined,
 		context: CrudHookContext
 	): Promise<void> {
-		if (!hooks) return;
+		// Execute resource-specific hooks first
+		if (hooks) {
+			const { operation } = context;
+			let hookFn: any;
 
-		const { operation } = context;
-		let hookFn: any;
+			switch (operation) {
+				case "create":
+					hookFn = hooks.afterCreate;
+					break;
+				case "update":
+					hookFn = hooks.afterUpdate;
+					break;
+				case "delete":
+					hookFn = hooks.afterDelete;
+					break;
+			}
 
-		switch (operation) {
-			case "create":
-				hookFn = hooks.afterCreate;
-				break;
-			case "update":
-				hookFn = hooks.afterUpdate;
-				break;
-			case "delete":
-				hookFn = hooks.afterDelete;
-				break;
+			await this.executeHook(hookFn, context);
 		}
 
-		await this.executeHook(hookFn, context);
+		// Execute plugin hooks after
+		if (context.adapter?.context?.pluginManager) {
+			const pluginManager = context.adapter.context.pluginManager;
+			const { operation } = context;
+			
+			let hookName: keyof any;
+			switch (operation) {
+				case "create":
+					hookName = "afterCreate";
+					break;
+				case "update":
+					hookName = "afterUpdate";
+					break;
+				case "delete":
+					hookName = "afterDelete";
+					break;
+				case "read":
+					hookName = "afterRead";
+					break;
+				case "list":
+					hookName = "afterList";
+					break;
+				default:
+					return;
+			}
+			
+			await pluginManager.executeHook(hookName, context);
+		}
 	}
 }
 
