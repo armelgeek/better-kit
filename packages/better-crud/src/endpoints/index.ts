@@ -11,6 +11,7 @@ import {
 	AuditEvent,
 	CrudQueryParams,
 } from "../types";
+import { convertToCrudWhere, convertToCrudOrderBy } from "../adapters/utils";
 import { capitalize, generateId, validateData } from "../utils/schema";
 import { 
 	sanitizeData, 
@@ -298,7 +299,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					const result = await adapter.findFirst({
 						model: actualTableName,
-						where: [{ field: "id", value: id }],
+						where: convertToCrudWhere([{ field: "id", value: id }]),
 						include,
 					});
 
@@ -360,7 +361,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				// Check if resource exists first (needed for ownership checks)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
-					where: [{ field: "id", value: id }],
+					where: convertToCrudWhere([{ field: "id", value: id }]),
 				});
 
 				if (!existing) {
@@ -430,7 +431,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					const result = await adapter.update({
 						model: actualTableName,
-						where: [{ field: "id", value: id }],
+						where: convertToCrudWhere([{ field: "id", value: id }]),
 						data,
 					});
 
@@ -480,7 +481,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				// Check if resource exists first (needed for ownership and audit)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
-					where: [{ field: "id", value: id }],
+					where: convertToCrudWhere([{ field: "id", value: id }]),
 				});
 
 				if (!existing) {
@@ -526,7 +527,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					await adapter.delete({
 						model: actualTableName,
-						where: [{ field: "id", value: id }],
+						where: convertToCrudWhere([{ field: "id", value: id }]),
 					});
 
 					// Execute after hooks
@@ -595,6 +596,8 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					filters: SearchBuilder.parseJSON(query.filters),
 					where: SearchBuilder.parseJSON(query.where),
 					dateRange: SearchBuilder.parseJSON(query.dateRange),
+					// Handle select field appropriately
+					select: query.select ? (typeof query.select === 'string' ? SearchBuilder.parseJSON(query.select) : query.select) : undefined,
 				};
 
 				// Check permissions with enhanced context
@@ -656,16 +659,16 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					// Get total count for pagination
 					const total = await adapter.count({
 						model: actualTableName,
-						where: whereConditions,
+						where: convertToCrudWhere(whereConditions),
 					});
 
 					// Get items
 					const items = await adapter.findMany({
 						model: actualTableName,
-						where: whereConditions,
+						where: convertToCrudWhere(whereConditions),
 						limit,
 						offset,
-						orderBy,
+						orderBy: convertToCrudOrderBy(orderBy),
 						include: includeOptions,
 					});
 

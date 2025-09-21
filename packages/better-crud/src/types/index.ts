@@ -1,5 +1,6 @@
 import { Endpoint } from "better-call";
 import { ZodSchema, z } from "zod";
+import { CrudAdapter } from "./adapter";
 
 export type CrudOperation = "create" | "read" | "update" | "delete" | "list";
 
@@ -143,7 +144,7 @@ export interface CrudOptions {
 	/** Array of resources to generate CRUD for */
 	resources: CrudResourceConfig[];
 	/** Database adapter configuration */
-	database: CrudDatabaseConfig;
+	database: CrudDatabaseOptions;
 	/** Base path for all endpoints (optional) */
 	basePath?: string;
 	/** Global auth requirement (default: false) */
@@ -187,6 +188,11 @@ export interface CrudDatabaseConfig {
 	autoMigrate?: boolean;
 }
 
+/**
+ * Database configuration can be either a provider config or a direct adapter
+ */
+export type CrudDatabaseOptions = CrudDatabaseConfig | { adapter: CrudAdapter };
+
 export interface CrudMiddleware {
 	/** Path pattern to match */
 	path: string;
@@ -205,77 +211,6 @@ export interface CrudContext {
 	relationships: Map<string, Record<string, RelationshipConfig>>;
 	/** Schema registry for field information */
 	schemas: Map<string, { fields: Record<string, FieldAttribute> }>;
-}
-
-export interface CrudAdapter {
-	/** Create a new record */
-	create(params: {
-		model: string;
-		data: Record<string, any>;
-		include?: IncludeOptions;
-	}): Promise<any>;
-
-	/** Find a single record */
-	findFirst(params: {
-		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
-		include?: IncludeOptions;
-	}): Promise<any | null>;
-
-	/** Find multiple records */
-	findMany(params: {
-		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
-		limit?: number;
-		offset?: number;
-		orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
-		include?: IncludeOptions;
-	}): Promise<any[]>;
-
-	/** Update a record */
-	update(params: {
-		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
-		data: Record<string, any>;
-		include?: IncludeOptions;
-	}): Promise<any>;
-
-	/** Delete a record */
-	delete(params: {
-		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
-		cascade?: boolean;
-	}): Promise<void>;
-
-	/** Count records */
-	count(params: {
-		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
-	}): Promise<number>;
-
-	/** Create records with related data atomically */
-	createWithRelations(params: {
-		model: string;
-		data: Record<string, any>;
-		relations?: Record<string, any>;
-		include?: IncludeOptions;
-	}): Promise<any>;
-
-	/** Update records with related data atomically */
-	updateWithRelations(params: {
-		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
-		data: Record<string, any>;
-		relations?: Record<string, any>;
-		include?: IncludeOptions;
-	}): Promise<any>;
-
-	/** Validate referential integrity */
-	validateReferences(params: {
-		model: string;
-		data: Record<string, any>;
-		operation: "create" | "update" | "delete";
-	}): Promise<{ valid: boolean; errors: string[] }>;
 }
 
 export interface FieldAttribute {
