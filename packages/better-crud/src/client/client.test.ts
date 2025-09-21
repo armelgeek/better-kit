@@ -57,9 +57,9 @@ describe("CRUD Client", () => {
 			},
 			{
 				headers: {
-					"Authorization": "Bearer token",
+					Authorization: "Bearer token",
 				},
-			}
+			},
 		);
 
 		expect(result).toBeDefined();
@@ -73,7 +73,7 @@ describe("CRUD Client", () => {
 
 		const result = await client.product.read("test-id", {
 			headers: {
-				"Authorization": "Bearer token",
+				Authorization: "Bearer token",
 			},
 		});
 
@@ -94,9 +94,9 @@ describe("CRUD Client", () => {
 			},
 			{
 				headers: {
-					"Authorization": "Bearer token",
+					Authorization: "Bearer token",
 				},
-			}
+			},
 		);
 
 		expect(result).toBeDefined();
@@ -110,7 +110,7 @@ describe("CRUD Client", () => {
 
 		const result = await client.product.delete("test-id", {
 			headers: {
-				"Authorization": "Bearer token",
+				Authorization: "Bearer token",
 			},
 		});
 
@@ -132,9 +132,9 @@ describe("CRUD Client", () => {
 			},
 			{
 				headers: {
-					"Authorization": "Bearer token",
+					Authorization: "Bearer token",
 				},
-			}
+			},
 		);
 
 		expect(result).toBeDefined();

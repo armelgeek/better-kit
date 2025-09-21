@@ -68,10 +68,10 @@ export async function createProduct() {
 		},
 		{
 			headers: {
-				"Authorization": "Bearer your-token-here",
+				Authorization: "Bearer your-token-here",
 				"Content-Type": "application/json",
 			},
-		}
+		},
 	);
 
 	if (result.error) {
@@ -84,7 +84,7 @@ export async function createProduct() {
 export async function getProduct(id: string) {
 	const result = await crudClient.product.read(id, {
 		headers: {
-			"Authorization": "Bearer your-token-here",
+			Authorization: "Bearer your-token-here",
 		},
 	});
 
@@ -95,10 +95,13 @@ export async function getProduct(id: string) {
 	return result.data;
 }
 
-export async function updateProduct(id: string, updates: Partial<z.infer<typeof productSchema>>) {
+export async function updateProduct(
+	id: string,
+	updates: Partial<z.infer<typeof productSchema>>,
+) {
 	const result = await crudClient.product.update(id, updates, {
 		headers: {
-			"Authorization": "Bearer your-token-here",
+			Authorization: "Bearer your-token-here",
 			"Content-Type": "application/json",
 		},
 	});
@@ -113,7 +116,7 @@ export async function updateProduct(id: string, updates: Partial<z.infer<typeof 
 export async function deleteProduct(id: string) {
 	const result = await crudClient.product.delete(id, {
 		headers: {
-			"Authorization": "Bearer your-token-here",
+			Authorization: "Bearer your-token-here",
 		},
 	});
 
@@ -133,7 +136,7 @@ export async function listProducts(options?: {
 }) {
 	const result = await crudClient.product.list(options, {
 		headers: {
-			"Authorization": "Bearer your-token-here",
+			Authorization: "Bearer your-token-here",
 		},
 	});
 

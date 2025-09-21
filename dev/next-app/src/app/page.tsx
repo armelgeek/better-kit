@@ -1,9 +1,8 @@
 import { authMinimal as auth } from "@/lib/auth-minimal";
 import { crudClient } from "@/lib/crud-auth";
 export default async function Home() {
-	
 	console.log("Testing CRUD client...");
-	
+
 	try {
 		const result = await crudClient.product.create({
 			name: "Tee shirt",

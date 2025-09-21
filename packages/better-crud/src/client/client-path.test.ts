@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCrudClient } from "../index";
 
 // Mock better-call/client to capture what requests would be made
@@ -104,7 +104,7 @@ describe("CRUD Client Path Handling", () => {
 				headers: {
 					Authorization: "Bearer token",
 				},
-			}
+			},
 		);
 
 		expect(mockClientCalls[0]).toEqual({

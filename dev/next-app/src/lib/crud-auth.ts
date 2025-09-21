@@ -1,6 +1,11 @@
 import { betterAuth } from "better-auth";
+import {
+	categorySchema,
+	createCrudClient,
+	createResource,
+	productSchema,
+} from "../../../../packages/better-crud/src/";
 import { betterCrud } from "../../../../packages/better-crud/src/crud";
-import { categorySchema, createCrudClient, createResource, productSchema } from "../../../../packages/better-crud/src/";
 
 export const auth = betterAuth({
 	database: {
@@ -14,7 +19,7 @@ export const auth = betterAuth({
 });
 
 export const crud = betterCrud({
-	basePath: "/api/crud", 
+	basePath: "/api/crud",
 	database: {
 		provider: "sqlite",
 		url: "data.db",
