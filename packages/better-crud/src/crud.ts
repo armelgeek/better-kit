@@ -43,7 +43,7 @@ function initCrud(options: CrudOptions): CrudContext {
 /**
  * Main CRUD factory function - similar to betterAuth()
  */
-export function betterCrud<O extends CrudOptions>(options: O) {
+export function adiemus<O extends CrudOptions>(options: O) {
 	const crudContext = initCrud(options);
 
 	// Register plugins
@@ -238,3 +238,16 @@ export type BetterCrud<
 	context: CrudContext;
 	schema: Record<string, { fields: Record<string, any> }>;
 };
+
+// Alias for the new package name
+export type Adiemus<
+	O extends CrudOptions = CrudOptions,
+	Endpoints extends Record<string, any> = Record<string, any>,
+	PluginEndpoints extends Record<string, any> = UnionToIntersection<
+		O["plugins"] extends Array<infer T>
+			? T extends { endpoints: infer E }
+				? E
+				: Record<string, never>
+			: Record<string, never>
+	>,
+> = BetterCrud<O, Endpoints, PluginEndpoints>;

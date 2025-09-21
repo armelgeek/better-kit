@@ -1,15 +1,15 @@
 # ORM Adapter System
 
-Better CRUD now supports a generic ORM adapter system, similar to better-auth, allowing you to use different database ORMs and custom adapters.
+Adiemus now supports a generic ORM adapter system, similar to better-auth, allowing you to use different database ORMs and custom adapters.
 
 ## Built-in Adapters
 
 ### Kysely Adapter (Default)
 
 ```typescript
-import { betterCrud } from "better-crud";
+import { adiemus } from "adiemus";
 
-const crud = betterCrud({
+const crud = adiemus({
   resources: [/* ... */],
   database: {
     provider: "sqlite",  // "sqlite" | "postgres" | "mysql"
@@ -24,7 +24,7 @@ const crud = betterCrud({
 You can create custom adapters for any ORM or database system by implementing the `CrudAdapter` interface:
 
 ```typescript
-import { CrudAdapter } from "better-crud";
+import { CrudAdapter } from "adiemus";
 
 class MyCustomAdapter implements CrudAdapter {
   async create(params) {
@@ -53,7 +53,7 @@ class MyCustomAdapter implements CrudAdapter {
 }
 
 // Use your custom adapter
-const crud = betterCrud({
+const crud = adiemus({
   resources: [/* ... */],
   database: {
     adapter: new MyCustomAdapter(),
@@ -154,7 +154,7 @@ If you were previously using better-crud with direct Kysely configuration, no ch
 
 ```typescript
 // This still works exactly the same
-const crud = betterCrud({
+const crud = adiemus({
   resources: [/* ... */],
   database: {
     provider: "sqlite",

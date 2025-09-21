@@ -1,6 +1,6 @@
-// Main export - the betterCrud factory function
-export { betterCrud } from "./crud";
-export type { BetterCrud } from "./crud";
+// Main export - the adiemus factory function
+export { adiemus } from "./crud";
+export type { BetterCrud, Adiemus } from "./crud";
 
 // Client
 export { createCrudClient } from "./client";

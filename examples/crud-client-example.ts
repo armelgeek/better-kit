@@ -3,7 +3,7 @@
  * This shows how to use the client in a way similar to better-auth
  */
 
-import { betterCrud, createCrudClient, createResource } from "better-crud";
+import { adiemus, createCrudClient, createResource } from "better-crud";
 import { z } from "zod";
 
 // 1. Define schemas
@@ -25,7 +25,7 @@ const categorySchema = z.object({
 });
 
 // 2. Create the CRUD server instance
-export const crud = betterCrud({
+export const crud = adiemus({
 	resources: [
 		createResource({
 			name: "product",

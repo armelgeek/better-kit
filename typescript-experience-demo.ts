@@ -7,7 +7,7 @@
 // In a real project, you would import from "better-crud" package
 
 /*
-import { betterCrud, createCrudClient, createResource } from "better-crud";
+import { adiemus, createCrudClient, createResource } from "better-crud";
 import { z } from "zod";
 
 // 1. Define schemas with Zod
@@ -29,7 +29,7 @@ const categorySchema = z.object({
 });
 
 // 2. Create CRUD server instance with full configuration
-export const crud = betterCrud({
+export const crud = adiemus({
 	resources: [
 		createResource({
 			name: "product",

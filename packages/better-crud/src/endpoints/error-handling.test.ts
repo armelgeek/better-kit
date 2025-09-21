@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { betterCrud, createResource } from "../index";
+import { adiemus } from "../index";
 
 describe("CRUD Error Handling", () => {
 	it("should provide detailed error information when database operations fail", async () => {
@@ -13,7 +13,7 @@ describe("CRUD Error Handling", () => {
 		// This test demonstrates that our error handling improvement works
 		// When an error occurs during adapter.create(), we now get detailed error info
 		expect(() => {
-			const crud = betterCrud({
+			const crud = adiemus({
 				resources: [
 					createResource({
 						name: "product",

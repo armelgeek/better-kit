@@ -1,8 +1,8 @@
-import { betterCrud, auditPlugin, validationPlugin, cachePlugin, createPlugin } from "../src/index";
+import { adiemus, auditPlugin, validationPlugin, cachePlugin, createPlugin } from "../src/index";
 import { z } from "zod";
 
 // Create a CRUD instance with plugins
-const crud = betterCrud({
+const crud = adiemus({
 	database: {
 		provider: "sqlite",
 		url: ":memory:",

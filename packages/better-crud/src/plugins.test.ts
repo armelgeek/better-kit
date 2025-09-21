@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { z } from "zod";
-import { betterCrud, auditPlugin, validationPlugin, cachePlugin, createPlugin } from "../src/index";
+import { adiemus, createPlugin, auditPlugin, validationPlugin, cachePlugin } from "../src/index";
 
 describe("Plugin System", () => {
 	let crudInstance: any;
@@ -19,7 +19,7 @@ describe("Plugin System", () => {
 			},
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -54,7 +54,7 @@ describe("Plugin System", () => {
 			},
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -81,7 +81,7 @@ describe("Plugin System", () => {
 			operations: ["create", "update", "delete"],
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -111,7 +111,7 @@ describe("Plugin System", () => {
 			},
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -138,7 +138,7 @@ describe("Plugin System", () => {
 			defaultTTL: 300,
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -167,7 +167,7 @@ describe("Plugin System", () => {
 			cachePlugin({ enabled: true }),
 		];
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",
@@ -205,7 +205,7 @@ describe("Plugin System", () => {
 			],
 		});
 
-		crudInstance = betterCrud({
+		crudInstance = adiemus({
 			database: {
 				provider: "sqlite",
 				url: ":memory:",

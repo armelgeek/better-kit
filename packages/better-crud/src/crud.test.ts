@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { betterCrud } from "../src";
+import { adiemus } from "../src";
 import { createResource, productSchema } from "../src";
 
 describe("BetterCrud", () => {
 	it("should create a CRUD instance", () => {
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "product",
@@ -34,7 +34,7 @@ describe("BetterCrud", () => {
 			active: z.boolean().default(true),
 		});
 
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "test",
@@ -67,7 +67,7 @@ describe("BetterCrud", () => {
 	});
 
 	it("should support custom permissions", () => {
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "product",
@@ -91,7 +91,7 @@ describe("BetterCrud", () => {
 	});
 
 	it("should support custom table names", () => {
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "product",
@@ -109,7 +109,7 @@ describe("BetterCrud", () => {
 	});
 
 	it("should support selective endpoint enabling", () => {
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				createResource({
 					name: "product",
@@ -135,7 +135,7 @@ describe("BetterCrud", () => {
 	it("should handle auto-migration without errors", () => {
 		// This test specifically checks the initTables function fix
 		expect(() => {
-			const crud = betterCrud({
+			const crud = adiemus({
 				resources: [
 					createResource({
 						name: "product",

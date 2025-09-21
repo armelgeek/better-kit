@@ -1,4 +1,4 @@
-# Better CRUD
+# Adiemus
 
 A standalone, type-safe CRUD generator built on top of `better-call` that follows the architecture patterns of better-auth. Generate REST API endpoints for your resources with minimal configuration.
 
@@ -18,11 +18,11 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 ## Installation
 
 ```bash
-npm install better-crud
+npm install adiemus
 # or
-yarn add better-crud
+yarn add adiemus
 # or
-pnpm add better-crud
+pnpm add adiemus
 ```
 
 ### Database Dependencies
@@ -45,9 +45,9 @@ npm install mysql2
 ### 1. Basic Setup
 
 ```typescript
-import { betterCrud, createResource, productSchema } from "better-crud";
+import { adiemus, createResource, productSchema } from "adiemus";
 
-export const crud = betterCrud({
+export const crud = adiemus({
   resources: [
     createResource({
       name: "product",
@@ -74,7 +74,7 @@ export const crud = betterCrud({
 Create a type-safe client for your CRUD operations:
 
 ```typescript
-import { createCrudClient } from "better-crud";
+import { createCrudClient } from "adiemus";
 
 // Create the client with type inference from your CRUD instance
 export const crudClient = createCrudClient<typeof crud>({
@@ -125,7 +125,7 @@ if (result.error) {
 
 #### Error Handling
 
-Better CRUD includes error codes similar to better-auth:
+Adiemus includes error codes similar to better-auth:
 
 ```typescript
 // Access error codes
@@ -442,7 +442,7 @@ const userSchema = z.object({
   updatedAt: z.date().default(() => new Date()),
 });
 
-const crud = betterCrud({
+const crud = adiemus({
   resources: [
     createResource({
       name: "user",
@@ -461,7 +461,7 @@ const client = createCrudClient<typeof crud>();
 
 ## Built-in Schemas
 
-Better CRUD comes with several pre-defined schemas:
+Adiemus comes with several pre-defined schemas:
 
 ```typescript
 import { 
@@ -471,7 +471,7 @@ import {
   orderSchema,
   userSchema,
   postSchema 
-} from "better-crud";
+} from "adiemus";
 ```
 
 ## Advanced Usage
@@ -534,7 +534,7 @@ createResource({
 ### Base Path
 
 ```typescript
-const crud = betterCrud({
+const crud = adiemus({
   resources: [/* ... */],
   database: {/* ... */},
   basePath: "/api/v1", // All endpoints will be prefixed with /api/v1
@@ -543,7 +543,7 @@ const crud = betterCrud({
 
 ## Database Support
 
-Better CRUD supports multiple database providers through Kysely:
+Adiemus supports multiple database providers through Kysely:
 
 - **SQLite**: Perfect for development and small applications
 - **PostgreSQL**: Production-ready with advanced features
@@ -554,7 +554,7 @@ Better CRUD supports multiple database providers through Kysely:
 Enable auto-migration to automatically create tables based on your schemas:
 
 ```typescript
-const crud = betterCrud({
+const crud = adiemus({
   resources: [/* ... */],
   database: {
     provider: "sqlite",
@@ -566,7 +566,7 @@ const crud = betterCrud({
 
 ## Error Handling
 
-Better CRUD returns standard HTTP status codes:
+Adiemus returns standard HTTP status codes:
 
 - `200` - Success
 - `201` - Created
@@ -607,7 +607,7 @@ The TypeScript integration provides full type safety:
 type Product = z.infer<typeof productSchema>;
 
 // CRUD instance is fully typed
-const crud = betterCrud({...});
+const crud = adiemus({...});
 // crud.api.createProduct, crud.api.getProduct, etc. are all typed
 
 // Client is fully typed based on your CRUD configuration
@@ -633,7 +633,7 @@ NEXT_PUBLIC_VERCEL_URL=https://your-app.vercel.app/api
 
 ## Contributing
 
-Better CRUD follows the patterns established by better-auth. When contributing:
+Adiemus follows the patterns established by better-auth. When contributing:
 
 1. Follow the existing code style
 2. Add tests for new functionality

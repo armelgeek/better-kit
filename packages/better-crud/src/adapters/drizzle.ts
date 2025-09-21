@@ -2,7 +2,7 @@ import { CrudAdapter, CrudWhere, CrudOrderBy } from "../types/adapter";
 import { IncludeOptions, FieldAttribute } from "../types";
 
 /**
- * Drizzle ORM adapter for better-crud
+ * Drizzle ORM adapter for adiemus
  * 
  * Usage:
  * ```typescript

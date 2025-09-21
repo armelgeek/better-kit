@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { betterCrud } from "./crud";
+import { adiemus } from "./crud";
 import { productSchema } from "./schemas";
 
 describe("SQLite Data Binding Fix Integration Test", () => {
 	it("should handle product creation with complex data types without SQLite binding errors", async () => {
 		// This test reproduces the exact scenario from the issue
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				{
 					name: "product",
@@ -91,7 +91,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 	});
 
 	it("should handle product creation with all complex schema fields", async () => {
-		const crud = betterCrud({
+		const crud = adiemus({
 			resources: [
 				{
 					name: "product",

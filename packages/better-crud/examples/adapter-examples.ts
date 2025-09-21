@@ -1,8 +1,8 @@
-import { betterCrud, createPrismaAdapter, createDrizzleAdapter } from "better-crud";
+import { adiemus, createPrismaAdapter, createDrizzleAdapter } from "better-crud";
 import { z } from "zod";
 
 // Example 1: Using built-in Kysely adapter with SQLite
-const crudWithKysely = betterCrud({
+const crudWithKysely = adiemus({
 	resources: [
 		{
 			name: "product",
@@ -22,7 +22,7 @@ const crudWithKysely = betterCrud({
 });
 
 // Example 2: Using built-in Kysely adapter with PostgreSQL
-const crudWithPostgres = betterCrud({
+const crudWithPostgres = adiemus({
 	resources: [
 		{
 			name: "user",
@@ -44,7 +44,7 @@ const crudWithPostgres = betterCrud({
 // import { PrismaClient } from '@prisma/client';
 // const prisma = new PrismaClient();
 
-const crudWithPrisma = betterCrud({
+const crudWithPrisma = adiemus({
 	resources: [
 		{
 			name: "post",
@@ -69,7 +69,7 @@ const crudWithPrisma = betterCrud({
 // const sqlite = new Database('sqlite.db');
 // const db = drizzle(sqlite);
 
-const crudWithDrizzle = betterCrud({
+const crudWithDrizzle = adiemus({
 	resources: [
 		{
 			name: "category",
@@ -162,7 +162,7 @@ class InMemoryAdapter implements CrudAdapter {
 	}
 }
 
-const crudWithInMemory = betterCrud({
+const crudWithInMemory = adiemus({
 	resources: [
 		{
 			name: "todo",

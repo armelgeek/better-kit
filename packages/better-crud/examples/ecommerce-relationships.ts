@@ -1,4 +1,4 @@
-import { betterCrud } from "better-crud";
+import { adiemus } from "better-crud";
 import {
   productSchema,
   categorySchema,
@@ -22,7 +22,7 @@ import {
  */
 
 // Create CRUD instance with relationship-enabled resources
-export const ecommerceCrud = betterCrud({
+export const ecommerceCrud = adiemus({
   database: {
     provider: "sqlite",
     url: "sqlite:./ecommerce.db",

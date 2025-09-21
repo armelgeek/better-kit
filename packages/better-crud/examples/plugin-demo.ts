@@ -107,9 +107,9 @@ console.log(`   🗃️ Schema tables: ${Object.keys(loggingPlugin.schema || {})
 console.log(`   🎣 Hooks: ${Object.keys(loggingPlugin.hooks || {}).join(", ")}\n`);
 
 console.log("✨ All plugins created successfully!");
-console.log("🔌 These plugins can be used with betterCrud() like this:");
+console.log("🔌 These plugins can be used with adiemus() like this:");
 console.log(`
-const crud = betterCrud({
+const crud = adiemus({
   database: { provider: "sqlite", url: ":memory:" },
   resources: [/* your resources */],
   plugins: [audit, validation, cache, timestampPlugin, loggingPlugin],

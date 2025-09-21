@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { betterCrud } from "../crud";
+import { adiemus } from "../crud";
 import {
 	productSchema,
 	categorySchema,
@@ -16,7 +16,7 @@ describe("CRUD Relationship Management", () => {
 
 	beforeAll(async () => {
 		// Create CRUD instance with relationships
-		crud = betterCrud({
+		crud = adiemus({
 			database: {
 				provider: "sqlite",
 				url: "sqlite::memory:",

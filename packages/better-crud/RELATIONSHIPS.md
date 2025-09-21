@@ -77,10 +77,10 @@ Models are related through a junction table.
 ### Basic Resource Configuration
 
 ```typescript
-import { betterCrud } from "better-crud";
+import { adiemus } from "adiemus";
 import { productSchema, categorySchema } from "./schemas";
 
-const crud = betterCrud({
+const crud = adiemus({
   database: {
     provider: "sqlite",
     url: "sqlite:./database.db",
