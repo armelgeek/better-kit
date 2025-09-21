@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { betterCrud } from "./crud";
 import { productSchema } from "./schemas";
 
@@ -40,7 +40,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 
 		// Test direct adapter usage (this is where the error occurred)
 		const adapter = crud.context.adapter;
-		
+
 		// Manually create the table for testing since auto-migration is async
 		await crud.context.db.schema
 			.createTable("product")
@@ -57,7 +57,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 			.addColumn("createdAt", "text") // Date as ISO string
 			.addColumn("updatedAt", "text") // Date as ISO string
 			.execute();
-		
+
 		// This should not throw "SQLite3 can only bind numbers, strings, bigints, buffers, and null"
 		const result = await adapter.create({
 			model: "product",
@@ -69,7 +69,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 		expect(result.id).toBeDefined();
 		expect(result.name).toBe("Test Product");
 		expect(result.price).toBe(99.99);
-		
+
 		// Verify complex data types are properly handled
 		expect(Array.isArray(result.tags)).toBe(true);
 		expect(result.tags).toEqual(["electronics", "gadgets", "popular"]);
@@ -127,7 +127,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 		};
 
 		const adapter = crud.context.adapter;
-		
+
 		// Manually create the table for testing since auto-migration is async
 		await crud.context.db.schema
 			.createTable("product")
@@ -144,7 +144,7 @@ describe("SQLite Data Binding Fix Integration Test", () => {
 			.addColumn("createdAt", "text") // Date as ISO string
 			.addColumn("updatedAt", "text") // Date as ISO string
 			.execute();
-		
+
 		// This should work without SQLite binding errors
 		const result = await adapter.create({
 			model: "product",

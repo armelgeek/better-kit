@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { KyselyCrudAdapter } from "./kysely";
-import { Kysely, SqliteDialect } from "kysely";
 import Database from "better-sqlite3";
+import { Kysely, SqliteDialect } from "kysely";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { KyselyCrudAdapter } from "./kysely";
 
 describe("KyselyCrudAdapter Data Transformation", () => {
 	let adapter: KyselyCrudAdapter;

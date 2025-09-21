@@ -7,10 +7,10 @@ import { CrudAdapter, CrudDatabaseConfig, FieldAttribute } from "../types";
  */
 function transformFromData(data: Record<string, any>): Record<string, any> {
 	const transformed = { ...data };
-	
+
 	for (const key in transformed) {
 		const value = transformed[key];
-		
+
 		// Convert Date objects to ISO strings
 		if (value instanceof Date) {
 			transformed[key] = value.toISOString();
@@ -24,7 +24,7 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
 			transformed[key] = JSON.stringify(value);
 		}
 	}
-	
+
 	return transformed;
 }
 
@@ -34,24 +34,33 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
  */
 function transformToData(data: Record<string, any>): Record<string, any> {
 	const transformed = { ...data };
-	
+
 	for (const key in transformed) {
 		const value = transformed[key];
-		
+
 		// Skip null/undefined values
 		if (value === null || value === undefined) {
 			continue;
 		}
-		
+
 		// Convert ISO date strings back to Date objects for timestamp fields
-		if (typeof value === "string" && (key === "createdAt" || key === "updatedAt" || key === "publishedAt")) {
+		if (
+			typeof value === "string" &&
+			(key === "createdAt" || key === "updatedAt" || key === "publishedAt")
+		) {
 			const dateValue = new Date(value);
 			if (!isNaN(dateValue.getTime())) {
 				transformed[key] = dateValue;
 			}
 		}
 		// Try to parse JSON strings back to objects/arrays for known complex fields
-		else if (typeof value === "string" && (key === "tags" || key === "items" || key === "shippingAddress" || key === "profile")) {
+		else if (
+			typeof value === "string" &&
+			(key === "tags" ||
+				key === "items" ||
+				key === "shippingAddress" ||
+				key === "profile")
+		) {
 			try {
 				transformed[key] = JSON.parse(value);
 			} catch {
@@ -59,7 +68,7 @@ function transformToData(data: Record<string, any>): Record<string, any> {
 			}
 		}
 	}
-	
+
 	return transformed;
 }
 
@@ -134,7 +143,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 			query = query.offset(offset);
 		}
 
-		return (await query.execute()).map(item => transformToData(item));
+		return (await query.execute()).map((item) => transformToData(item));
 	}
 
 	async update(params: {
