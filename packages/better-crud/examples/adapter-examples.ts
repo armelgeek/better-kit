@@ -1,4 +1,4 @@
-import { betterCrud, CrudAdapter } from "better-crud";
+import { betterCrud, createPrismaAdapter, createDrizzleAdapter } from "better-crud";
 import { z } from "zod";
 
 // Example 1: Using built-in Kysely adapter with SQLite
@@ -40,71 +40,10 @@ const crudWithPostgres = betterCrud({
 	},
 });
 
-// Example 3: Using a custom adapter (e.g., for different ORM or database)
-class CustomPrismaAdapter implements CrudAdapter {
-	constructor(private prisma: any) {}
+// Example 3: Using built-in Prisma adapter
+// import { PrismaClient } from '@prisma/client';
+// const prisma = new PrismaClient();
 
-	async create(params) {
-		const { model, data } = params;
-		return await this.prisma[model].create({ data });
-	}
-
-	async findFirst(params) {
-		const { model, where = [] } = params;
-		const whereClause = this.convertWhere(where);
-		return await this.prisma[model].findFirst({ where: whereClause });
-	}
-
-	async findMany(params) {
-		const { model, where = [], limit, offset, orderBy = [] } = params;
-		const whereClause = this.convertWhere(where);
-		const orderByClause = this.convertOrderBy(orderBy);
-		
-		return await this.prisma[model].findMany({
-			where: whereClause,
-			take: limit,
-			skip: offset,
-			orderBy: orderByClause,
-		});
-	}
-
-	async update(params) {
-		const { model, where, data } = params;
-		const whereClause = this.convertWhere(where);
-		return await this.prisma[model].update({
-			where: whereClause,
-			data,
-		});
-	}
-
-	async delete(params) {
-		const { model, where } = params;
-		const whereClause = this.convertWhere(where);
-		await this.prisma[model].delete({ where: whereClause });
-	}
-
-	async count(params) {
-		const { model, where = [] } = params;
-		const whereClause = this.convertWhere(where);
-		return await this.prisma[model].count({ where: whereClause });
-	}
-
-	private convertWhere(where: any[]) {
-		const converted: any = {};
-		for (const condition of where) {
-			converted[condition.field] = condition.value;
-		}
-		return converted;
-	}
-
-	private convertOrderBy(orderBy: any[]) {
-		return orderBy.map(order => ({
-			[order.field]: order.direction,
-		}));
-	}
-}
-
-// Example usage with custom Prisma adapter
 const crudWithPrisma = betterCrud({
 	resources: [
 		{
@@ -118,11 +57,37 @@ const crudWithPrisma = betterCrud({
 		},
 	],
 	database: {
-		adapter: new CustomPrismaAdapter({} as any), // Prisma client would go here
+		adapter: createPrismaAdapter({} as any), // Pass your PrismaClient instance here
 	},
 });
 
-// Example 4: Using a simple in-memory adapter for testing
+// Example 4: Using built-in Drizzle adapter
+// import { drizzle } from 'drizzle-orm/better-sqlite3';
+// import Database from 'better-sqlite3';
+// import * as schema from './schema';
+// 
+// const sqlite = new Database('sqlite.db');
+// const db = drizzle(sqlite);
+
+const crudWithDrizzle = betterCrud({
+	resources: [
+		{
+			name: "category",
+			schema: z.object({
+				id: z.string(),
+				name: z.string(),
+				description: z.string().optional(),
+			}),
+		},
+	],
+	database: {
+		adapter: createDrizzleAdapter({} as any, {} as any), // Pass your Drizzle db and schema here
+	},
+});
+
+// Example 5: Using a simple in-memory adapter for testing
+import { CrudAdapter } from "better-crud";
+
 class InMemoryAdapter implements CrudAdapter {
 	private data = new Map<string, any>();
 
@@ -217,5 +182,6 @@ export {
 	crudWithKysely,
 	crudWithPostgres,
 	crudWithPrisma,
+	crudWithDrizzle,
 	crudWithInMemory,
 };
