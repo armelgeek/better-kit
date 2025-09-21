@@ -1,12 +1,14 @@
 import { FieldAttribute } from "../../db/field";
 import { shimContext } from "../../utils/shim";
+import { PluginWithClient } from "../../types/plugin-client";
+import { createCrudClientMethods } from "./client";
 import { createCrudEndpoints } from "./endpoints";
-import { CrudOptions, CrudPlugin, CrudResourceConfig } from "./types";
+import { CrudOptions, CrudResourceConfig } from "./types";
 
 /**
  * Creates a CRUD plugin that automatically generates endpoints for multiple resources
  */
-export function crud(options: CrudOptions): CrudPlugin {
+export function crud(options: CrudOptions): PluginWithClient {
 	const { resources, basePath = "", requireAuth = false } = options;
 
 	// Generate endpoints for all resources
@@ -40,6 +42,18 @@ export function crud(options: CrudOptions): CrudPlugin {
 		id: "crud",
 		endpoints: api,
 		schema,
+		client: {
+			id: "crud",
+			methods: {
+				// Create a factory function that returns CRUD methods
+				// This will be called with the actual client instance
+				$factory: (client: any, clientOptions?: any) => 
+					createCrudClientMethods(resources, client, clientOptions?.baseURL)
+			},
+			options: {
+				// Default options for CRUD operations
+			}
+		}
 	};
 }
 

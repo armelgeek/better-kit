@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { categorySchema, createResource, crud, organization, productSchema } from "better-auth/plugins";
 import { github } from "better-auth/provider";
 
 export const auth = betterAuth({
@@ -18,5 +18,26 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 	},
-	plugins: [organization()],
+	plugins: [
+		organization(),
+		crud({
+			resources: [
+				createResource({
+					name: "product",
+					schema: productSchema,
+					permissions: {
+						create: async () => true,
+						read: async () => true,
+						update: async () => true,
+						delete: async () => true,
+						list: async () => true,
+					},
+				}),
+				createResource({
+					name: "category", 
+					schema: categorySchema,
+				}),
+			],
+		}),
+	],
 });

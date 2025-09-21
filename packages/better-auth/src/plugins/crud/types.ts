@@ -2,6 +2,7 @@ import { ZodSchema, z } from "zod";
 import { AuthEndpoint } from "../../api/call";
 import { FieldAttribute } from "../../db/field";
 import { Plugin } from "../../types/plugins";
+import { PluginWithClient } from "../../types/plugin-client";
 
 export interface CrudResourceConfig {
 	name: string;
@@ -30,6 +31,18 @@ export interface CrudOptions {
 }
 
 export interface CrudPlugin extends Plugin {
+	id: "crud";
+	endpoints: Record<string, AuthEndpoint>;
+	schema: {
+		[resourceName: string]: {
+			fields: {
+				[field: string]: FieldAttribute;
+			};
+		};
+	};
+}
+
+export interface CrudPluginWithClient extends PluginWithClient {
 	id: "crud";
 	endpoints: Record<string, AuthEndpoint>;
 	schema: {

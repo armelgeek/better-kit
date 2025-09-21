@@ -30,7 +30,21 @@ type InferContext<T> = T extends (ctx: infer Ctx) => any
 		: never
 	: never;
 
-export interface ClientOptions extends BetterFetchOption {}
+/**
+ * Extended client options that support plugin configurations
+ */
+export interface ClientOptions extends BetterFetchOption {
+	/**
+	 * Plugin-specific client configurations
+	 */
+	pluginConfigs?: {
+		crud?: {
+			baseURL?: string;
+			resources?: any[];
+		};
+		[key: string]: any;
+	};
+}
 
 const redirectPlugin = {
 	id: "redirect",
