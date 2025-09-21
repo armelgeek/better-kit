@@ -6,14 +6,41 @@ import {
 	CrudResourceConfig,
 	PaginationResult,
 	IncludeOptions,
+	CrudHookContext,
+	SecurityContext,
+	AuditEvent,
+	CrudQueryParams,
 } from "../types";
 import { capitalize, generateId, validateData } from "../utils/schema";
+import { 
+	sanitizeData, 
+	sanitizeFields, 
+	hasRequiredScopes, 
+	checkOwnership, 
+	extractSecurityContext, 
+	checkEnhancedPermissions,
+	rateLimiter,
+	validateAndSanitizeInput 
+} from "../utils/security";
+import { HookExecutor, AuditLogger } from "../utils/hooks";
+import { SearchBuilder, FilterBuilder } from "../utils/search";
 
 /**
  * Create CRUD-specific middleware that provides context
  */
 export const crudContextMiddleware = createMiddleware(async (ctx) => {
-	return {} as CrudContext;
+	// Extract security context from request
+	const securityContext = extractSecurityContext(ctx.request || ctx);
+	
+	// Add security utilities to context
+	const enhancedContext = {
+		...({} as CrudContext),
+		security: securityContext,
+		rateLimiter,
+		auditLogger: new AuditLogger(),
+	};
+	
+	return enhancedContext;
 });
 
 /**
@@ -48,19 +75,45 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	const crudEndpoints: Record<string, any> = {};
 
-	// Helper function to check permissions
+	// Enhanced helper function to check permissions with scopes and ownership
 	const checkPermission = async (
 		operation: keyof typeof permissions,
 		context: CrudPermissionContext,
+		config?: CrudResourceConfig,
 	): Promise<boolean> => {
 		const permissionFn = permissions[operation];
-		if (!permissionFn) return true; // No permission defined = allow
+		const requiredScopes = config?.scopes?.[operation];
+		const ownershipConfig = config?.ownership;
 
-		try {
-			return await permissionFn(context);
-		} catch {
-			return false;
+		// Check basic permission function first
+		if (permissionFn) {
+			try {
+				const hasBasicPermission = await permissionFn(context);
+				if (!hasBasicPermission) return false;
+			} catch {
+				return false;
+			}
+		} else if (!config) {
+			// If no permission function and no config, default to allow
+			return true;
 		}
+
+		// Check enhanced permissions (scopes, ownership) if config is provided
+		if (config) {
+			return await checkEnhancedPermissions(context, requiredScopes, ownershipConfig);
+		}
+
+		return true;
+	};
+
+	// Helper to extract user from request/context  
+	const extractUser = (ctx: any): any => {
+		return ctx.user || ctx.context?.user || ctx.request?.user || null;
+	};
+
+	// Helper to extract user scopes
+	const extractUserScopes = (user: any): string[] => {
+		return user?.scopes || user?.roles || [];
 	};
 
 	// Helper function to parse include options from query parameters
@@ -105,33 +158,81 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 			async (ctx) => {
 				const { body, context, query } = ctx;
 				const { adapter } = context;
+				
+				// Extract user and security context
+				const user = extractUser(ctx);
+				const userScopes = extractUserScopes(user);
+				const securityContext = extractSecurityContext(ctx.request || ctx);
 
-				// Check permissions
-				const hasPermission = await checkPermission("create", {
-					user: null, // TODO: extract from session/auth
-					resource: name,
-					operation: "create",
-					data: body,
-					request: ctx,
-				});
-
-				if (!hasPermission) {
-					return ctx.json({ error: "Forbidden" }, { status: 403 });
+				// Rate limiting check
+				if (context.security?.rateLimit) {
+					const rateLimitKey = `${securityContext.ipAddress || 'unknown'}-create-${name}`;
+					const isAllowed = rateLimiter.isAllowed(
+						rateLimitKey,
+						context.security.rateLimit.windowMs,
+						context.security.rateLimit.max
+					);
+					
+					if (!isAllowed) {
+						return ctx.json({ error: "Rate limit exceeded" }, { status: 429 });
+					}
 				}
 
-				// Validate data
-				const validation = validateData(schema, body);
+				// Enhanced validation and sanitization
+				const sanitizationRules = resourceConfig.sanitization?.global || [];
+				const validation = validateAndSanitizeInput(schema, body, sanitizationRules);
+				
 				if (!validation.success) {
 					return ctx.json(
-						{ error: "Validation failed", details: validation.error },
+						{ error: "Validation failed", details: validation.errors },
 						{ status: 400 },
 					);
 				}
 
+				let data = validation.data;
+
+				// Apply field-specific sanitization
+				if (resourceConfig.sanitization?.fields) {
+					data = sanitizeFields(data, resourceConfig.sanitization.fields);
+				}
+
+				// Check permissions with enhanced context
+				const permissionContext: CrudPermissionContext = {
+					user,
+					resource: name,
+					operation: "create",
+					data,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				const hasPermission = await checkPermission("create", permissionContext, resourceConfig);
+				if (!hasPermission) {
+					return ctx.json({ error: "Forbidden" }, { status: 403 });
+				}
+
 				// Generate ID if not present
-				const data = { ...validation.data };
 				if (!data.id) {
 					data.id = generateId();
+				}
+
+				// Execute before hooks
+				const hookContext: CrudHookContext = {
+					user,
+					resource: name,
+					operation: "create",
+					data,
+					request: ctx,
+					adapter,
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
 				}
 
 				// Parse include options
@@ -144,11 +245,18 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 						include,
 					});
 
+					// Execute after hooks
+					hookContext.result = result;
+					await HookExecutor.executeAfter(resourceConfig.hooks, hookContext);
+
+					// Log audit event
+					if (context.auditLogger) {
+						await context.auditLogger.logFromContext(hookContext, undefined, result);
+					}
+
 					return ctx.json(result, { status: 201 });
 				} catch (error) {
-					// Log the actual error for debugging
 					console.error("Error creating resource:", error);
-
 					return ctx.json(
 						{
 							error: "Failed to create resource",
@@ -179,19 +287,10 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				const { params, context, query } = ctx;
 				const { adapter } = context;
 				const { id } = params;
-
-				// Check permissions
-				const hasPermission = await checkPermission("read", {
-					user: null, // TODO: extract from session/auth
-					resource: name,
-					operation: "read",
-					id,
-					request: ctx,
-				});
-
-				if (!hasPermission) {
-					return ctx.json({ error: "Forbidden" }, { status: 403 });
-				}
+				
+				// Extract user and security context
+				const user = extractUser(ctx);
+				const userScopes = extractUserScopes(user);
 
 				// Parse include options
 				const include = parseIncludeOptions(query);
@@ -207,11 +306,25 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 						return ctx.json({ error: "Resource not found" }, { status: 404 });
 					}
 
+					// Check permissions with enhanced context including existing data
+					const permissionContext: CrudPermissionContext = {
+						user,
+						resource: name,
+						operation: "read",
+						id,
+						existingData: result,
+						request: ctx,
+						scopes: userScopes,
+					};
+
+					const hasPermission = await checkPermission("read", permissionContext, resourceConfig);
+					if (!hasPermission) {
+						return ctx.json({ error: "Forbidden" }, { status: 403 });
+					}
+
 					return ctx.json(result);
 				} catch (error) {
-					// Log the actual error for debugging
 					console.error("Error fetching resource:", error);
-
 					return ctx.json(
 						{
 							error: "Failed to fetch resource",
@@ -224,7 +337,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 		);
 	}
 
-	// UPDATE endpoint
+	// UPDATE endpoint  
 	if (enabledEndpoints.update) {
 		crudEndpoints[`update${capitalize(name)}`] = createCrudEndpoint(
 			`/${name}/:id`,
@@ -239,55 +352,100 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				const { params, body, context } = ctx;
 				const { adapter } = context;
 				const { id } = params;
+				
+				// Extract user and security context
+				const user = extractUser(ctx);
+				const userScopes = extractUserScopes(user);
 
-				// Check permissions
-				const hasPermission = await checkPermission("update", {
-					user: null, // TODO: extract from session/auth
-					resource: name,
-					operation: "update",
-					id,
-					data: body,
-					request: ctx,
+				// Check if resource exists first (needed for ownership checks)
+				const existing = await adapter.findFirst({
+					model: actualTableName,
+					where: [{ field: "id", value: id }],
 				});
 
-				if (!hasPermission) {
-					return ctx.json({ error: "Forbidden" }, { status: 403 });
+				if (!existing) {
+					return ctx.json({ error: "Resource not found" }, { status: 404 });
 				}
 
-				// Validate data
-				const validation = validateData(
-					(schema as ZodObject<any>).partial(),
-					body,
+				// Enhanced validation and sanitization
+				const sanitizationRules = resourceConfig.sanitization?.global || [];
+				const validation = validateAndSanitizeInput(
+					(schema as ZodObject<any>).partial(), 
+					body, 
+					sanitizationRules
 				);
+				
 				if (!validation.success) {
 					return ctx.json(
-						{ error: "Validation failed", details: validation.error },
+						{ error: "Validation failed", details: validation.errors },
 						{ status: 400 },
 					);
 				}
 
+				let data = validation.data;
+
+				// Apply field-specific sanitization
+				if (resourceConfig.sanitization?.fields) {
+					data = sanitizeFields(data, resourceConfig.sanitization.fields);
+				}
+
+				// Check permissions with enhanced context including existing data
+				const permissionContext: CrudPermissionContext = {
+					user,
+					resource: name,
+					operation: "update",
+					id,
+					data,
+					existingData: existing,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				const hasPermission = await checkPermission("update", permissionContext, resourceConfig);
+				if (!hasPermission) {
+					return ctx.json({ error: "Forbidden" }, { status: 403 });
+				}
+
+				// Execute before hooks
+				const hookContext: CrudHookContext = {
+					user,
+					resource: name,
+					operation: "update",
+					id,
+					data,
+					existingData: existing,
+					request: ctx,
+					adapter,
+				};
+
 				try {
-					// Check if resource exists
-					const existing = await adapter.findFirst({
-						model: actualTableName,
-						where: [{ field: "id", value: id }],
-					});
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
 
-					if (!existing) {
-						return ctx.json({ error: "Resource not found" }, { status: 404 });
-					}
-
+				try {
 					const result = await adapter.update({
 						model: actualTableName,
 						where: [{ field: "id", value: id }],
-						data: validation.data,
+						data,
 					});
+
+					// Execute after hooks
+					hookContext.result = result;
+					await HookExecutor.executeAfter(resourceConfig.hooks, hookContext);
+
+					// Log audit event
+					if (context.auditLogger) {
+						await context.auditLogger.logFromContext(hookContext, existing, result);
+					}
 
 					return ctx.json(result);
 				} catch (error) {
-					// Log the actual error for debugging
 					console.error("Error updating resource:", error);
-
 					return ctx.json(
 						{
 							error: "Failed to update resource",
@@ -314,41 +472,74 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				const { params, context } = ctx;
 				const { adapter } = context;
 				const { id } = params;
+				
+				// Extract user and security context
+				const user = extractUser(ctx);
+				const userScopes = extractUserScopes(user);
 
-				// Check permissions
-				const hasPermission = await checkPermission("delete", {
-					user: null, // TODO: extract from session/auth
+				// Check if resource exists first (needed for ownership and audit)
+				const existing = await adapter.findFirst({
+					model: actualTableName,
+					where: [{ field: "id", value: id }],
+				});
+
+				if (!existing) {
+					return ctx.json({ error: "Resource not found" }, { status: 404 });
+				}
+
+				// Check permissions with enhanced context including existing data
+				const permissionContext: CrudPermissionContext = {
+					user,
 					resource: name,
 					operation: "delete",
 					id,
+					existingData: existing,
 					request: ctx,
-				});
+					scopes: userScopes,
+				};
 
+				const hasPermission = await checkPermission("delete", permissionContext, resourceConfig);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
 
+				// Execute before hooks
+				const hookContext: CrudHookContext = {
+					user,
+					resource: name,
+					operation: "delete",
+					id,
+					existingData: existing,
+					request: ctx,
+					adapter,
+				};
+
 				try {
-					// Check if resource exists
-					const existing = await adapter.findFirst({
-						model: actualTableName,
-						where: [{ field: "id", value: id }],
-					});
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
 
-					if (!existing) {
-						return ctx.json({ error: "Resource not found" }, { status: 404 });
-					}
-
+				try {
 					await adapter.delete({
 						model: actualTableName,
 						where: [{ field: "id", value: id }],
 					});
 
+					// Execute after hooks
+					await HookExecutor.executeAfter(resourceConfig.hooks, hookContext);
+
+					// Log audit event
+					if (context.auditLogger) {
+						await context.auditLogger.logFromContext(hookContext, existing, undefined);
+					}
+
 					return ctx.json({ success: true });
 				} catch (error) {
-					// Log the actual error for debugging
 					console.error("Error deleting resource:", error);
-
 					return ctx.json(
 						{
 							error: "Failed to delete resource",
@@ -361,7 +552,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 		);
 	}
 
-	// LIST endpoint
+	// LIST endpoint with advanced search and filtering
 	if (enabledEndpoints.list) {
 		crudEndpoints[`list${capitalize(name)}s`] = createCrudEndpoint(
 			`/${name}s`,
@@ -377,69 +568,105 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 						.optional()
 						.transform((val) => (val ? parseInt(val) : 10)),
 					search: z.string().optional(),
+					q: z.string().optional(), // Alternative search parameter
+					searchFields: z.string().optional(), // Comma-separated list of fields to search
 					sortBy: z.string().optional(),
 					sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
 					include: z.string().optional(),
 					select: z.string().optional(),
+					filters: z.string().optional(), // JSON string of advanced filters
+					where: z.string().optional(), // JSON string of where conditions
+					dateRange: z.string().optional(), // JSON string for date range filtering
 				}),
 			},
 			async (ctx) => {
 				const { query, context } = ctx;
 				const { adapter } = context;
+				
+				// Extract user and security context
+				const user = extractUser(ctx);
+				const userScopes = extractUserScopes(user);
 
-				// Check permissions
-				const hasPermission = await checkPermission("list", {
-					user: null, // TODO: extract from session/auth
+				// Build enhanced query parameters with proper typing
+				const enhancedQuery: CrudQueryParams = {
+					...query,
+					include: query.include ? SearchBuilder.parseStringArray(query.include) : undefined,
+					searchFields: SearchBuilder.parseStringArray(query.searchFields),
+					filters: SearchBuilder.parseJSON(query.filters),
+					where: SearchBuilder.parseJSON(query.where),
+					dateRange: SearchBuilder.parseJSON(query.dateRange),
+				};
+
+				// Check permissions with enhanced context
+				const permissionContext: CrudPermissionContext = {
+					user,
 					resource: name,
 					operation: "list",
 					request: ctx,
-				});
+					scopes: userScopes,
+				};
 
+				const hasPermission = await checkPermission("list", permissionContext, resourceConfig);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
 
 				try {
-					const { page, limit, search, sortBy, sortOrder } = query;
-					const offset = (page - 1) * limit;
+					// Build search conditions
+					const searchConditions = SearchBuilder.buildSearchConditions(
+						enhancedQuery,
+						resourceConfig.search
+					);
 
-					// Build where conditions for search
-					const where: Array<{ field: string; value: any; operator?: string }> =
-						[];
-					if (search) {
-						// Simple search implementation - searches in all string fields
-						// In a real implementation, you'd want to be more specific about searchable fields
-						where.push({
-							field: "name",
-							value: `%${search}%`,
-							operator: "LIKE",
-						});
+					// Build pagination
+					const { page, limit, offset } = SearchBuilder.buildPagination(enhancedQuery);
+
+					// Build ordering
+					const orderBy = SearchBuilder.buildOrderBy(enhancedQuery);
+
+					// Build include options
+					const includeOptions = SearchBuilder.buildIncludeOptions(enhancedQuery);
+
+					// Apply ownership filtering if configured
+					let whereConditions = [...searchConditions];
+					if (resourceConfig.ownership && user) {
+						const ownershipField = resourceConfig.ownership.field;
+						const userId = user.id || user.userId;
+						
+						// If strategy is flexible, allow users to see their own data plus admin access
+						if (resourceConfig.ownership.strategy === "flexible") {
+							const isAdmin = hasRequiredScopes(userScopes, ["admin", "super_admin"]);
+							if (!isAdmin) {
+								whereConditions.push({
+									field: ownershipField,
+									value: userId,
+									operator: "eq",
+								});
+							}
+						} else {
+							// Strict ownership - only show user's own data
+							whereConditions.push({
+								field: ownershipField,
+								value: userId,
+								operator: "eq",
+							});
+						}
 					}
 
-					// Build order by
-					const orderBy: Array<{ field: string; direction: "asc" | "desc" }> =
-						[];
-					if (sortBy) {
-						orderBy.push({ field: sortBy, direction: sortOrder });
-					}
-
-					// Get total count
+					// Get total count for pagination
 					const total = await adapter.count({
 						model: actualTableName,
-						where,
+						where: whereConditions,
 					});
-
-					// Parse include options
-					const include = parseIncludeOptions(query);
 
 					// Get items
 					const items = await adapter.findMany({
 						model: actualTableName,
-						where,
+						where: whereConditions,
 						limit,
 						offset,
 						orderBy,
-						include,
+						include: includeOptions,
 					});
 
 					const totalPages = Math.ceil(total / limit);
@@ -458,9 +685,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 					return ctx.json(result);
 				} catch (error) {
-					// Log the actual error for debugging
 					console.error("Error fetching resources:", error);
-
 					return ctx.json(
 						{
 							error: "Failed to fetch resources",
