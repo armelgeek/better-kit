@@ -9,6 +9,7 @@ import {
 	CrudHookContext,
 	SecurityContext,
 	AuditEvent,
+	CrudQueryParams,
 } from "../types";
 import { capitalize, generateId, validateData } from "../utils/schema";
 import { 
@@ -586,9 +587,10 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
 
-				// Build enhanced query parameters
-				const enhancedQuery = {
+				// Build enhanced query parameters with proper typing
+				const enhancedQuery: CrudQueryParams = {
 					...query,
+					include: query.include ? SearchBuilder.parseStringArray(query.include) : undefined,
 					searchFields: SearchBuilder.parseStringArray(query.searchFields),
 					filters: SearchBuilder.parseJSON(query.filters),
 					where: SearchBuilder.parseJSON(query.where),
