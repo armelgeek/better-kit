@@ -82,7 +82,7 @@ export const crudClient = createCrudClient<typeof crud>({
 });
 
 // Now you can use the client with full type safety:
-await crudClient.products.create({
+await crudClient.product.create({
   name: "Tee shirt",
   price: 29.99,
 }, {
@@ -90,6 +90,83 @@ await crudClient.products.create({
     "Authorization": "Bearer your-token",
   }
 });
+```
+
+#### TypeScript Auto-completion & Type Safety
+
+The client provides full TypeScript support similar to better-auth:
+
+```typescript
+// ✅ Auto-completion for all resources and methods
+crudClient.product.create({ /* schema-based suggestions */ });
+crudClient.category.list({ /* typed parameters */ });
+
+// ✅ Schema validation - TypeScript enforces required fields
+await crudClient.product.create({
+  name: "Required field",     // ✅ TypeScript enforces this
+  price: 29.99,              // ✅ Validates number type
+  status: "active",          // ✅ Enum validation
+  // description: "optional"  // ✅ Optional fields suggested
+});
+
+// ✅ Partial updates with proper typing
+await crudClient.product.update("id", {
+  price: 34.99,  // ✅ Only update fields you want to change
+});
+
+// ✅ Properly typed responses
+const result = await crudClient.product.create(data);
+if (result.error) {
+  console.log(result.error.code);     // ✅ Typed error codes
+} else {
+  console.log(result.data.name);      // ✅ Typed response data
+}
+```
+
+#### Error Handling
+
+Better CRUD includes error codes similar to better-auth:
+
+```typescript
+// Access error codes
+console.log(crudClient.$ERROR_CODES.VALIDATION_FAILED);
+console.log(crudClient.$ERROR_CODES.FORBIDDEN);
+console.log(crudClient.$ERROR_CODES.NOT_FOUND);
+
+// Typed error handling pattern
+type ErrorTypes = Partial<
+  Record<
+    keyof typeof crudClient.$ERROR_CODES,
+    {
+      en: string;
+      es: string;
+    }
+  >
+>;
+
+const errorCodes = {
+  VALIDATION_FAILED: {
+    en: "validation failed",
+    es: "validación fallida",
+  },
+  FORBIDDEN: {
+    en: "access denied",
+    es: "acceso denegado", 
+  },
+} satisfies ErrorTypes;
+
+const getErrorMessage = (code: string, lang: "en" | "es") => {
+  if (code in errorCodes) {
+    return errorCodes[code as keyof typeof errorCodes][lang];
+  }
+  return "";
+};
+
+// Usage in components
+const result = await crudClient.product.create(data);
+if (result.error?.code) {
+  alert(getErrorMessage(result.error.code, "en"));
+}
 ```
 
 ### 3. Framework Integration
