@@ -1,5 +1,6 @@
 import { Kysely, sql } from "kysely";
-import { CrudAdapter, CrudDatabaseConfig, FieldAttribute, IncludeOptions } from "../types";
+import { CrudAdapter, CrudAdapterConfig, CrudWhere, CrudOrderBy } from "../types/adapter";
+import { FieldAttribute, IncludeOptions } from "../types";
 import { RelationshipManager } from "../utils/relationships";
 
 /**
@@ -75,6 +76,13 @@ function transformToData(data: Record<string, any>): Record<string, any> {
 
 export class KyselyCrudAdapter implements CrudAdapter {
 	private relationshipManager?: RelationshipManager;
+	public config?: {
+		provider: "sqlite" | "postgres" | "mysql" | "custom";
+		transform?: {
+			date?: boolean;
+			boolean?: boolean;
+		};
+	};
 
 	constructor(private db: Kysely<any>) {}
 
@@ -114,10 +122,11 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async findFirst(params: {
 		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
+		where?: CrudWhere[];
 		include?: IncludeOptions;
+		select?: string[];
 	}) {
-		const { model, where = [], include } = params;
+		const { model, where = [], include, select } = params;
 
 		// If no includes, use simple query
 		if (!include || !this.relationshipManager) {
@@ -138,13 +147,14 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async findMany(params: {
 		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
+		where?: CrudWhere[];
 		limit?: number;
 		offset?: number;
-		orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+		orderBy?: CrudOrderBy[];
 		include?: IncludeOptions;
+		select?: string[];
 	}) {
-		const { model, where = [], limit, offset, orderBy = [], include } = params;
+		const { model, where = [], limit, offset, orderBy = [], include, select } = params;
 
 		// If no includes, use simple query
 		if (!include || !this.relationshipManager) {
@@ -178,7 +188,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async update(params: {
 		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
+		where: CrudWhere[];
 		data: Record<string, any>;
 		include?: IncludeOptions;
 	}) {
@@ -214,7 +224,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async delete(params: {
 		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
+		where: CrudWhere[];
 		cascade?: boolean;
 	}) {
 		const { model, where, cascade = false } = params;
@@ -236,7 +246,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async count(params: {
 		model: string;
-		where?: Array<{ field: string; value: any; operator?: string }>;
+		where?: CrudWhere[];
 	}) {
 		const { model, where = [] } = params;
 
@@ -283,7 +293,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async updateWithRelations(params: {
 		model: string;
-		where: Array<{ field: string; value: any; operator?: string }>;
+		where: CrudWhere[];
 		data: Record<string, any>;
 		relations?: Record<string, any>;
 		include?: IncludeOptions;
@@ -330,13 +340,31 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		return { valid: errors.length === 0, errors };
 	}
 
+	async createSchema(data: { model: string; fields: Record<string, FieldAttribute> }[]): Promise<void> {
+		try {
+			for (const { model, fields } of data) {
+				// Get provider from config or default to sqlite
+				const provider = this.config?.provider || "sqlite";
+				
+				// Generate and execute CREATE TABLE SQL
+				const createTableSQL = generateCreateTableSQL(model, fields, provider);
+				
+				// Execute the SQL using Kysely's sql template literal
+				await sql`${sql.raw(createTableSQL)}`.execute(this.db);
+			}
+		} catch (error) {
+			console.error("Error creating schema:", error);
+			throw error;
+		}
+	}
+
 	private async findWithRelations(
 		model: string,
 		params: {
-			where?: Array<{ field: string; value: any; operator?: string }>;
+			where?: CrudWhere[];
 			limit?: number;
 			offset?: number;
-			orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+			orderBy?: CrudOrderBy[];
 			include: IncludeOptions;
 		}
 	): Promise<any[]> {
@@ -474,7 +502,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	private async handleCascadeDelete(
 		model: string,
-		where: Array<{ field: string; value: any; operator?: string }>
+		where: CrudWhere[]
 	): Promise<void> {
 		// TODO: Implement cascade delete logic
 		// This would find all related records that should be deleted
@@ -505,7 +533,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 /**
  * Creates a Kysely database instance based on the configuration
  */
-export function createKyselyDatabase(config: CrudDatabaseConfig): Kysely<any> {
+export function createKyselyDatabase(config: { provider: string; url: string; autoMigrate?: boolean }): Kysely<any> {
 	// This is a simplified implementation
 	// In a real scenario, you'd handle different database providers
 	if (config.provider === "sqlite") {
@@ -700,4 +728,38 @@ export function generateCreateTableSQL(
 	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
 		",\n  ",
 	)}\n)`;
+}
+
+/**
+ * Creates a Kysely adapter instance (for use with provider config)
+ */
+export function createKyselyAdapter(options: { database: { provider: string; url: string; autoMigrate?: boolean } }): Kysely<any> | null {
+	if (!("provider" in options.database)) {
+		return null;
+	}
+	
+	return createKyselyDatabase(options.database as any);
+}
+
+/**
+ * Creates a CRUD adapter using Kysely - follows better-auth pattern
+ */
+export function kyselyCrudAdapter(
+	db: Kysely<any>,
+	config?: CrudAdapterConfig,
+): CrudAdapter {
+	const adapter = new KyselyCrudAdapter(db);
+	
+	// Set configuration
+	if (config) {
+		adapter.config = {
+			provider: config.provider,
+			transform: config.transform || {
+				date: true,
+				boolean: config.provider === "sqlite",
+			},
+		};
+	}
+	
+	return adapter;
 }

@@ -1,10 +1,6 @@
 import { createRouter } from "better-call";
 import { sql } from "kysely";
-import {
-	KyselyCrudAdapter,
-	createKyselyDatabase,
-	generateCreateTableSQL,
-} from "./adapters/kysely";
+import { getCrudAdapter } from "./adapters/utils";
 import { createCrudEndpoints } from "./endpoints";
 import { CrudContext, CrudOptions } from "./types";
 import { zodSchemaToFields } from "./utils/schema";
@@ -14,24 +10,25 @@ import { RelationshipManager } from "./utils/relationships";
  * Initialize CRUD context similar to better-auth's init function
  */
 function initCrud(options: CrudOptions): CrudContext {
-	const db = createKyselyDatabase(options.database);
-	const adapter = new KyselyCrudAdapter(db);
+	const adapter = getCrudAdapter(options);
 
 	// Initialize relationship and schema registries
 	const relationships = new Map();
 	const schemas = new Map();
 
 	const context: CrudContext = {
-		db,
+		db: null, // For backward compatibility, we keep this but it's not used with the adapter pattern
 		adapter,
 		options,
 		relationships,
 		schemas,
 	};
 
-	// Create relationship manager and attach to adapter
+	// Create relationship manager and attach to adapter if it's a Kysely adapter
 	const relationshipManager = new RelationshipManager(context);
-	adapter.setRelationshipManager(relationshipManager);
+	if ('setRelationshipManager' in adapter) {
+		(adapter as any).setRelationshipManager(relationshipManager);
+	}
 
 	return context;
 }
@@ -117,7 +114,8 @@ export function betterCrud<O extends CrudOptions>(options: O) {
 	});
 
 	// Auto-migrate tables if enabled
-	if (options.database.autoMigrate) {
+	const shouldAutoMigrate = "autoMigrate" in options.database ? options.database.autoMigrate : false;
+	if (shouldAutoMigrate) {
 		initTables(crudContext, schema).catch(console.error);
 	}
 
@@ -159,19 +157,18 @@ async function initTables(
 	schema: Record<string, { fields: Record<string, any> }>,
 ) {
 	try {
-		for (const [resourceName, resourceSchema] of Object.entries(schema)) {
-			const tableName = resourceName;
-			const fields = resourceSchema.fields;
+		// Prepare schema data for the adapter
+		const schemaData = Object.entries(schema).map(([resourceName, resourceSchema]) => ({
+			model: resourceName,
+			fields: resourceSchema.fields,
+		}));
 
-			// Generate and execute CREATE TABLE SQL
-			const createTableSQL = generateCreateTableSQL(
-				tableName,
-				fields,
-				context.options.database.provider,
-			);
-
-			// Execute the SQL using Kysely's sql template literal
-			await sql`${sql.raw(createTableSQL)}`.execute(context.db);
+		// Use adapter's createSchema method if available
+		if (context.adapter.createSchema) {
+			await context.adapter.createSchema(schemaData);
+		} else {
+			// Fallback for adapters that don't support createSchema
+			console.warn("Adapter does not support createSchema method. Auto-migration skipped.");
 		}
 	} catch (error) {
 		console.error("Error initializing tables:", error);

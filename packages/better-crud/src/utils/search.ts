@@ -1,4 +1,4 @@
-import { CrudQueryParams } from "../types";
+import { CrudQueryParams, IncludeOptions } from "../types";
 
 /**
  * Search and filtering utilities
