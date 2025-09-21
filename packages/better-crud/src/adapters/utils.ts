@@ -14,6 +14,16 @@ export function convertToCrudWhere(where: Array<{ field: string; value: any; ope
 }
 
 /**
+ * Convert old orderBy format to new CrudOrderBy format
+ */
+export function convertToCrudOrderBy(orderBy: Array<{ field: string; direction: "asc" | "desc" }>): import("../types/adapter").CrudOrderBy[] {
+	return orderBy.map(o => ({
+		field: o.field,
+		direction: o.direction,
+	}));
+}
+
+/**
  * Get the appropriate adapter based on the database configuration
  * Similar to better-auth's getAdapter function
  */
