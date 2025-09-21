@@ -23,5 +23,8 @@ export type { ValidationPluginOptions } from "./validation";
 export { cachePlugin } from "./cache";
 export type { CachePluginOptions } from "./cache";
 
+export { openApiPlugin } from "./openapi";
+export type { OpenAPIOptions } from "./openapi";
+
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";
