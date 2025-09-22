@@ -19,6 +19,8 @@ const testProductSchema = z.object({
 	description: z.string().optional(),
 	price: z.number().min(0, "Price must be positive"),
 	categoryId: z.string().optional(),
+	sku: z.string().optional(),
+	stock: z.number().int().min(0).default(0),
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });
@@ -28,6 +30,7 @@ const testCategorySchema = z.object({
 	name: z.string().min(1, "Category name is required"),
 	description: z.string().optional(),
 	parentId: z.string().optional(),
+	slug: z.string().min(1, "Slug is required"),
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });

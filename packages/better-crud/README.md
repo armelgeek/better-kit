@@ -45,7 +45,16 @@ npm install mysql2
 ### 1. Basic Setup
 
 ```typescript
-import { adiemus, createResource, productSchema } from "adiemus";
+import { adiemus, createResource, withId } from "adiemus";
+import { z } from "zod";
+
+// Define your custom schema
+const productSchema = withId({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
+  price: z.number().min(0, "Price must be positive"),
+  status: z.enum(["active", "inactive", "draft"]).default("draft"),
+});
 
 export const crud = adiemus({
   resources: [
@@ -459,19 +468,38 @@ const crud = adiemus({
 const client = createCrudClient<typeof crud>();
 ```
 
-## Built-in Schemas
+## Schema Helpers
 
-Adiemus comes with several pre-defined schemas:
+Adiemus provides helpful utilities for creating schemas:
 
 ```typescript
-import { 
-  productSchema, 
-  categorySchema, 
-  tagSchema, 
-  orderSchema,
-  userSchema,
-  postSchema 
-} from "adiemus";
+import { withId, withTimestamps } from "adiemus";
+import { z } from "zod";
+
+// Helper for creating schemas with id and timestamps
+const productSchema = withId({
+  name: z.string().min(1),
+  price: z.number().positive(),
+  description: z.string().optional(),
+  status: z.enum(["active", "inactive"]).default("active"),
+});
+
+// Helper for creating schemas with just timestamps
+const logSchema = withTimestamps({
+  level: z.enum(["info", "warn", "error"]),
+  message: z.string(),
+  source: z.string(),
+});
+
+// For maximum flexibility, define schemas manually
+const userSchema = z.object({
+  id: z.string().optional(),
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: z.enum(["user", "admin"]).default("user"),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
 ```
 
 ## Advanced Usage
@@ -510,7 +538,7 @@ createResource({
 ```typescript
 createResource({
   name: "product",
-  schema: productSchema,
+  schema: productSchema, // Your custom schema
   tableName: "custom_products_table",
 })
 ```
@@ -603,7 +631,7 @@ try {
 The TypeScript integration provides full type safety:
 
 ```typescript
-// Types are automatically inferred from your schemas
+// Types are automatically inferred from your custom schemas
 type Product = z.infer<typeof productSchema>;
 
 // CRUD instance is fully typed

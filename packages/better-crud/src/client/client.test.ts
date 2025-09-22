@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { adiemus } from "../index";
+import { adiemus, createCrudClient } from "../index";
 
 // Mock better-call/client
 vi.mock("better-call/client", () => ({
