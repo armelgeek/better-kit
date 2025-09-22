@@ -1,11 +1,11 @@
 import { betterAuth } from "better-auth";
 import {
 	categorySchema,
-	createCrudClient,
+	createQueryClient,
 	createResource,
 	productSchema,
-} from "../../../../packages/better-crud/src/";
-import { betterCrud } from "../../../../packages/better-crud/src/crud";
+} from "../../../../packages/better-query/src/";
+import { betterQuery } from "../../../../packages/better-query/src/query";
 
 export const auth = betterAuth({
 	database: {
@@ -18,8 +18,8 @@ export const auth = betterAuth({
 	},
 });
 
-export const crud = betterCrud({
-	basePath: "/api/crud",
+export const query = betterQuery({
+	basePath: "/api/query",
 	database: {
 		provider: "sqlite",
 		url: "data.db",
@@ -44,9 +44,14 @@ export const crud = betterCrud({
 	],
 });
 
-export const crudClient = createCrudClient<typeof crud>({
-	baseURL: "http://localhost:3000/api/crud",
+export const queryClient = createQueryClient<typeof query>({
+	baseURL: "http://localhost:3000/api/query",
 });
 
 export type Auth = typeof auth;
-export type Crud = typeof crud;
+export type Query = typeof query;
+
+// Legacy aliases for backward compatibility
+export const crud = query;
+export const crudClient = queryClient;
+export type Crud = typeof query;

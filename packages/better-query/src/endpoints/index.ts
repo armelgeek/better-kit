@@ -86,8 +86,8 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 	// Enhanced helper function to check permissions with scopes and ownership
 	const checkPermission = async (
 		operation: keyof typeof permissions,
-		context: CrudPermissionContext,
-		config?: CrudResourceConfig,
+		context: QueryPermissionContext,
+		config?: QueryResourceConfig,
 	): Promise<boolean> => {
 		const permissionFn = permissions[operation];
 		const requiredScopes = config?.scopes?.[operation];
@@ -205,7 +205,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Check permissions with enhanced context
-				const permissionContext: CrudPermissionContext = {
+				const permissionContext: QueryPermissionContext = {
 					user,
 					resource: name,
 					operation: "create",
@@ -225,7 +225,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Execute before hooks
-				const hookContext: CrudHookContext = {
+				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
 					operation: "create",
@@ -318,7 +318,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					}
 
 					// Check permissions with enhanced context including existing data
-					const permissionContext: CrudPermissionContext = {
+					const permissionContext: QueryPermissionContext = {
 						user,
 						resource: name,
 						operation: "read",
@@ -401,7 +401,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Check permissions with enhanced context including existing data
-				const permissionContext: CrudPermissionContext = {
+				const permissionContext: QueryPermissionContext = {
 					user,
 					resource: name,
 					operation: "update",
@@ -418,7 +418,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Execute before hooks
-				const hookContext: CrudHookContext = {
+				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
 					operation: "update",
@@ -502,7 +502,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Check permissions with enhanced context including existing data
-				const permissionContext: CrudPermissionContext = {
+				const permissionContext: QueryPermissionContext = {
 					user,
 					resource: name,
 					operation: "delete",
@@ -518,7 +518,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}
 
 				// Execute before hooks
-				const hookContext: CrudHookContext = {
+				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
 					operation: "delete",
@@ -605,7 +605,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const userScopes = extractUserScopes(user);
 
 				// Build enhanced query parameters with proper typing
-				const enhancedQuery: CrudQueryParams = {
+				const enhancedQuery: QueryParams = {
 					...query,
 					include: query.include ? SearchBuilder.parseStringArray(query.include) : undefined,
 					searchFields: SearchBuilder.parseStringArray(query.searchFields),
@@ -617,7 +617,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Check permissions with enhanced context
-				const permissionContext: CrudPermissionContext = {
+				const permissionContext: QueryPermissionContext = {
 					user,
 					resource: name,
 					operation: "list",
