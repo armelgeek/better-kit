@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { adiemus } from "../index";
+import { adiemus, createResource } from "../index";
 
 describe("CRUD Error Handling", () => {
 	it("should provide detailed error information when database operations fail", async () => {

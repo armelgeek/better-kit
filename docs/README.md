@@ -15,7 +15,7 @@ Complete documentation for Adiemus - A powerful, type-safe CRUD generator for Ty
   - [Installation](#installation)
   - [Quick Setup](#quick-setup)
   - [Generated Endpoints](#generated-endpoints)
-  - [Built-in Schemas](#built-in-schemas)
+  - [Schema Helpers](#schema-helpers)
 - [Database](#database)
   - [Supported Databases](#supported-databases)
   - [Configuration](#configuration)
@@ -327,25 +327,50 @@ For each resource, the following endpoints are automatically created:
 | `DELETE` | `/api/product/:id` | Delete a product |
 | `GET` | `/api/products` | List products with pagination |
 
-### Built-in Schemas
+### Schema Helpers
 
-Adiemus includes several pre-defined schemas for common use cases:
+Adiemus provides helpful utilities for creating custom schemas:
 
 ```typescript
 import { 
-  productSchema, 
-  categorySchema, 
-  tagSchema, 
-  orderSchema,
-  userSchema,
-  postSchema 
+  withId, 
+  withTimestamps,
+  belongsTo,
+  hasMany 
 } from "adiemus";
+import { z } from "zod";
+
+// Create schemas with helper utilities
+const productSchema = withId({
+  name: z.string().min(1),
+  price: z.number().positive(),
+  description: z.string().optional(),
+  status: z.enum(["active", "inactive"]).default("active"),
+  categoryId: z.string().optional(),
+});
+
+const categorySchema = withId({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  slug: z.string().min(1),
+});
 
 const crud = adiemus({
   resources: [
-    createResource({ name: "product", schema: productSchema }),
-    createResource({ name: "category", schema: categorySchema }),
-    createResource({ name: "tag", schema: tagSchema }),
+    createResource({ 
+      name: "product", 
+      schema: productSchema,
+      relationships: {
+        category: belongsTo("category", "categoryId"),
+      }
+    }),
+    createResource({ 
+      name: "category", 
+      schema: categorySchema,
+      relationships: {
+        products: hasMany("product", "categoryId"),
+      }
+    }),
   ],
   database: { provider: "sqlite", url: "database.db" }
 });

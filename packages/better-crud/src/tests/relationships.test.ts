@@ -1,15 +1,50 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { z } from "zod";
 import { adiemus } from "../crud";
-import {
-	productSchema,
-	categorySchema,
-	reviewSchema,
-	userSchema,
-	productRelationships,
-	categoryRelationships,
-	reviewRelationships,
-	userRelationships,
-} from "../schemas/relationships";
+import { belongsTo, hasMany, belongsToMany } from "../schemas/relationships";
+
+// Define test schemas since we no longer have predefined ones
+const testUserSchema = z.object({
+	id: z.string().optional(),
+	email: z.string().email("Valid email is required"),
+	name: z.string().min(1, "Name is required"),
+	role: z.enum(["user", "admin"]).default("user"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
+
+const testProductSchema = z.object({
+	id: z.string().optional(),
+	name: z.string().min(1, "Product name is required"),
+	description: z.string().optional(),
+	price: z.number().min(0, "Price must be positive"),
+	categoryId: z.string().optional(),
+	sku: z.string().optional(),
+	stock: z.number().int().min(0).default(0),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
+
+const testCategorySchema = z.object({
+	id: z.string().optional(),
+	name: z.string().min(1, "Category name is required"),
+	description: z.string().optional(),
+	parentId: z.string().optional(),
+	slug: z.string().min(1, "Slug is required"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
+
+const testReviewSchema = z.object({
+	id: z.string().optional(),
+	productId: z.string(),
+	userId: z.string(),
+	rating: z.number().int().min(1).max(5),
+	title: z.string().min(1, "Review title is required"),
+	content: z.string().min(1, "Review content is required"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
 
 describe("CRUD Relationship Management", () => {
 	let crud: any;
@@ -25,35 +60,38 @@ describe("CRUD Relationship Management", () => {
 			resources: [
 				{
 					name: "user",
-					schema: userSchema,
+					schema: testUserSchema,
 					relationships: {
-						// Only include relationships to resources that exist
-						reviews: userRelationships.reviews,
+						// Define user relationships using helper functions
+						reviews: hasMany("review", "userId"),
 					},
 				},
 				{
 					name: "category",
-					schema: categorySchema,
+					schema: testCategorySchema,
 					relationships: {
-						// Only include self-referencing relationships and products
-						parent: categoryRelationships.parent,
-						children: categoryRelationships.children,
-						products: categoryRelationships.products,
+						// Define category relationships using helper functions
+						parent: belongsTo("category", "parentId"),
+						children: hasMany("category", "parentId"),
+						products: hasMany("product", "categoryId"),
 					},
 				},
 				{
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 					relationships: {
-						// Only include category and reviews relationships
-						category: productRelationships.category,
-						reviews: productRelationships.reviews,
+						// Define product relationships using helper functions
+						category: belongsTo("category", "categoryId"),
+						reviews: hasMany("review", "productId"),
 					},
 				},
 				{
 					name: "review",
-					schema: reviewSchema,
-					relationships: reviewRelationships,
+					schema: testReviewSchema,
+					relationships: {
+						product: belongsTo("product", "productId"),
+						user: belongsTo("user", "userId"),
+					},
 				},
 			],
 		});

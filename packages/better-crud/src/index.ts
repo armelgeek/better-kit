@@ -18,20 +18,11 @@ export * from "./plugins";
 export { createResource, zodSchemaToFields } from "./utils/schema";
 export { RelationshipManager } from "./utils/relationships";
 
-// Pre-defined schemas (basic)
+// Schema helpers (no predefined schemas, just utilities)
 export * from "./schemas";
+
+// Relationship helpers
+export * from "./schemas/relationships";
 
 // Endpoints
 export { createCrudEndpoints, createCrudEndpoint } from "./endpoints";
-
-// Relationship examples - export explicitly to avoid conflicts
-export {
-  productRelationships,
-  categoryRelationships,
-  reviewRelationships,
-  userRelationships,
-  tagRelationships,
-  orderRelationships,
-  postRelationships,
-  reviewSchema,
-} from "./schemas/relationships";
