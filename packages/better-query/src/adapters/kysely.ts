@@ -1,5 +1,5 @@
 import { Kysely, sql } from "kysely";
-import { CrudAdapter, CrudAdapterConfig, CrudWhere, CrudOrderBy } from "../types/adapter";
+import { QueryAdapter, QueryAdapterConfig, QueryWhere, QueryOrderBy } from "../types/adapter";
 import { FieldAttribute, IncludeOptions } from "../types";
 import { RelationshipManager } from "../utils/relationships";
 
@@ -74,7 +74,7 @@ function transformToData(data: Record<string, any>): Record<string, any> {
 	return transformed;
 }
 
-export class KyselyCrudAdapter implements CrudAdapter {
+export class KyselyQueryAdapter implements QueryAdapter {
 	private relationshipManager?: RelationshipManager;
 	public config?: {
 		provider: "sqlite" | "postgres" | "mysql" | "custom";
@@ -122,7 +122,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async findFirst(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 		include?: IncludeOptions;
 		select?: string[];
 	}) {
@@ -147,10 +147,10 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async findMany(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 		limit?: number;
 		offset?: number;
-		orderBy?: CrudOrderBy[];
+		orderBy?: QueryOrderBy[];
 		include?: IncludeOptions;
 		select?: string[];
 	}) {
@@ -188,7 +188,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async update(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		data: Record<string, any>;
 		include?: IncludeOptions;
 	}) {
@@ -224,7 +224,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async delete(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		cascade?: boolean;
 	}) {
 		const { model, where, cascade = false } = params;
@@ -246,7 +246,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async count(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 	}) {
 		const { model, where = [] } = params;
 
@@ -272,7 +272,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		// Start transaction
 		return await this.db.transaction().execute(async (trx) => {
 			// Create main record
-			const adapter = new KyselyCrudAdapter(trx);
+			const adapter = new KyselyQueryAdapter(trx);
 			adapter.setRelationshipManager(this.relationshipManager!);
 			
 			const mainRecord = await adapter.create({ model, data });
@@ -293,7 +293,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	async updateWithRelations(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		data: Record<string, any>;
 		relations?: Record<string, any>;
 		include?: IncludeOptions;
@@ -303,7 +303,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 		// Start transaction
 		return await this.db.transaction().execute(async (trx) => {
 			// Update main record
-			const adapter = new KyselyCrudAdapter(trx);
+			const adapter = new KyselyQueryAdapter(trx);
 			adapter.setRelationshipManager(this.relationshipManager!);
 			
 			const mainRecord = await adapter.update({ model, where, data });
@@ -361,10 +361,10 @@ export class KyselyCrudAdapter implements CrudAdapter {
 	private async findWithRelations(
 		model: string,
 		params: {
-			where?: CrudWhere[];
+			where?: QueryWhere[];
 			limit?: number;
 			offset?: number;
-			orderBy?: CrudOrderBy[];
+			orderBy?: QueryOrderBy[];
 			include: IncludeOptions;
 		}
 	): Promise<any[]> {
@@ -502,7 +502,7 @@ export class KyselyCrudAdapter implements CrudAdapter {
 
 	private async handleCascadeDelete(
 		model: string,
-		where: CrudWhere[]
+		where: QueryWhere[]
 	): Promise<void> {
 		// TODO: Implement cascade delete logic
 		// This would find all related records that should be deleted
@@ -742,13 +742,13 @@ export function createKyselyAdapter(options: { database: { provider: string; url
 }
 
 /**
- * Creates a CRUD adapter using Kysely - follows better-auth pattern
+ * Creates a Query adapter using Kysely - follows better-auth pattern
  */
-export function kyselyCrudAdapter(
+export function kyselyQueryAdapter(
 	db: Kysely<any>,
-	config?: CrudAdapterConfig,
-): CrudAdapter {
-	const adapter = new KyselyCrudAdapter(db);
+	config?: QueryAdapterConfig,
+): QueryAdapter {
+	const adapter = new KyselyQueryAdapter(db);
 	
 	// Set configuration
 	if (config) {
@@ -763,3 +763,6 @@ export function kyselyCrudAdapter(
 	
 	return adapter;
 }
+
+// Legacy alias
+export const kyselyCrudAdapter = kyselyQueryAdapter;

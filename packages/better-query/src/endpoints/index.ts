@@ -1,17 +1,17 @@
 import { createEndpointCreator, createMiddleware } from "better-call";
 import { ZodObject, ZodRawShape, z } from "zod";
 import {
-	CrudContext,
-	CrudPermissionContext,
-	CrudResourceConfig,
+	QueryContext,
+	QueryPermissionContext,
+	QueryResourceConfig,
 	PaginationResult,
 	IncludeOptions,
-	CrudHookContext,
+	QueryHookContext,
 	SecurityContext,
 	AuditEvent,
-	CrudQueryParams,
+	QueryParams,
 } from "../types";
-import { convertToCrudWhere, convertToCrudOrderBy } from "../adapters/utils";
+import { convertToQueryWhere, convertToQueryOrderBy } from "../adapters/utils";
 import { capitalize, generateId, validateData } from "../utils/schema";
 import { 
 	sanitizeData, 
@@ -27,15 +27,15 @@ import { HookExecutor, AuditLogger } from "../utils/hooks";
 import { SearchBuilder, FilterBuilder } from "../utils/search";
 
 /**
- * Create CRUD-specific middleware that provides context
+ * Create Query-specific middleware that provides context
  */
-export const crudContextMiddleware = createMiddleware(async (ctx) => {
+export const queryContextMiddleware = createMiddleware(async (ctx) => {
 	// Extract security context from request
 	const securityContext = extractSecurityContext(ctx.request || ctx);
 	
 	// Add security utilities to context
 	const enhancedContext = {
-		...({} as CrudContext),
+		...({} as QueryContext),
 		security: securityContext,
 		rateLimiter,
 		auditLogger: new AuditLogger(),
@@ -44,17 +44,23 @@ export const crudContextMiddleware = createMiddleware(async (ctx) => {
 	return enhancedContext;
 });
 
-/**
- * Create CRUD endpoint creator with our middleware
- */
-export const createCrudEndpoint = createEndpointCreator({
-	use: [crudContextMiddleware],
-});
+// Legacy alias
+export const crudContextMiddleware = queryContextMiddleware;
 
 /**
- * Creates CRUD endpoints for a given resource
+ * Create Query endpoint creator with our middleware
  */
-export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
+export const createQueryEndpoint = createEndpointCreator({
+	use: [queryContextMiddleware],
+});
+
+// Legacy alias
+export const createCrudEndpoint = createQueryEndpoint;
+
+/**
+ * Creates Query endpoints for a given resource
+ */
+export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 	const {
 		name,
 		schema,
@@ -75,7 +81,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 		...endpoints,
 	};
 
-	const crudEndpoints: Record<string, any> = {};
+	const queryEndpoints: Record<string, any> = {};
 
 	// Enhanced helper function to check permissions with scopes and ownership
 	const checkPermission = async (
@@ -147,7 +153,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// CREATE endpoint
 	if (enabledEndpoints.create) {
-		crudEndpoints[`create${capitalize(name)}`] = createCrudEndpoint(
+		queryEndpoints[`create${capitalize(name)}`] = createQueryEndpoint(
 			`/${name}`,
 			{
 				method: "POST",
@@ -276,7 +282,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// READ endpoint
 	if (enabledEndpoints.read) {
-		crudEndpoints[`get${capitalize(name)}`] = createCrudEndpoint(
+		queryEndpoints[`get${capitalize(name)}`] = createQueryEndpoint(
 			`/${name}/:id`,
 			{
 				method: "GET",
@@ -303,7 +309,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					const result = await adapter.findFirst({
 						model: actualTableName,
-						where: convertToCrudWhere([{ field: "id", value: id }]),
+						where: convertToQueryWhere([{ field: "id", value: id }]),
 						include,
 					});
 
@@ -344,7 +350,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// UPDATE endpoint  
 	if (enabledEndpoints.update) {
-		crudEndpoints[`update${capitalize(name)}`] = createCrudEndpoint(
+		queryEndpoints[`update${capitalize(name)}`] = createQueryEndpoint(
 			`/${name}/:id`,
 			{
 				method: "PATCH",
@@ -365,7 +371,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				// Check if resource exists first (needed for ownership checks)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
-					where: convertToCrudWhere([{ field: "id", value: id }]),
+					where: convertToQueryWhere([{ field: "id", value: id }]),
 				});
 
 				if (!existing) {
@@ -438,7 +444,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					const result = await adapter.update({
 						model: actualTableName,
-						where: convertToCrudWhere([{ field: "id", value: id }]),
+						where: convertToQueryWhere([{ field: "id", value: id }]),
 						data,
 					});
 
@@ -468,7 +474,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// DELETE endpoint
 	if (enabledEndpoints.delete) {
-		crudEndpoints[`delete${capitalize(name)}`] = createCrudEndpoint(
+		queryEndpoints[`delete${capitalize(name)}`] = createQueryEndpoint(
 			`/${name}/:id`,
 			{
 				method: "DELETE",
@@ -488,7 +494,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				// Check if resource exists first (needed for ownership and audit)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
-					where: convertToCrudWhere([{ field: "id", value: id }]),
+					where: convertToQueryWhere([{ field: "id", value: id }]),
 				});
 
 				if (!existing) {
@@ -537,7 +543,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 				try {
 					await adapter.delete({
 						model: actualTableName,
-						where: convertToCrudWhere([{ field: "id", value: id }]),
+						where: convertToQueryWhere([{ field: "id", value: id }]),
 					});
 
 					// Execute after hooks
@@ -565,7 +571,7 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// LIST endpoint with advanced search and filtering
 	if (enabledEndpoints.list) {
-		crudEndpoints[`list${capitalize(name)}s`] = createCrudEndpoint(
+		queryEndpoints[`list${capitalize(name)}s`] = createQueryEndpoint(
 			`/${name}s`,
 			{
 				method: "GET",
@@ -669,16 +675,16 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 					// Get total count for pagination
 					const total = await adapter.count({
 						model: actualTableName,
-						where: convertToCrudWhere(whereConditions),
+						where: convertToQueryWhere(whereConditions),
 					});
 
 					// Get items
 					const items = await adapter.findMany({
 						model: actualTableName,
-						where: convertToCrudWhere(whereConditions),
+						where: convertToQueryWhere(whereConditions),
 						limit,
 						offset,
-						orderBy: convertToCrudOrderBy(orderBy),
+						orderBy: convertToQueryOrderBy(orderBy),
 						include: includeOptions,
 					});
 
@@ -713,8 +719,11 @@ export function createCrudEndpoints(resourceConfig: CrudResourceConfig) {
 
 	// Merge custom endpoints if provided
 	if (customEndpoints && Object.keys(customEndpoints).length > 0) {
-		Object.assign(crudEndpoints, customEndpoints);
+		Object.assign(queryEndpoints, customEndpoints);
 	}
 
-	return crudEndpoints;
+	return queryEndpoints;
 }
+
+// Legacy alias
+export const createCrudEndpoints = createQueryEndpoints;
