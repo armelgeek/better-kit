@@ -1,9 +1,12 @@
 import { Endpoint } from "better-call";
 import { ZodSchema, z } from "zod";
-import { CrudAdapter } from "./adapter";
+import { QueryAdapter } from "./adapter";
 import { Plugin } from "./plugins";
 
-export type CrudOperation = "create" | "read" | "update" | "delete" | "list";
+export type QueryOperation = "create" | "read" | "update" | "delete" | "list";
+
+// Legacy alias
+export type CrudOperation = QueryOperation;
 
 /** Relationship types */
 export type RelationType = "hasOne" | "hasMany" | "belongsTo" | "belongsToMany";
@@ -30,7 +33,7 @@ export interface RelationshipConfig {
 	maxDepth?: number;
 }
 
-export interface CrudResourceConfig {
+export interface QueryResourceConfig {
 	/** Resource name (e.g., "product") */
 	name: string;
 	/** Zod validation schema */
@@ -51,11 +54,11 @@ export interface CrudResourceConfig {
 	customEndpoints?: Record<string, Endpoint>;
 	/** Permission functions */
 	permissions?: {
-		create?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
-		read?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
-		update?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
-		delete?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
-		list?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
+		create?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
+		read?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
+		update?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
+		delete?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
+		list?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
 	};
 	/** Scoped permissions for advanced access control */
 	scopes?: {
@@ -72,12 +75,12 @@ export interface CrudResourceConfig {
 	};
 	/** Lifecycle hooks */
 	hooks?: {
-		onCreate?: (context: CrudHookContext) => Promise<void> | void;
-		onUpdate?: (context: CrudHookContext) => Promise<void> | void;
-		onDelete?: (context: CrudHookContext) => Promise<void> | void;
-		afterCreate?: (context: CrudHookContext) => Promise<void> | void;
-		afterUpdate?: (context: CrudHookContext) => Promise<void> | void;
-		afterDelete?: (context: CrudHookContext) => Promise<void> | void;
+		onCreate?: (context: QueryHookContext) => Promise<void> | void;
+		onUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		onDelete?: (context: QueryHookContext) => Promise<void> | void;
+		afterCreate?: (context: QueryHookContext) => Promise<void> | void;
+		afterUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		afterDelete?: (context: QueryHookContext) => Promise<void> | void;
 	};
 	/** Input sanitization rules */
 	sanitization?: {
@@ -92,13 +95,16 @@ export interface CrudResourceConfig {
 	};
 }
 
-export interface CrudPermissionContext {
+// Legacy alias
+export type CrudResourceConfig = QueryResourceConfig;
+
+export interface QueryPermissionContext {
 	/** Any user data (can be null for anonymous) */
 	user?: any;
 	/** Resource being accessed */
 	resource: string;
 	/** Operation being performed */
-	operation: CrudOperation;
+	operation: QueryOperation;
 	/** Data being created/updated (for create/update operations) */
 	data?: any;
 	/** ID being accessed (for read/update/delete operations) */
@@ -111,13 +117,16 @@ export interface CrudPermissionContext {
 	existingData?: any;
 }
 
-export interface CrudHookContext {
+// Legacy alias
+export type CrudPermissionContext = QueryPermissionContext;
+
+export interface QueryHookContext {
 	/** User performing the operation */
 	user?: any;
 	/** Resource being accessed */
 	resource: string;
 	/** Operation being performed */
-	operation: CrudOperation;
+	operation: QueryOperation;
 	/** Data being created/updated */
 	data?: any;
 	/** ID being accessed (for read/update/delete operations) */
@@ -129,8 +138,11 @@ export interface CrudHookContext {
 	/** Request context */
 	request?: any;
 	/** Adapter instance for custom queries - can be extended with context */
-	adapter: CrudAdapter & { context?: any };
+	adapter: QueryAdapter & { context?: any };
 }
+
+// Legacy alias
+export type CrudHookContext = QueryHookContext;
 
 export interface SanitizationRule {
 	type: "trim" | "escape" | "lowercase" | "uppercase" | "strip" | "custom";
@@ -143,17 +155,17 @@ export interface UserScope {
 	permissions: string[];
 }
 
-export interface CrudOptions {
-	/** Array of resources to generate CRUD for */
-	resources: CrudResourceConfig[];
+export interface QueryOptions {
+	/** Array of resources to generate operations for */
+	resources: QueryResourceConfig[];
 	/** Database adapter configuration */
-	database: CrudDatabaseOptions;
+	database: QueryDatabaseOptions;
 	/** Base path for all endpoints (optional) */
 	basePath?: string;
 	/** Global auth requirement (default: false) */
 	requireAuth?: boolean;
 	/** Custom middleware */
-	middleware?: CrudMiddleware[];
+	middleware?: QueryMiddleware[];
 	/** Plugins to enable */
 	plugins?: Plugin[];
 	/** Global security settings */
@@ -174,17 +186,20 @@ export interface CrudOptions {
 			rules: SanitizationRule[];
 		};
 		/** Global permission checks */
-		globalPermissions?: (context: CrudPermissionContext) => Promise<boolean> | boolean;
+		globalPermissions?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
 	};
 	/** Audit logging configuration */
 	audit?: {
 		enabled: boolean;
-		logOperations?: CrudOperation[];
+		logOperations?: QueryOperation[];
 		auditLogger?: (event: AuditEvent) => Promise<void> | void;
 	};
 }
 
-export interface CrudDatabaseConfig {
+// Legacy alias
+export type CrudOptions = QueryOptions;
+
+export interface QueryDatabaseConfig {
 	/** Database provider */
 	provider: "sqlite" | "postgres" | "mysql";
 	/** Database connection URL */
@@ -196,22 +211,29 @@ export interface CrudDatabaseConfig {
 /**
  * Database configuration can be either a provider config or a direct adapter
  */
-export type CrudDatabaseOptions = CrudDatabaseConfig | { adapter: CrudAdapter };
+export type QueryDatabaseOptions = QueryDatabaseConfig | { adapter: QueryAdapter };
 
-export interface CrudMiddleware {
+// Legacy aliases
+export type CrudDatabaseConfig = QueryDatabaseConfig;
+export type CrudDatabaseOptions = QueryDatabaseOptions;
+
+export interface QueryMiddleware {
 	/** Path pattern to match */
 	path: string;
 	/** Middleware function */
 	handler: (context: any) => Promise<void> | void;
 }
 
-export interface CrudContext {
+// Legacy alias
+export type CrudMiddleware = QueryMiddleware;
+
+export interface QueryContext {
 	/** Database instance */
 	db: any;
 	/** Database adapter */
-	adapter: CrudAdapter;
-	/** CRUD options */
-	options: CrudOptions;
+	adapter: QueryAdapter;
+	/** Query options */
+	options: QueryOptions;
 	/** Relationship registry for resolving relations */
 	relationships: Map<string, Record<string, RelationshipConfig>>;
 	/** Schema registry for field information */
@@ -219,6 +241,9 @@ export interface CrudContext {
 	/** Plugin manager instance */
 	pluginManager?: any;
 }
+
+// Legacy alias
+export type CrudContext = QueryContext;
 
 export interface FieldAttribute {
 	type: "string" | "number" | "boolean" | "date" | "json";
@@ -259,7 +284,7 @@ export interface PaginationParams {
 }
 
 /** Query parameters for list operations with relationships */
-export interface CrudQueryParams extends PaginationParams {
+export interface QueryParams extends PaginationParams {
 	/** Include related data */
 	include?: string[];
 	/** Advanced select with nested includes */
@@ -285,6 +310,9 @@ export interface CrudQueryParams extends PaginationParams {
 	};
 }
 
+// Legacy alias
+export type CrudQueryParams = QueryParams;
+
 export interface AuditEvent {
 	/** Timestamp of the event */
 	timestamp: Date;
@@ -293,7 +321,7 @@ export interface AuditEvent {
 	/** Resource affected */
 	resource: string;
 	/** Operation performed */
-	operation: CrudOperation;
+	operation: QueryOperation;
 	/** ID of the affected record */
 	recordId?: string;
 	/** Data before the operation (for updates/deletes) */
@@ -338,4 +366,7 @@ export interface PaginationResult<T> {
 	};
 }
 
-export type CrudEndpoint = Endpoint<any>;
+export type QueryEndpoint = Endpoint<any>;
+
+// Legacy alias
+export type CrudEndpoint = QueryEndpoint;

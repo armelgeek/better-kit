@@ -1,9 +1,9 @@
 /**
- * Example demonstrating the new CRUD client system
+ * Example demonstrating the new Query client system
  * This shows how to use the client in a way similar to better-auth
  */
 
-import { adiemus, createCrudClient, createResource } from "better-crud";
+import { betterQuery, createQueryClient, createResource } from "better-query";
 import { z } from "zod";
 
 // 1. Define schemas
@@ -25,7 +25,7 @@ const categorySchema = z.object({
 });
 
 // 2. Create the CRUD server instance
-export const crud = adiemus({
+export const query = betterQuery({
 	resources: [
 		createResource({
 			name: "product",
@@ -51,7 +51,7 @@ export const crud = adiemus({
 });
 
 // 3. Create the typed client
-export const crudClient = createCrudClient<typeof crud>({
+export const queryClient = createQueryClient<typeof query>({
 	baseURL: "http://localhost:3000/api",
 });
 
@@ -59,7 +59,7 @@ export const crudClient = createCrudClient<typeof crud>({
 
 export async function createProduct() {
 	// Type-safe product creation with custom headers
-	const result = await crudClient.product.create(
+	const result = await queryClient.product.create(
 		{
 			name: "Tee shirt",
 			price: 29.99,
@@ -82,7 +82,7 @@ export async function createProduct() {
 }
 
 export async function getProduct(id: string) {
-	const result = await crudClient.product.read(id, {
+	const result = await queryClient.product.read(id, {
 		headers: {
 			Authorization: "Bearer your-token-here",
 		},
@@ -99,7 +99,7 @@ export async function updateProduct(
 	id: string,
 	updates: Partial<z.infer<typeof productSchema>>,
 ) {
-	const result = await crudClient.product.update(id, updates, {
+	const result = await queryClient.product.update(id, updates, {
 		headers: {
 			Authorization: "Bearer your-token-here",
 			"Content-Type": "application/json",
@@ -114,7 +114,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string) {
-	const result = await crudClient.product.delete(id, {
+	const result = await queryClient.product.delete(id, {
 		headers: {
 			Authorization: "Bearer your-token-here",
 		},
@@ -134,7 +134,7 @@ export async function listProducts(options?: {
 	sortBy?: string;
 	sortOrder?: "asc" | "desc";
 }) {
-	const result = await crudClient.product.list(options, {
+	const result = await queryClient.product.list(options, {
 		headers: {
 			Authorization: "Bearer your-token-here",
 		},
@@ -210,20 +210,20 @@ export function useProducts() {
 // app/api/products/route.ts
 import { crud } from '@/lib/crud-config';
 
-export const GET = crud.handler;
-export const POST = crud.handler;
+export const GET = query.handler;
+export const POST = query.handler;
 
 // app/api/products/[id]/route.ts
-export const GET = crud.handler;
-export const PATCH = crud.handler;
-export const DELETE = crud.handler;
+export const GET = query.handler;
+export const PATCH = query.handler;
+export const DELETE = query.handler;
 */
 
 // 7. Example frontend usage
 /*
 async function handleCreateProduct(formData: FormData) {
 	try {
-		const product = await crudClient.products.create({
+		const product = await queryClient.products.create({
 			name: formData.get('name') as string,
 			price: parseFloat(formData.get('price') as string),
 			description: formData.get('description') as string,

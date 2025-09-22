@@ -1,17 +1,20 @@
 import { BetterFetchOption } from "@better-fetch/fetch";
 import { createClient } from "better-call/client";
-import { BetterCrud } from "../crud";
-import { CrudResourceConfig } from "../types";
+import { BetterQuery } from "../query";
+import { QueryResourceConfig } from "../types";
 import { ZodSchema, z } from "zod";
 
-export interface CrudClientOptions extends BetterFetchOption {
+export interface QueryClientOptions extends BetterFetchOption {
 	baseURL?: string;
 }
+
+// Legacy alias
+export type CrudClientOptions = QueryClientOptions;
 
 /**
  * Error codes object similar to better-auth
  */
-export const CRUD_ERROR_CODES = {
+export const QUERY_ERROR_CODES = {
 	VALIDATION_FAILED: "VALIDATION_FAILED",
 	FORBIDDEN: "FORBIDDEN", 
 	NOT_FOUND: "NOT_FOUND",
@@ -22,7 +25,13 @@ export const CRUD_ERROR_CODES = {
 	HOOK_EXECUTION_FAILED: "HOOK_EXECUTION_FAILED",
 } as const;
 
-export type CrudErrorCode = keyof typeof CRUD_ERROR_CODES;
+// Legacy alias
+export const CRUD_ERROR_CODES = QUERY_ERROR_CODES;
+
+export type QueryErrorCode = keyof typeof QUERY_ERROR_CODES;
+
+// Legacy alias
+export type CrudErrorCode = QueryErrorCode;
 
 /**
  * Infer base URL from environment variables (similar to better-auth pattern)
@@ -51,11 +60,11 @@ function inferBaseURL() {
 }
 
 /**
- * Create a typed CRUD client from a CRUD instance
+ * Create a typed Query client from a Query instance
  */
-export function createCrudClient<T extends BetterCrud = BetterCrud>(
-	options?: CrudClientOptions,
-): CrudClient<T> {
+export function createQueryClient<T extends BetterQuery = BetterQuery>(
+	options?: QueryClientOptions,
+): QueryClient<T> {
 	type API = T["api"];
 
 	// Only pass compatible options to createClient to avoid type conflicts
@@ -73,17 +82,20 @@ export function createCrudClient<T extends BetterCrud = BetterCrud>(
 		} as any
 	);
 
-	const proxy = createCrudProxy(client);
+	const proxy = createQueryProxy(client);
 	
-	(proxy as any).$ERROR_CODES = CRUD_ERROR_CODES;
+	(proxy as any).$ERROR_CODES = QUERY_ERROR_CODES;
 	
-	return proxy as CrudClient<T>;
+	return proxy as QueryClient<T>;
 }
 
+// Legacy alias
+export const createCrudClient = createQueryClient;
+
 /**
- * Create a proxy that organizes CRUD methods by resource
+ * Create a proxy that organizes Query methods by resource
  */
-function createCrudProxy(client: any) {
+function createQueryProxy(client: any) {
 	// Create resource proxies
 	const resources: Record<string, any> = {};
 
@@ -157,6 +169,9 @@ function createCrudProxy(client: any) {
 	});
 }
 
+// Legacy alias
+const createCrudProxy = createQueryProxy;
+
 /**
  * Capitalize first letter of a string
  */
@@ -167,12 +182,12 @@ function capitalize(str: string): string {
 /**
  * Type helper to infer resource names and schemas from CRUD configuration
  */
-type InferResourceNames<T extends readonly CrudResourceConfig[]> = {
+type InferResourceNames<T extends readonly QueryResourceConfig[]> = {
 	[K in T[number]["name"]]: T[number] & { name: K };
 };
 
 type GetResourceByName<
-	T extends readonly CrudResourceConfig[],
+	T extends readonly QueryResourceConfig[],
 	K extends string
 > = Extract<T[number], { name: K }>;
 
@@ -180,10 +195,10 @@ type SchemaInput<T extends ZodSchema> = T extends ZodSchema<infer U> ? U : never
 type SchemaOutput<T extends ZodSchema> = T extends ZodSchema<any, any, infer U> ? U : never;
 
 /**
- * Infer typed CRUD methods for a resource with proper schema typing
+ * Infer typed Query methods for a resource with proper schema typing
  */
-type InferCrudMethods<
-	TResources extends readonly CrudResourceConfig[],
+type InferQueryMethods<
+	TResources extends readonly QueryResourceConfig[],
 	TResourceName extends string
 > = {
 	create: (
@@ -191,7 +206,7 @@ type InferCrudMethods<
 		options?: BetterFetchOption
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
-		error?: { code?: CrudErrorCode; message: string; details?: any };
+		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
 	
 	read: (
@@ -199,7 +214,7 @@ type InferCrudMethods<
 		options?: BetterFetchOption
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
-		error?: { code?: CrudErrorCode; message: string; details?: any };
+		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
 	
 	update: (
@@ -208,7 +223,7 @@ type InferCrudMethods<
 		options?: BetterFetchOption
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
-		error?: { code?: CrudErrorCode; message: string; details?: any };
+		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
 	
 	delete: (
@@ -216,7 +231,7 @@ type InferCrudMethods<
 		options?: BetterFetchOption
 	) => Promise<{
 		data?: { success: boolean };
-		error?: { code?: CrudErrorCode; message: string; details?: any };
+		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
 	
 	list: (
@@ -243,18 +258,27 @@ type InferCrudMethods<
 				hasPrev: boolean;
 			};
 		};
-		error?: { code?: CrudErrorCode; message: string; details?: any };
+		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
 };
 
+// Legacy alias
+type InferCrudMethods<
+	TResources extends readonly QueryResourceConfig[],
+	TResourceName extends string
+> = InferQueryMethods<TResources, TResourceName>;
+
 /**
- * Main client type that infers all resources from CRUD configuration
+ * Main client type that infers all resources from Query configuration
  */
-export type CrudClient<T extends BetterCrud = BetterCrud> = {
-	[K in T["options"]["resources"][number]["name"]]: InferCrudMethods<
+export type QueryClient<T extends BetterQuery = BetterQuery> = {
+	[K in T["options"]["resources"][number]["name"]]: InferQueryMethods<
 		T["options"]["resources"],
 		K
 	>;
 } & {
-	$ERROR_CODES: typeof CRUD_ERROR_CODES;
+	$ERROR_CODES: typeof QUERY_ERROR_CODES;
 };
+
+// Legacy alias
+export type CrudClient<T extends BetterQuery = BetterQuery> = QueryClient<T>;

@@ -3,25 +3,31 @@ import { FieldAttribute, IncludeOptions } from ".";
 /**
  * Where clause for database queries
  */
-export interface CrudWhere {
+export interface QueryWhere {
 	field: string;
 	value: any;
 	operator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "notIn" | "like" | "notLike";
 }
 
+// Legacy alias
+export type CrudWhere = QueryWhere;
+
 /**
  * Order by clause for database queries
  */
-export interface CrudOrderBy {
+export interface QueryOrderBy {
 	field: string;
 	direction: "asc" | "desc";
 }
 
+// Legacy alias
+export type CrudOrderBy = QueryOrderBy;
+
 /**
- * Generic CRUD Adapter Interface
- * Similar to better-auth's Adapter interface but specialized for CRUD operations
+ * Generic Query Adapter Interface
+ * Similar to better-auth's Adapter interface but specialized for database operations
  */
-export interface CrudAdapter {
+export interface QueryAdapter {
 	/** Create a new record */
 	create(params: {
 		model: string;
@@ -32,7 +38,7 @@ export interface CrudAdapter {
 	/** Find a single record */
 	findFirst(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 		include?: IncludeOptions;
 		select?: string[];
 	}): Promise<any | null>;
@@ -40,10 +46,10 @@ export interface CrudAdapter {
 	/** Find multiple records */
 	findMany(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 		limit?: number;
 		offset?: number;
-		orderBy?: CrudOrderBy[];
+		orderBy?: QueryOrderBy[];
 		include?: IncludeOptions;
 		select?: string[];
 	}): Promise<any[]>;
@@ -51,7 +57,7 @@ export interface CrudAdapter {
 	/** Update a record */
 	update(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		data: Record<string, any>;
 		include?: IncludeOptions;
 	}): Promise<any>;
@@ -59,14 +65,14 @@ export interface CrudAdapter {
 	/** Delete a record */
 	delete(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		cascade?: boolean;
 	}): Promise<void>;
 
 	/** Count records */
 	count(params: {
 		model: string;
-		where?: CrudWhere[];
+		where?: QueryWhere[];
 	}): Promise<number>;
 
 	/** Create records with related data atomically */
@@ -80,7 +86,7 @@ export interface CrudAdapter {
 	/** Update records with related data atomically */
 	updateWithRelations?(params: {
 		model: string;
-		where: CrudWhere[];
+		where: QueryWhere[];
 		data: Record<string, any>;
 		relations?: Record<string, any>;
 		include?: IncludeOptions;
@@ -113,10 +119,13 @@ export interface CrudAdapter {
 	};
 }
 
+// Legacy alias
+export type CrudAdapter = QueryAdapter;
+
 /**
  * Adapter configuration interface
  */
-export interface CrudAdapterConfig {
+export interface QueryAdapterConfig {
 	/** Database provider */
 	provider: "sqlite" | "postgres" | "mysql";
 	/** Enable auto-migration */
@@ -127,3 +136,6 @@ export interface CrudAdapterConfig {
 		boolean?: boolean;
 	};
 }
+
+// Legacy alias
+export type CrudAdapterConfig = QueryAdapterConfig;

@@ -1,4 +1,4 @@
-import { CrudQueryParams, IncludeOptions } from "../types";
+import { QueryParams, IncludeOptions } from "../types";
 
 /**
  * Search and filtering utilities
@@ -8,7 +8,7 @@ export class SearchBuilder {
 	 * Build search conditions from query parameters
 	 */
 	static buildSearchConditions(
-		query: CrudQueryParams,
+		query: QueryParams,
 		searchConfig?: {
 			fields: string[];
 			strategy: "contains" | "startsWith" | "exact" | "fuzzy";
@@ -110,7 +110,7 @@ export class SearchBuilder {
 	 * Build order by conditions
 	 */
 	static buildOrderBy(
-		query: CrudQueryParams
+		query: QueryParams
 	): Array<{ field: string; direction: "asc" | "desc" }> {
 		const orderBy: Array<{ field: string; direction: "asc" | "desc" }> = [];
 
@@ -144,7 +144,7 @@ export class SearchBuilder {
 	/**
 	 * Build pagination parameters
 	 */
-	static buildPagination(query: CrudQueryParams): {
+	static buildPagination(query: QueryParams): {
 		limit: number;
 		offset: number;
 		page: number;
@@ -159,7 +159,7 @@ export class SearchBuilder {
 	/**
 	 * Build include/select options for relationships
 	 */
-	static buildIncludeOptions(query: CrudQueryParams): IncludeOptions | undefined {
+	static buildIncludeOptions(query: QueryParams): IncludeOptions | undefined {
 		const options: IncludeOptions = {};
 
 		if (query.include) {
