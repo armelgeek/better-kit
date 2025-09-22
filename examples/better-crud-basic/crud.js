@@ -1,25 +1,40 @@
 import {
 	adiemus,
-	categorySchema,
 	createResource,
-	productSchema,
+	withId,
 } from "better-crud";
 import { z } from "zod";
 
-// Define a custom schema
-const userSchema = z.object({
-	id: z.string().optional(),
+// Define custom schemas - users now need to create their own schemas
+const productSchema = withId({
+	name: z.string().min(1, "Product name is required"),
+	description: z.string().optional(),
+	price: z.number().min(0, "Price must be positive"),
+	categoryId: z.string().optional(),
+	tags: z.array(z.string()).default([]),
+	status: z.enum(["active", "inactive", "draft"]).default("draft"),
+	sku: z.string().optional(),
+	stock: z.number().int().min(0).default(0),
+});
+
+const categorySchema = withId({
+	name: z.string().min(1, "Category name is required"),
+	description: z.string().optional(),
+	parentId: z.string().optional(),
+	slug: z.string().min(1, "Slug is required"),
+	status: z.enum(["active", "inactive"]).default("active"),
+});
+
+const userSchema = withId({
 	email: z.string().email("Valid email is required"),
 	name: z.string().min(1, "Name is required"),
 	role: z.enum(["user", "admin"]).default("user"),
-	createdAt: z.date().default(() => new Date()),
-	updatedAt: z.date().default(() => new Date()),
 });
 
 console.log("✅ Successfully imported better-crud!");
-console.log("✅ Successfully created schemas!");
+console.log("✅ Successfully created custom schemas!");
 
-console.log("\nAvailable schemas:");
+console.log("\nCustom schemas:");
 console.log("- productSchema:", typeof productSchema);
 console.log("- categorySchema:", typeof categorySchema);
 console.log("- userSchema:", typeof userSchema);

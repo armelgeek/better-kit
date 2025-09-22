@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { adiemus } from "../src";
-import { createResource, productSchema } from "../src";
+import { createResource } from "../src";
+
+// Define a test schema since we no longer have predefined ones
+const testProductSchema = z.object({
+	id: z.string().optional(),
+	name: z.string().min(1, "Product name is required"),
+	description: z.string().optional(),
+	price: z.number().min(0, "Price must be positive"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
 
 describe("BetterCrud", () => {
 	it("should create a CRUD instance", () => {
@@ -9,7 +19,7 @@ describe("BetterCrud", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 				}),
 			],
 			database: {
@@ -71,7 +81,7 @@ describe("BetterCrud", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 					permissions: {
 						create: () => true,
 						read: () => false,
@@ -95,7 +105,7 @@ describe("BetterCrud", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 					tableName: "custom_products",
 				}),
 			],
@@ -113,7 +123,7 @@ describe("BetterCrud", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 					endpoints: {
 						create: true,
 						read: true,

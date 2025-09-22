@@ -6,8 +6,28 @@
  */
 
 import { betterAuth } from "better-auth";
-import { categorySchema, createCrudClient, createResource, crud, productSchema } from "better-auth/plugins";
+import { z } from "zod";
+import { createCrudClient, createResource, crud } from "better-auth/plugins";
 import { createReactAuthClient } from "better-auth/react";
+
+// Define custom schemas for the example
+const productSchema = z.object({
+	id: z.string(),
+	name: z.string().min(1, "Product name is required"),
+	description: z.string().optional(),
+	price: z.number().min(0, "Price must be positive"),
+	categoryId: z.string().optional(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
+
+const categorySchema = z.object({
+	id: z.string(),
+	name: z.string().min(1, "Category name is required"),
+	description: z.string().optional(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
 
 // 1. Server-side configuration with CRUD plugin
 export const auth = betterAuth({

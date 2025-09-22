@@ -1,5 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { createResource, crud, productSchema } from "./index";
+import { z } from "zod";
+import { createResource, crud } from "./index";
+
+// Define a test schema since we no longer have predefined ones
+const testProductSchema = z.object({
+	id: z.string(),
+	name: z.string().min(1, "Product name is required"),
+	description: z.string().optional(),
+	price: z.number().min(0, "Price must be positive"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
 
 describe("CRUD Plugin", () => {
 	test("should create CRUD plugin with endpoints", () => {
@@ -7,7 +18,7 @@ describe("CRUD Plugin", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 				}),
 			],
 		});
@@ -28,11 +39,11 @@ describe("CRUD Plugin", () => {
 	test("should create resource with default endpoints", () => {
 		const resource = createResource({
 			name: "test",
-			schema: productSchema,
+			schema: testProductSchema,
 		});
 
 		expect(resource.name).toBe("test");
-		expect(resource.schema).toBe(productSchema);
+		expect(resource.schema).toBe(testProductSchema);
 		expect(resource.endpoints).toEqual({
 			create: true,
 			read: true,
@@ -45,7 +56,7 @@ describe("CRUD Plugin", () => {
 	test("should create resource with custom endpoints", () => {
 		const resource = createResource({
 			name: "test",
-			schema: productSchema,
+			schema: testProductSchema,
 			endpoints: {
 				create: true,
 				read: true,
@@ -65,7 +76,7 @@ describe("CRUD Plugin", () => {
 			resources: [
 				createResource({
 					name: "product",
-					schema: productSchema,
+					schema: testProductSchema,
 				}),
 			],
 		});
