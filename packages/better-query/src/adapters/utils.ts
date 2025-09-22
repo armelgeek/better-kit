@@ -1,11 +1,11 @@
-import { CrudOptions } from "../types";
-import { CrudAdapter, CrudWhere } from "../types/adapter";
-import { createKyselyAdapter, kyselyCrudAdapter } from "./kysely";
+import { QueryOptions } from "../types";
+import { QueryAdapter, QueryWhere } from "../types/adapter";
+import { createKyselyAdapter, kyselyQueryAdapter } from "./kysely";
 
 /**
- * Convert old where clause format to new CrudWhere format
+ * Convert old where clause format to new QueryWhere format
  */
-export function convertToCrudWhere(where: Array<{ field: string; value: any; operator?: string }>): CrudWhere[] {
+export function convertToQueryWhere(where: Array<{ field: string; value: any; operator?: string }>): QueryWhere[] {
 	return where.map(w => ({
 		field: w.field,
 		value: w.value,
@@ -13,21 +13,27 @@ export function convertToCrudWhere(where: Array<{ field: string; value: any; ope
 	}));
 }
 
+// Legacy alias
+export const convertToCrudWhere = convertToQueryWhere;
+
 /**
- * Convert old orderBy format to new CrudOrderBy format
+ * Convert old orderBy format to new QueryOrderBy format
  */
-export function convertToCrudOrderBy(orderBy: Array<{ field: string; direction: "asc" | "desc" }>): import("../types/adapter").CrudOrderBy[] {
+export function convertToQueryOrderBy(orderBy: Array<{ field: string; direction: "asc" | "desc" }>): import("../types/adapter").QueryOrderBy[] {
 	return orderBy.map(o => ({
 		field: o.field,
 		direction: o.direction,
 	}));
 }
 
+// Legacy alias
+export const convertToCrudOrderBy = convertToQueryOrderBy;
+
 /**
  * Get the appropriate adapter based on the database configuration
  * Similar to better-auth's getAdapter function
  */
-export function getCrudAdapter(options: CrudOptions): CrudAdapter {
+export function getQueryAdapter(options: QueryOptions): QueryAdapter {
 	// If user provides a direct adapter, use it
 	if ("adapter" in options.database) {
 		return options.database.adapter;
@@ -42,7 +48,7 @@ export function getCrudAdapter(options: CrudOptions): CrudAdapter {
 
 		// For now, we only support Kysely adapters
 		// In the future, we can add support for other ORMs here
-		return kyselyCrudAdapter(db, {
+		return kyselyQueryAdapter(db, {
 			provider: options.database.provider,
 			autoMigrate: options.database.autoMigrate,
 		});
@@ -51,10 +57,13 @@ export function getCrudAdapter(options: CrudOptions): CrudAdapter {
 	throw new Error("Invalid database configuration. Provide either 'adapter' or 'provider' configuration.");
 }
 
+// Legacy alias
+export const getCrudAdapter = getQueryAdapter;
+
 /**
  * Get database type from configuration
  */
-export function getDatabaseType(options: CrudOptions): string {
+export function getDatabaseType(options: QueryOptions): string {
 	if ("provider" in options.database) {
 		return options.database.provider;
 	}

@@ -1,8 +1,8 @@
 import { createRouter } from "better-call";
 import { sql } from "kysely";
-import { getCrudAdapter } from "./adapters/utils";
-import { createCrudEndpoints } from "./endpoints";
-import { CrudContext, CrudOptions } from "./types";
+import { getQueryAdapter } from "./adapters/utils";
+import { createQueryEndpoints } from "./endpoints";
+import { QueryContext, QueryOptions } from "./types";
 import { zodSchemaToFields } from "./utils/schema";
 import { RelationshipManager } from "./utils/relationships";
 import { PluginManager, shimPluginContext } from "./plugins/manager";
@@ -10,10 +10,10 @@ import { PluginInitContext } from "./types/plugins";
 import type { UnionToIntersection } from "type-fest";
 
 /**
- * Initialize CRUD context similar to better-auth's init function
+ * Initialize Query context similar to better-auth's init function
  */
-function initCrud(options: CrudOptions): CrudContext {
-	const adapter = getCrudAdapter(options);
+function initQuery(options: QueryOptions): QueryContext {
+	const adapter = getQueryAdapter(options);
 
 	// Initialize relationship and schema registries
 	const relationships = new Map();
@@ -22,7 +22,7 @@ function initCrud(options: CrudOptions): CrudContext {
 	// Initialize plugin manager
 	const pluginManager = new PluginManager();
 
-	const context: CrudContext = {
+	const context: QueryContext = {
 		db: null, // For backward compatibility, we keep this but it's not used with the adapter pattern
 		adapter,
 		options,
@@ -41,19 +41,19 @@ function initCrud(options: CrudOptions): CrudContext {
 }
 
 /**
- * Main CRUD factory function - similar to betterAuth()
+ * Main Query factory function - similar to betterAuth()
  */
-export function adiemus<O extends CrudOptions>(options: O) {
-	const crudContext = initCrud(options);
+export function betterQuery<O extends QueryOptions>(options: O) {
+	const queryContext = initQuery(options);
 
 	// Register plugins
 	if (options.plugins) {
-		crudContext.pluginManager!.registerPlugins(options.plugins);
+		queryContext.pluginManager!.registerPlugins(options.plugins);
 	}
 
 	// Collect all resources (original + plugin resources)
 	const allResources = [...options.resources];
-	const pluginResources = crudContext.pluginManager!.getPluginResources();
+	const pluginResources = queryContext.pluginManager!.getPluginResources();
 	allResources.push(...pluginResources);
 
 	// Generate endpoints for all resources
@@ -63,12 +63,12 @@ export function adiemus<O extends CrudOptions>(options: O) {
 	for (const resourceConfig of allResources) {
 		// Register relationships
 		if (resourceConfig.relationships) {
-			const relationshipManager = new RelationshipManager(crudContext);
+			const relationshipManager = new RelationshipManager(queryContext);
 			relationshipManager.registerRelationships(resourceConfig.name, resourceConfig.relationships);
 		}
 
-		// Generate CRUD endpoints for this resource
-		const resourceEndpoints = createCrudEndpoints(resourceConfig);
+		// Generate Query endpoints for this resource
+		const resourceEndpoints = createQueryEndpoints(resourceConfig);
 
 		// Add to combined endpoints
 		Object.assign(allEndpoints, resourceEndpoints);
@@ -78,19 +78,19 @@ export function adiemus<O extends CrudOptions>(options: O) {
 			fields: zodSchemaToFields(resourceConfig.schema),
 		};
 		schema[resourceConfig.name] = resourceSchema;
-		crudContext.schemas.set(resourceConfig.name, resourceSchema);
+		queryContext.schemas.set(resourceConfig.name, resourceSchema);
 	}
 
 	// Add plugin endpoints
-	const pluginEndpoints = crudContext.pluginManager!.getPluginEndpoints();
+	const pluginEndpoints = queryContext.pluginManager!.getPluginEndpoints();
 	Object.assign(allEndpoints, pluginEndpoints);
 
 	// Add plugin schemas
-	const pluginSchemas = crudContext.pluginManager!.getPluginSchemas();
+	const pluginSchemas = queryContext.pluginManager!.getPluginSchemas();
 	Object.assign(schema, pluginSchemas);
 
 	// Validate all relationships after all resources are registered
-	const relationshipManager = new RelationshipManager(crudContext);
+	const relationshipManager = new RelationshipManager(queryContext);
 	for (const resourceConfig of allResources) {
 		if (resourceConfig.relationships) {
 			for (const [relationName, relationConfig] of Object.entries(resourceConfig.relationships)) {
@@ -118,7 +118,7 @@ export function adiemus<O extends CrudOptions>(options: O) {
 			return value({
 				...context,
 				context: {
-					...crudContext,
+					...queryContext,
 					...context.context,
 				},
 			});
@@ -132,28 +132,28 @@ export function adiemus<O extends CrudOptions>(options: O) {
 	// Initialize plugins
 	const pluginInitContext: PluginInitContext = {
 		resources: new Map(allResources.map(r => [r.name, r])),
-		schemas: crudContext.schemas,
-		relationships: crudContext.relationships,
-		adapter: crudContext.adapter,
+		schemas: queryContext.schemas,
+		relationships: queryContext.relationships,
+		adapter: queryContext.adapter,
 		options: options,
 	};
 
 	// Initialize plugins asynchronously
-	crudContext.pluginManager!.initializePlugins(pluginInitContext).catch(console.error);
+	queryContext.pluginManager!.initializePlugins(pluginInitContext).catch(console.error);
 
 	// Create router using better-call
 	const { handler, endpoints } = createRouter(api, {
-		extraContext: crudContext,
+		extraContext: queryContext,
 		basePath: options.basePath,
 		onError(e) {
-			console.error("CRUD Error:", e);
+			console.error("Query Error:", e);
 		},
 	});
 
 	// Auto-migrate tables if enabled
 	const shouldAutoMigrate = "autoMigrate" in options.database ? options.database.autoMigrate : false;
 	if (shouldAutoMigrate) {
-		initTables(crudContext, schema).catch(console.error);
+		initTables(queryContext, schema).catch(console.error);
 	}
 
 	// Type inference for plugin endpoints
@@ -171,7 +171,7 @@ export function adiemus<O extends CrudOptions>(options: O) {
 		handler,
 		api: endpoints as Endpoint & PluginEndpoint,
 		options,
-		context: crudContext,
+		context: queryContext,
 		schema,
 	};
 }
@@ -199,7 +199,7 @@ function applyBasePath(
  * Initialize database tables for auto-migration
  */
 async function initTables(
-	context: CrudContext,
+	context: QueryContext,
 	schema: Record<string, { fields: Record<string, any> }>,
 ) {
 	try {
@@ -221,8 +221,8 @@ async function initTables(
 	}
 }
 
-export type BetterCrud<
-	O extends CrudOptions = CrudOptions,
+export type BetterQuery<
+	O extends QueryOptions = QueryOptions,
 	Endpoints extends Record<string, any> = Record<string, any>,
 	PluginEndpoints extends Record<string, any> = UnionToIntersection<
 		O["plugins"] extends Array<infer T>
@@ -235,13 +235,13 @@ export type BetterCrud<
 	handler: (request: Request) => Promise<Response>;
 	api: Endpoints & PluginEndpoints;
 	options: O;
-	context: CrudContext;
+	context: QueryContext;
 	schema: Record<string, { fields: Record<string, any> }>;
 };
 
-// Alias for the new package name
-export type Adiemus<
-	O extends CrudOptions = CrudOptions,
+// Legacy alias for backward compatibility
+export type BetterCrud<
+	O extends QueryOptions = QueryOptions,
 	Endpoints extends Record<string, any> = Record<string, any>,
 	PluginEndpoints extends Record<string, any> = UnionToIntersection<
 		O["plugins"] extends Array<infer T>
@@ -250,4 +250,17 @@ export type Adiemus<
 				: Record<string, never>
 			: Record<string, never>
 	>,
-> = BetterCrud<O, Endpoints, PluginEndpoints>;
+> = BetterQuery<O, Endpoints, PluginEndpoints>;
+
+// Legacy alias for the old package name
+export type Adiemus<
+	O extends QueryOptions = QueryOptions,
+	Endpoints extends Record<string, any> = Record<string, any>,
+	PluginEndpoints extends Record<string, any> = UnionToIntersection<
+		O["plugins"] extends Array<infer T>
+			? T extends { endpoints: infer E }
+				? E
+				: Record<string, never>
+			: Record<string, never>
+	>,
+> = BetterQuery<O, Endpoints, PluginEndpoints>;
