@@ -133,8 +133,8 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 
 		// Verify the hook was called and modified the data
 		expect(beforeCreateHook).toHaveBeenCalledWith(mockContext);
-		expect(mockContext.data.seo?.slug).toBe("test-product-with-spaces");
-		expect(mockContext.data.status).toBe("draft");
+		expect((mockContext.data as any).seo?.slug).toBe("test-product-with-spaces");
+		expect((mockContext.data as any).status).toBe("draft");
 	});
 
 	it("should support beforeUpdate hook that modifies data", async () => {
@@ -180,8 +180,8 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 
 		// Verify the hook was called and modified the data
 		expect(beforeUpdateHook).toHaveBeenCalledWith(mockContext);
-		expect(mockContext.data.updatedAt).toBeInstanceOf(Date);
-		expect(mockContext.data.seo?.slug).toBe("updated-product-name");
+		expect((mockContext.data as any).updatedAt).toBeInstanceOf(Date);
+		expect((mockContext.data as any).seo?.slug).toBe("updated-product-name");
 	});
 
 	it("should support afterCreate hook for side effects", async () => {
