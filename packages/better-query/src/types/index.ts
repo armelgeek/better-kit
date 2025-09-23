@@ -75,12 +75,21 @@ export interface QueryResourceConfig {
 	};
 	/** Lifecycle hooks */
 	hooks?: {
+		// Before hooks (support both naming conventions)
 		onCreate?: (context: QueryHookContext) => Promise<void> | void;
 		onUpdate?: (context: QueryHookContext) => Promise<void> | void;
 		onDelete?: (context: QueryHookContext) => Promise<void> | void;
+		beforeCreate?: (context: QueryHookContext) => Promise<void> | void;
+		beforeUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		beforeDelete?: (context: QueryHookContext) => Promise<void> | void;
+		beforeRead?: (context: QueryHookContext) => Promise<void> | void;
+		beforeList?: (context: QueryHookContext) => Promise<void> | void;
+		// After hooks
 		afterCreate?: (context: QueryHookContext) => Promise<void> | void;
 		afterUpdate?: (context: QueryHookContext) => Promise<void> | void;
 		afterDelete?: (context: QueryHookContext) => Promise<void> | void;
+		afterRead?: (context: QueryHookContext) => Promise<void> | void;
+		afterList?: (context: QueryHookContext) => Promise<void> | void;
 	};
 	/** Input sanitization rules */
 	sanitization?: {
@@ -168,6 +177,24 @@ export interface QueryOptions {
 	middleware?: QueryMiddleware[];
 	/** Plugins to enable */
 	plugins?: Plugin[];
+	/** Global lifecycle hooks that apply to all resources */
+	hooks?: {
+		// Before hooks (support both naming conventions)
+		onCreate?: (context: QueryHookContext) => Promise<void> | void;
+		onUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		onDelete?: (context: QueryHookContext) => Promise<void> | void;
+		beforeCreate?: (context: QueryHookContext) => Promise<void> | void;
+		beforeUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		beforeDelete?: (context: QueryHookContext) => Promise<void> | void;
+		beforeRead?: (context: QueryHookContext) => Promise<void> | void;
+		beforeList?: (context: QueryHookContext) => Promise<void> | void;
+		// After hooks
+		afterCreate?: (context: QueryHookContext) => Promise<void> | void;
+		afterUpdate?: (context: QueryHookContext) => Promise<void> | void;
+		afterDelete?: (context: QueryHookContext) => Promise<void> | void;
+		afterRead?: (context: QueryHookContext) => Promise<void> | void;
+		afterList?: (context: QueryHookContext) => Promise<void> | void;
+	};
 	/** Global security settings */
 	security?: {
 		/** Rate limiting configuration */
