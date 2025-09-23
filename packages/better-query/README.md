@@ -1,4 +1,4 @@
-# Adiemus
+# Better Query
 
 A standalone, type-safe CRUD generator built on top of `better-call` that follows the architecture patterns of better-auth. Generate REST API endpoints for your resources with minimal configuration.
 
@@ -18,11 +18,11 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 ## Installation
 
 ```bash
-npm install adiemus
+npm install better-query
 # or
-yarn add adiemus
+yarn add better-query
 # or
-pnpm add adiemus
+pnpm add better-query
 ```
 
 ### Database Dependencies
@@ -45,7 +45,7 @@ npm install mysql2
 ### 1. Basic Setup
 
 ```typescript
-import { adiemus, createResource, withId } from "adiemus";
+import { betterQuery, createResource, withId } from "better-query";
 import { z } from "zod";
 
 // Define your custom schema
@@ -56,7 +56,7 @@ const productSchema = withId({
   status: z.enum(["active", "inactive", "draft"]).default("draft"),
 });
 
-export const crud = adiemus({
+export const query = betterQuery({
   resources: [
     createResource({
       name: "product",
@@ -83,15 +83,15 @@ export const crud = adiemus({
 Create a type-safe client for your CRUD operations:
 
 ```typescript
-import { createCrudClient } from "adiemus";
+import { createQueryClient } from "better-query";
 
-// Create the client with type inference from your CRUD instance
-export const crudClient = createCrudClient<typeof crud>({
+// Create the client with type inference from your query instance
+export const queryClient = createQueryClient<typeof query>({
   baseURL: "http://localhost:3000/api",
 });
 
 // Now you can use the client with full type safety:
-await crudClient.product.create({
+await queryClient.product.create({
   name: "Tee shirt",
   price: 29.99,
 }, {
@@ -134,18 +134,18 @@ if (result.error) {
 
 #### Error Handling
 
-Adiemus includes error codes similar to better-auth:
+Better Query includes error codes similar to better-auth:
 
 ```typescript
 // Access error codes
-console.log(crudClient.$ERROR_CODES.VALIDATION_FAILED);
-console.log(crudClient.$ERROR_CODES.FORBIDDEN);
-console.log(crudClient.$ERROR_CODES.NOT_FOUND);
+console.log(queryClient.$ERROR_CODES.VALIDATION_FAILED);
+console.log(queryClient.$ERROR_CODES.FORBIDDEN);
+console.log(queryClient.$ERROR_CODES.NOT_FOUND);
 
 // Typed error handling pattern
 type ErrorTypes = Partial<
   Record<
-    keyof typeof crudClient.$ERROR_CODES,
+    keyof typeof queryClient.$ERROR_CODES,
     {
       en: string;
       es: string;
@@ -172,7 +172,7 @@ const getErrorMessage = (code: string, lang: "en" | "es") => {
 };
 
 // Usage in components
-const result = await crudClient.product.create(data);
+const result = await queryClient.product.create(data);
 if (result.error?.code) {
   alert(getErrorMessage(result.error.code, "en"));
 }
@@ -183,25 +183,25 @@ if (result.error?.code) {
 #### Next.js App Router
 
 ```typescript
-// app/api/[...crud]/route.ts
-import { crud } from "@/lib/crud";
+// app/api/[...query]/route.ts
+import { query } from "@/lib/query";
 
-export const GET = crud.handler;
-export const POST = crud.handler;
-export const PATCH = crud.handler;
-export const DELETE = crud.handler;
+export const GET = query.handler;
+export const POST = query.handler;
+export const PATCH = query.handler;
+export const DELETE = query.handler;
 ```
 
 #### Hono
 
 ```typescript
 import { Hono } from "hono";
-import { crud } from "./crud";
+import { query } from "./query";
 
 const app = new Hono();
 
 app.all("/api/*", async (c) => {
-  const response = await crud.handler(c.req.raw);
+  const response = await query.handler(c.req.raw);
   return response;
 });
 ```
@@ -246,7 +246,7 @@ The client provides a convenient, type-safe way to interact with your CRUD API:
 
 ```typescript
 // Type-safe creation with custom headers
-const product = await crudClient.products.create({
+const product = await queryClient.products.create({
   name: "Awesome T-Shirt",
   price: 29.99,
   description: "High quality cotton shirt",
@@ -263,7 +263,7 @@ const product = await crudClient.products.create({
 
 ```typescript
 // Get a specific product
-const product = await crudClient.products.read("product-id", {
+const product = await queryClient.products.read("product-id", {
   headers: {
     "Authorization": "Bearer your-token",
   }
@@ -274,7 +274,7 @@ const product = await crudClient.products.read("product-id", {
 
 ```typescript
 // Partial updates are supported
-const updatedProduct = await crudClient.products.update("product-id", {
+const updatedProduct = await queryClient.products.update("product-id", {
   price: 24.99,
   status: "active",
 }, {
@@ -287,7 +287,7 @@ const updatedProduct = await crudClient.products.update("product-id", {
 ### Deleting Resources
 
 ```typescript
-await crudClient.products.delete("product-id", {
+await queryClient.products.delete("product-id", {
   headers: {
     "Authorization": "Bearer your-token",
   }
@@ -297,7 +297,7 @@ await crudClient.products.delete("product-id", {
 ### Listing Resources with Pagination
 
 ```typescript
-const result = await crudClient.products.list({
+const result = await queryClient.products.list({
   page: 1,
   limit: 10,
   search: "shirt",
@@ -327,7 +327,7 @@ console.log(result.data);
 
 ```typescript
 import { useState, useEffect } from 'react';
-import { crudClient } from '@/lib/crud-client';
+import { queryClient } from '@/lib/query-client';
 
 export function useProducts() {
   const [products, setProducts] = useState([]);
@@ -338,7 +338,7 @@ export function useProducts() {
     setLoading(true);
     setError(null);
     try {
-      const result = await crudClient.products.list(params, {
+      const result = await queryClient.products.list(params, {
         headers: {
           "Authorization": `Bearer ${getAuthToken()}`,
         }
@@ -360,7 +360,7 @@ export function useProducts() {
 
   const createProduct = async (productData) => {
     try {
-      const result = await crudClient.products.create(productData, {
+      const result = await queryClient.products.create(productData, {
         headers: {
           "Authorization": `Bearer ${getAuthToken()}`,
         }
@@ -649,9 +649,9 @@ The client can automatically infer the base URL from environment variables:
 
 ```env
 # Development
-CRUD_URL=http://localhost:3000/api
+BETTER_QUERY_URL=http://localhost:3000/api
 # or
-NEXT_PUBLIC_CRUD_URL=http://localhost:3000/api
+NEXT_PUBLIC_BETTER_QUERY_URL=http://localhost:3000/api
 
 # Production
 VERCEL_URL=https://your-app.vercel.app/api
@@ -661,7 +661,7 @@ NEXT_PUBLIC_VERCEL_URL=https://your-app.vercel.app/api
 
 ## Contributing
 
-Adiemus follows the patterns established by better-auth. When contributing:
+Better Query follows the patterns established by better-auth. When contributing:
 
 1. Follow the existing code style
 2. Add tests for new functionality

@@ -25,7 +25,7 @@ The main auth client now supports plugin-specific configurations:
 ```typescript
 interface ClientOptions extends BetterFetchOption {
   pluginConfigs?: {
-    crud?: {
+    query?: {
       baseURL?: string;
       resources?: any[];
     };
@@ -34,18 +34,18 @@ interface ClientOptions extends BetterFetchOption {
 }
 ```
 
-## CRUD Plugin Client
+## Better Query Plugin Client
 
-The CRUD plugin demonstrates the plugin client pattern with a fully-featured, type-safe client.
+The Better Query plugin demonstrates the plugin client pattern with a fully-featured, type-safe client.
 
 ### Standalone Usage
 
-Create a standalone CRUD client that works independently:
+Create a standalone query client that works independently:
 
 ```typescript
-import { createCrudClient } from "better-auth/plugins";
+import { createQueryClient } from "better-query/client";
 
-const crudClient = createCrudClient({
+const queryClient = createQueryClient({
   baseURL: "http://localhost:3000/api/auth",
   resources: [
     { name: "product", schema: productSchema },
@@ -54,29 +54,29 @@ const crudClient = createCrudClient({
 });
 
 // Type-safe operations
-await crudClient.product.create({
+await queryClient.product.create({
   name: "New Product",
   price: 29.99,
   description: "A great product",
 });
 
-await crudClient.product.list({
+await queryClient.product.list({
   page: 1,
   limit: 10,
   sortBy: "createdAt",
   sortOrder: "desc",
 });
 
-await crudClient.product.update("product-id", {
+await queryClient.product.update("product-id", {
   price: 24.99,
 });
 
-await crudClient.product.delete("product-id");
+await queryClient.product.delete("product-id");
 ```
 
 ### Integrated with Auth Client
 
-Configure the CRUD client to work with the main auth client:
+Configure the query client to work with the main auth client:
 
 ```typescript
 import { createReactAuthClient } from "better-auth/react";
@@ -84,7 +84,7 @@ import { createReactAuthClient } from "better-auth/react";
 const authClient = createReactAuthClient({
   baseURL: "http://localhost:3000/api/auth",
   pluginConfigs: {
-    crud: {
+    query: {
       baseURL: "http://localhost:3000/api/auth",
       resources: [
         { name: "product", schema: productSchema },
@@ -95,7 +95,7 @@ const authClient = createReactAuthClient({
 });
 
 // Future: Integrated usage (when fully implemented)
-// await authClient.crud.product.create(data);
+// await authClient.query.product.create(data);
 ```
 
 ## Type Safety
@@ -108,7 +108,7 @@ Resource operations are typed based on Zod schemas:
 
 ```typescript
 // Input type inferred from productSchema
-const product = await crudClient.product.create({
+const product = await queryClient.product.create({
   name: "Product", // string (required)
   price: 29.99,    // number (required)
   description: "Optional description", // string (optional)
@@ -125,17 +125,17 @@ console.log(product.data?.createdAt); // Date
 Typed error codes similar to better-auth:
 
 ```typescript
-const result = await crudClient.product.create(data);
+const result = await queryClient.product.create(data);
 
 if (result.error) {
   switch (result.error.code) {
-    case crudClient.$ERROR_CODES.VALIDATION_FAILED:
+    case queryClient.$ERROR_CODES.VALIDATION_FAILED:
       console.log("Invalid input data");
       break;
-    case crudClient.$ERROR_CODES.UNAUTHORIZED:
+    case queryClient.$ERROR_CODES.UNAUTHORIZED:
       console.log("Please log in");
       break;
-    case crudClient.$ERROR_CODES.FORBIDDEN:
+    case queryClient.$ERROR_CODES.FORBIDDEN:
       console.log("Permission denied");
       break;
   }
@@ -158,7 +158,7 @@ function useProducts() {
     async function fetchProducts() {
       try {
         setLoading(true);
-        const result = await crudClient.product.list();
+        const result = await queryClient.product.list();
         if (result.error) {
           setError(result.error.message);
         } else {
@@ -199,7 +199,7 @@ function ProductList() {
 ### 1. Pagination
 
 ```typescript
-const result = await crudClient.product.list({
+const result = await queryClient.product.list({
   page: 1,
   limit: 10,
   sortBy: "createdAt",
@@ -220,7 +220,7 @@ console.log(result.data?.pagination);
 ### 2. Filtering and Search
 
 ```typescript
-const result = await crudClient.product.list({
+const result = await queryClient.product.list({
   search: "electronics",
   where: {
     status: "active",
@@ -235,7 +235,7 @@ const result = await crudClient.product.list({
 ### 3. Custom Headers
 
 ```typescript
-await crudClient.product.create(data, {
+await queryClient.product.create(data, {
   headers: {
     "Authorization": "Bearer your-token",
     "X-Custom-Header": "value",
@@ -245,16 +245,16 @@ await crudClient.product.create(data, {
 
 ## Server Configuration
 
-Configure the CRUD plugin on the server to match client expectations:
+Configure the Better Query plugin on the server to match client expectations:
 
 ```typescript
 import { betterAuth } from "better-auth";
-import { crud, createResource, productSchema, categorySchema } from "better-auth/plugins";
+import { betterQuery, createResource, productSchema, categorySchema } from "better-query/plugin";
 
 export const auth = betterAuth({
   // ... other config
   plugins: [
-    crud({
+    betterQuery({
       resources: [
         createResource({
           name: "product",
@@ -284,7 +284,7 @@ export const auth = betterAuth({
 Use environment variables for base URLs:
 
 ```typescript
-const crudClient = createCrudClient({
+const queryClient = createQueryClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/auth",
 });
 ```
@@ -296,7 +296,7 @@ Wrap plugin client usage in error boundaries:
 ```typescript
 async function handleCreateProduct(data: any) {
   try {
-    const result = await crudClient.product.create(data);
+    const result = await queryClient.product.create(data);
     if (result.error) {
       throw new Error(result.error.message);
     }
@@ -320,7 +320,7 @@ function isValidProduct(data: any): data is ProductInput {
 }
 
 if (isValidProduct(formData)) {
-  await crudClient.product.create(formData);
+  await queryClient.product.create(formData);
 }
 ```
 
