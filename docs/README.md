@@ -1,12 +1,12 @@
-# Adiemus Documentation
+# Better Query Documentation
 
-Complete documentation for Adiemus - A powerful, type-safe CRUD generator for TypeScript applications.
+Complete documentation for Better Query - A powerful, type-safe CRUD generator for TypeScript applications.
 
 ## Table of Contents
 
 - [Introduction](#introduction)
   - [Key Features](#key-features)
-  - [Why Adiemus?](#why-adiemus)
+  - [Why Better Query?](#why-better-query)
 - [Concepts](#concepts)
   - [Core Architecture](#core-architecture)
   - [Data Flow](#data-flow)
@@ -40,7 +40,7 @@ Complete documentation for Adiemus - A powerful, type-safe CRUD generator for Ty
 
 ## Introduction
 
-**Adiemus** is a standalone, type-safe CRUD generator built on top of `better-call` that follows the architecture patterns of Better-Auth. It provides a simple yet powerful way to generate REST API endpoints for your resources with minimal configuration while maintaining full TypeScript support and database agnostic operations.
+**Better Query** is a standalone, type-safe CRUD generator built on top of `better-call` that follows the architecture patterns of Better-Auth. It provides a simple yet powerful way to generate REST API endpoints for your resources with minimal configuration while maintaining full TypeScript support and database agnostic operations.
 
 ### Key Features
 
@@ -56,9 +56,9 @@ Complete documentation for Adiemus - A powerful, type-safe CRUD generator for Ty
 - 🎯 **Type-Safe Client**: Client SDK with full TypeScript support, similar to Better-Auth
 - 🔌 **Extensible Plugin System**: Extend functionality with plugins for audit, validation, caching, and more
 
-### Why Adiemus?
+### Why Better Query?
 
-Adiemus was designed to fill the gap between simple CRUD generators and complex ORM solutions. It provides:
+Better Query was designed to fill the gap between simple CRUD generators and complex ORM solutions. It provides:
 
 1. **Developer Experience**: TypeScript-first design with excellent auto-completion and type safety
 2. **Flexibility**: Works with any framework, database, and authentication system
@@ -72,7 +72,7 @@ Adiemus was designed to fill the gap between simple CRUD generators and complex 
 
 ### Core Architecture
 
-Adiemus follows a modular architecture inspired by Better-Auth, consisting of several key components:
+Better Query follows a modular architecture inspired by Better-Auth, consisting of several key components:
 
 #### Resources
 Resources represent your data entities (like users, products, posts). Each resource is defined with:
@@ -82,7 +82,7 @@ Resources represent your data entities (like users, products, posts). Each resou
 - Optional **endpoints configuration** to enable/disable specific operations
 
 #### Endpoints
-For each resource, Adiemus automatically generates RESTful endpoints:
+For each resource, Better Query automatically generates RESTful endpoints:
 - `POST /api/product` - Create a product
 - `GET /api/product/:id` - Get a product by ID
 - `PATCH /api/product/:id` - Update a product
@@ -138,7 +138,7 @@ const crud = adiemus({
 });
 
 // Client: Full type inference
-const client = createCrudClient<typeof crud>();
+const client = createQueryClient<typeof query>();
 
 // TypeScript enforces schema validation
 await client.product.create({
@@ -156,11 +156,11 @@ await client.product.create({
 ### Installation
 
 ```bash
-npm install adiemus
+npm install better-query
 # or
-yarn add adiemus
+yarn add better-query
 # or
-pnpm add adiemus
+pnpm add better-query
 ```
 
 ### Database Dependencies
@@ -184,7 +184,7 @@ npm install mysql2
 
 ```typescript
 import { z } from "zod";
-import { adiemus, createResource } from "adiemus";
+import { betterQuery, createResource } from "better-query";
 
 // Define your data schema
 const productSchema = z.object({
@@ -198,10 +198,10 @@ const productSchema = z.object({
 });
 ```
 
-#### 2. Create CRUD Instance
+#### 2. Create Query Instance
 
 ```typescript
-export const crud = adiemus({
+export const query = betterQuery({
   resources: [
     createResource({
       name: "product",
@@ -228,25 +228,25 @@ export const crud = adiemus({
 ##### Next.js App Router
 
 ```typescript
-// app/api/[...crud]/route.ts
-import { crud } from "@/lib/crud";
+// app/api/[...query]/route.ts
+import { query } from "@/lib/query";
 
-export const GET = crud.handler;
-export const POST = crud.handler;
-export const PATCH = crud.handler;
-export const DELETE = crud.handler;
+export const GET = query.handler;
+export const POST = query.handler;
+export const PATCH = query.handler;
+export const DELETE = query.handler;
 ```
 
 ##### Hono
 
 ```typescript
 import { Hono } from "hono";
-import { crud } from "./crud";
+import { query } from "./query";
 
 const app = new Hono();
 
 app.all("/api/*", async (c) => {
-  const response = await crud.handler(c.req.raw);
+  const response = await query.handler(c.req.raw);
   return response;
 });
 ```
@@ -255,7 +255,7 @@ app.all("/api/*", async (c) => {
 
 ```typescript
 import express from "express";
-import { crud } from "./crud";
+import { query } from "./query";
 
 const app = express();
 
@@ -1198,13 +1198,13 @@ The plugin system is fully typed and provides excellent TypeScript support:
 
 ```typescript
 // Plugin endpoints are automatically typed
-const crud = adiemus({
+const query = betterQuery({
   plugins: [auditPlugin(), cachePlugin()],
 });
 
 // These endpoints exist and are typed
-crud.api.getAuditLogs({ query: { resource: "user" } });
-crud.api.getCacheStats();
+query.api.getAuditLogs({ query: { resource: "user" } });
+query.api.getCacheStats();
 ```
 
 ---
@@ -1216,7 +1216,7 @@ crud.api.getCacheStats();
 ```typescript
 // hooks/useProducts.ts
 import { useState, useEffect } from 'react';
-import { crudClient } from '@/lib/crud-client';
+import { queryClient } from '@/lib/query-client';
 
 export function useProducts() {
   const [products, setProducts] = useState([]);
@@ -1227,7 +1227,7 @@ export function useProducts() {
     setLoading(true);
     setError(null);
     try {
-      const result = await crudClient.product.list(params);
+      const result = await queryClient.product.list(params);
       
       if (result.error) {
         throw new Error(result.error);
@@ -1245,7 +1245,7 @@ export function useProducts() {
 
   const createProduct = async (productData) => {
     try {
-      const result = await crudClient.product.create(productData);
+      const result = await queryClient.product.create(productData);
       
       if (result.error) {
         throw new Error(result.error);
@@ -1271,8 +1271,8 @@ export function useProducts() {
 ### Complete Setup Example
 
 ```typescript
-// lib/crud.ts
-import { adiemus, createResource, auditPlugin, cachePlugin } from "adiemus";
+// lib/query.ts
+import { betterQuery, createResource, auditPlugin, cachePlugin } from "better-query";
 import { z } from "zod";
 
 const productSchema = z.object({
@@ -1293,7 +1293,7 @@ const categorySchema = z.object({
   createdAt: z.date().default(() => new Date()),
 });
 
-export const crud = adiemus({
+export const query = betterQuery({
   resources: [
     createResource({
       name: "product",
@@ -1346,11 +1346,11 @@ export const crud = adiemus({
   ],
 });
 
-// lib/crud-client.ts
-import { createCrudClient } from "adiemus";
-import type { crud } from "./crud";
+// lib/query-client.ts
+import { createQueryClient } from "better-query";
+import type { query } from "./query";
 
-export const crudClient = createCrudClient<typeof crud>({
+export const queryClient = createQueryClient<typeof query>({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
 });
 ```
@@ -1361,10 +1361,10 @@ export const crudClient = createCrudClient<typeof crud>({
 
 ### Running Tests
 
-Adiemus includes a comprehensive test suite:
+Better Query includes a comprehensive test suite:
 
 ```bash
-cd packages/better-crud
+cd packages/better-query
 npm test
 # or for watch mode
 npm run test:watch
