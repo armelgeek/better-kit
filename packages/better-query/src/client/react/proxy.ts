@@ -39,10 +39,7 @@ export function createQueryProxy(
 						const response = await $fetch(`/${resourceName}`, {
 							method: "POST",
 							body: data,
-							headers: {
-								...options?.headers,
-								...requestOptions?.headers,
-							},
+							...(requestOptions?.headers && { headers: requestOptions.headers }),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
@@ -60,10 +57,7 @@ export function createQueryProxy(
 					try {
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "GET",
-							headers: {
-								...options?.headers,
-								...requestOptions?.headers,
-							},
+							...(requestOptions?.headers && { headers: requestOptions.headers }),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
@@ -82,10 +76,7 @@ export function createQueryProxy(
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "PATCH",
 							body: data,
-							headers: {
-								...options?.headers,
-								...requestOptions?.headers,
-							},
+							...(requestOptions?.headers && { headers: requestOptions.headers }),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
@@ -103,10 +94,7 @@ export function createQueryProxy(
 					try {
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "DELETE",
-							headers: {
-								...options?.headers,
-								...requestOptions?.headers,
-							},
+							...(requestOptions?.headers && { headers: requestOptions.headers }),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
@@ -137,10 +125,7 @@ export function createQueryProxy(
 						const response = await $fetch(`/${resourceName}s`, {
 							method: "GET",
 							query: params,
-							headers: {
-								...options?.headers,
-								...requestOptions?.headers,
-							},
+							...(requestOptions?.headers && { headers: requestOptions.headers }),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
