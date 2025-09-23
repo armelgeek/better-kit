@@ -13,6 +13,7 @@
 	"exports": {
 		".": "./dist/index.js",
 		"./client": "./dist/client.js",
+		"./react": "./dist/react.js",
 		"./adapters": "./dist/adapters.js",
 		"./plugins": "./dist/plugins.js"
 	},
@@ -25,7 +26,9 @@
 	},
 	"devDependencies": {
 		"@types/better-sqlite3": "^7.6.11",
+		"@types/react": "^19.1.13",
 		"better-sqlite3": "^11.1.2",
+		"react": "^19.1.1",
 		"tsup": "^8.2.4",
 		"type-fest": "^4.41.0",
 		"typescript": "^5.5.0-dev.20240508",
@@ -33,5 +36,14 @@
 	},
 	"files": [
 		"dist"
-	]
+	],
+	"peerDependencies": {
+		"@types/react": "*",
+		"react": ">=16.8.0"
+	},
+	"peerDependenciesMeta": {
+		"@types/react": {
+			"optional": true
+		}
+	}
 }

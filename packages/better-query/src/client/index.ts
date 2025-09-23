@@ -282,3 +282,8 @@ export type QueryClient<T extends BetterQuery = BetterQuery> = {
 
 // Legacy alias
 export type CrudClient<T extends BetterQuery = BetterQuery> = QueryClient<T>;
+
+// Export React client
+export { createReactQueryClient, createReactCrudClient, useQuery, useResource } from "./react";
+export type { ReactQueryClient, ReactCrudClient, ReactQueryClientOptions, ReactCrudClientOptions } from "./react";
+export type * from "./react/types";
