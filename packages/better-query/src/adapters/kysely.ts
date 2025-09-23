@@ -592,6 +592,63 @@ export function createKyselyDatabase(config: { provider: string; url: string; au
 }
 
 /**
+ * List of SQL reserved words that need to be escaped
+ * https://www.sqlite.org/lang_keywords.html
+ */
+const SQLITE_RESERVED_WORDS = new Set([
+	'ABORT', 'ACTION', 'ADD', 'AFTER', 'ALL', 'ALTER', 'ANALYZE', 'AND', 'AS', 'ASC',
+	'ATTACH', 'AUTOINCREMENT', 'BEFORE', 'BEGIN', 'BETWEEN', 'BY', 'CASCADE', 'CASE',
+	'CAST', 'CHECK', 'COLLATE', 'COLUMN', 'COMMIT', 'CONFLICT', 'CONSTRAINT', 'CREATE',
+	'CROSS', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'DATABASE', 'DEFAULT',
+	'DEFERRABLE', 'DEFERRED', 'DELETE', 'DESC', 'DETACH', 'DISTINCT', 'DROP', 'EACH',
+	'ELSE', 'END', 'ESCAPE', 'EXCEPT', 'EXCLUSIVE', 'EXISTS', 'EXPLAIN', 'FAIL', 'FOR',
+	'FOREIGN', 'FROM', 'FULL', 'GLOB', 'GROUP', 'HAVING', 'IF', 'IGNORE', 'IMMEDIATE',
+	'IN', 'INDEX', 'INDEXED', 'INITIALLY', 'INNER', 'INSERT', 'INSTEAD', 'INTERSECT',
+	'INTO', 'IS', 'ISNULL', 'JOIN', 'KEY', 'LEFT', 'LIKE', 'LIMIT', 'MATCH', 'NATURAL',
+	'NO', 'NOT', 'NOTNULL', 'NULL', 'OF', 'OFFSET', 'ON', 'OR', 'ORDER', 'OUTER', 'PLAN',
+	'PRAGMA', 'PRIMARY', 'QUERY', 'RAISE', 'RECURSIVE', 'REFERENCES', 'REGEXP', 'REINDEX',
+	'RELEASE', 'RENAME', 'REPLACE', 'RESTRICT', 'RIGHT', 'ROLLBACK', 'ROW', 'SAVEPOINT',
+	'SELECT', 'SET', 'TABLE', 'TEMP', 'TEMPORARY', 'THEN', 'TO', 'TRANSACTION', 'TRIGGER',
+	'UNION', 'UNIQUE', 'UPDATE', 'USING', 'VACUUM', 'VALUES', 'VIEW', 'VIRTUAL', 'WHEN',
+	'WHERE', 'WITH', 'WITHOUT'
+]);
+
+/**
+ * PostgreSQL reserved words (subset of most common ones)
+ */
+const POSTGRES_RESERVED_WORDS = new Set([
+	'ALL', 'ANALYSE', 'ANALYZE', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASYMMETRIC', 'BOTH',
+	'CASE', 'CAST', 'CHECK', 'COLLATE', 'COLUMN', 'CONSTRAINT', 'CREATE', 'CURRENT_CATALOG',
+	'CURRENT_DATE', 'CURRENT_ROLE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'CURRENT_USER',
+	'DEFAULT', 'DEFERRABLE', 'DESC', 'DISTINCT', 'DO', 'ELSE', 'END', 'EXCEPT', 'FALSE',
+	'FETCH', 'FOR', 'FOREIGN', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IN', 'INITIALLY',
+	'INTERSECT', 'INTO', 'LEADING', 'LIMIT', 'LOCALTIME', 'LOCALTIMESTAMP', 'NOT', 'NULL',
+	'OFFSET', 'ON', 'ONLY', 'OR', 'ORDER', 'PLACING', 'PRIMARY', 'REFERENCES', 'RETURNING',
+	'SELECT', 'SESSION_USER', 'SOME', 'SYMMETRIC', 'TABLE', 'THEN', 'TO', 'TRAILING', 'TRUE',
+	'UNION', 'UNIQUE', 'USER', 'USING', 'VARIADIC', 'WHEN', 'WHERE', 'WINDOW', 'WITH'
+]);
+
+/**
+ * Escape SQL identifier if it's a reserved word
+ */
+function escapeIdentifier(identifier: string, provider: string = "sqlite"): string {
+	const upperIdentifier = identifier.toUpperCase();
+	
+	if (provider === "postgres") {
+		if (POSTGRES_RESERVED_WORDS.has(upperIdentifier)) {
+			return `"${identifier}"`; // PostgreSQL uses double quotes
+		}
+	} else {
+		// SQLite and MySQL
+		if (SQLITE_RESERVED_WORDS.has(upperIdentifier)) {
+			return `"${identifier}"`; // SQLite uses double quotes for identifiers
+		}
+	}
+	
+	return identifier;
+}
+
+/**
  * Generate CREATE TABLE SQL for a resource
  */
 export function generateCreateTableSQL(
@@ -601,6 +658,9 @@ export function generateCreateTableSQL(
 ): string {
 	const columns: string[] = [];
 	const foreignKeys: string[] = [];
+
+	// Escape table name if it's a reserved word
+	const escapedTableName = escapeIdentifier(tableName, provider);
 
 	// Always add ID column if not present
 	if (!fields.id) {
@@ -612,7 +672,9 @@ export function generateCreateTableSQL(
 	}
 
 	for (const [fieldName, field] of Object.entries(fields)) {
-		let columnDef = fieldName;
+		// Escape field name if it's a reserved word
+		const escapedFieldName = escapeIdentifier(fieldName, provider);
+		let columnDef = escapedFieldName;
 
 		// Handle data types
 		if (provider === "postgres") {
@@ -690,14 +752,17 @@ export function generateCreateTableSQL(
 
 		// Handle foreign key references
 		if (field.references) {
+			const escapedRefModel = escapeIdentifier(field.references.model, provider);
+			const escapedRefField = escapeIdentifier(field.references.field, provider);
+			
 			if (provider === "postgres") {
 				foreignKeys.push(
-					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+					`FOREIGN KEY (${escapedFieldName}) REFERENCES ${escapedRefModel}(${escapedRefField}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
 				);
 			} else {
 				// For SQLite, add foreign key constraint separately
 				foreignKeys.push(
-					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+					`FOREIGN KEY (${escapedFieldName}) REFERENCES ${escapedRefModel}(${escapedRefField}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
 				);
 			}
 		}
@@ -725,7 +790,7 @@ export function generateCreateTableSQL(
 	// Combine columns and foreign keys
 	const allConstraints = [...columns, ...foreignKeys];
 
-	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
+	return `CREATE TABLE IF NOT EXISTS ${escapedTableName} (\n  ${allConstraints.join(
 		",\n  ",
 	)}\n)`;
 }
