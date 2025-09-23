@@ -51,6 +51,80 @@ describe("Hooks Utils", () => {
 			expect(onDelete).not.toHaveBeenCalled();
 		});
 
+		it("should execute beforeCreate hook when using new naming convention", async () => {
+			const beforeCreate = vi.fn();
+			const beforeUpdate = vi.fn();
+			const beforeDelete = vi.fn();
+			
+			const hooks = { beforeCreate, beforeUpdate, beforeDelete };
+
+			const createContext: CrudHookContext = {
+				user: { id: "user123" },
+				resource: "product",
+				operation: "create",
+				data: { name: "Test Product" },
+				adapter: {} as any,
+			};
+
+			await HookExecutor.executeBefore(hooks, createContext);
+			expect(beforeCreate).toHaveBeenCalledWith(createContext);
+			expect(beforeUpdate).not.toHaveBeenCalled();
+			expect(beforeDelete).not.toHaveBeenCalled();
+		});
+
+		it("should prioritize onCreate over beforeCreate when both are present", async () => {
+			const onCreate = vi.fn();
+			const beforeCreate = vi.fn();
+			
+			const hooks = { onCreate, beforeCreate };
+
+			const createContext: CrudHookContext = {
+				user: { id: "user123" },
+				resource: "product",
+				operation: "create",
+				data: { name: "Test Product" },
+				adapter: {} as any,
+			};
+
+			await HookExecutor.executeBefore(hooks, createContext);
+			expect(onCreate).toHaveBeenCalledWith(createContext);
+			expect(beforeCreate).not.toHaveBeenCalled();
+		});
+
+		it("should execute beforeUpdate hook for update operations", async () => {
+			const beforeUpdate = vi.fn();
+			
+			const hooks = { beforeUpdate };
+
+			const updateContext: CrudHookContext = {
+				user: { id: "user123" },
+				resource: "product",
+				operation: "update",
+				data: { name: "Updated Product" },
+				adapter: {} as any,
+			};
+
+			await HookExecutor.executeBefore(hooks, updateContext);
+			expect(beforeUpdate).toHaveBeenCalledWith(updateContext);
+		});
+
+		it("should execute beforeDelete hook for delete operations", async () => {
+			const beforeDelete = vi.fn();
+			
+			const hooks = { beforeDelete };
+
+			const deleteContext: CrudHookContext = {
+				user: { id: "user123" },
+				resource: "product",
+				operation: "delete",
+				id: "prod123",
+				adapter: {} as any,
+			};
+
+			await HookExecutor.executeBefore(hooks, deleteContext);
+			expect(beforeDelete).toHaveBeenCalledWith(deleteContext);
+		});
+
 		it("should execute correct after hook based on operation", async () => {
 			const afterCreate = vi.fn();
 			const afterUpdate = vi.fn();

@@ -60,13 +60,16 @@ export class HookExecutor {
 
 		switch (operation) {
 			case "create":
-				hookFn = hooks.onCreate;
+				// Support both onCreate and beforeCreate naming conventions
+				hookFn = hooks.onCreate || hooks.beforeCreate;
 				break;
 			case "update":
-				hookFn = hooks.onUpdate;
+				// Support both onUpdate and beforeUpdate naming conventions
+				hookFn = hooks.onUpdate || hooks.beforeUpdate;
 				break;
 			case "delete":
-				hookFn = hooks.onDelete;
+				// Support both onDelete and beforeDelete naming conventions
+				hookFn = hooks.onDelete || hooks.beforeDelete;
 				break;
 		}
 
@@ -94,6 +97,12 @@ export class HookExecutor {
 					break;
 				case "delete":
 					hookFn = hooks.afterDelete;
+					break;
+				case "read":
+					hookFn = hooks.afterRead;
+					break;
+				case "list":
+					hookFn = hooks.afterList;
 					break;
 			}
 
