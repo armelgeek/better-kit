@@ -265,22 +265,22 @@ export const query = betterQuery({
 	// Global hooks that apply to all resources
 	hooks: {
 		beforeCreate: async (context) => {
-			console.log(`Creating ${context.resource.name}:`, context.data);
+			console.log(`Creating ${context.resource}:`, context.data);
 		},
 		afterCreate: async (context) => {
-			console.log(`Created ${context.resource.name} with ID:`, context.result.id);
+			console.log(`Created ${context.resource} with ID:`, context.result.id);
 		},
 		beforeUpdate: async (context) => {
-			console.log(`Updating ${context.resource.name}:`, context.data);
+			console.log(`Updating ${context.resource}:`, context.data);
 		},
 		afterUpdate: async (context) => {
-			console.log(`Updated ${context.resource.name}:`, context.result.id);
+			console.log(`Updated ${context.resource}:`, context.result.id);
 		},
 		beforeDelete: async (context) => {
-			console.log(`Deleting ${context.resource.name}:`, context.id);
+			console.log(`Deleting ${context.resource}:`, context.id);
 		},
 		afterDelete: async (context) => {
-			console.log(`Deleted ${context.resource.name} with ID:`, context.id);
+			console.log(`Deleted ${context.resource} with ID:`, context.id);
 		},
 	},
 
