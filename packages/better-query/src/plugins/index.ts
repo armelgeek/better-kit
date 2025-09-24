@@ -26,5 +26,13 @@ export type { CachePluginOptions } from "./cache";
 export { openApiPlugin } from "./openapi";
 export type { OpenAPIOptions } from "./openapi";
 
+export { adminPlugin } from "./admin";
+export type { AdminPluginOptions } from "./admin";
+
+// Admin components and utilities (React-specific exports)
+export * from "./admin/components";
+export * from "./admin/hooks";
+export * from "./admin/utils";
+
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";
