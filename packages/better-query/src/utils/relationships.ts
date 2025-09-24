@@ -193,7 +193,7 @@ export class RelationshipManager {
 
 			// Process relationships
 			for (const include of includes) {
-				this.attachRelatedData(mainObj, row, include, resourceName);
+				this.attachRelatedData(mainObj, row, include, "main");
 			}
 		}
 
@@ -253,6 +253,46 @@ export class RelationshipManager {
 		}
 
 		return hasData ? relatedObj : null;
+	}
+
+	/**
+	 * Get all junction tables that need to be created for many-to-many relationships
+	 */
+	getRequiredJunctionTables(): Array<{
+		tableName: string;
+		sourceKey: string;
+		targetKey: string;
+		sourceTable: string;
+		targetTable: string;
+	}> {
+		const junctionTables: Array<{
+			tableName: string;
+			sourceKey: string;
+			targetKey: string;
+			sourceTable: string;
+			targetTable: string;
+		}> = [];
+		const processedTables = new Set<string>();
+
+		for (const [resourceName, relationships] of this.context.relationships.entries()) {
+			for (const [relationName, config] of Object.entries(relationships)) {
+				if (config.type === "belongsToMany" && config.through && config.sourceKey && config.targetForeignKey) {
+					// Avoid duplicate junction tables (same table from different sides of relationship)
+					if (!processedTables.has(config.through)) {
+						junctionTables.push({
+							tableName: config.through,
+							sourceKey: config.sourceKey,
+							targetKey: config.targetForeignKey,
+							sourceTable: resourceName,
+							targetTable: config.target,
+						});
+						processedTables.add(config.through);
+					}
+				}
+			}
+		}
+
+		return junctionTables;
 	}
 }
 

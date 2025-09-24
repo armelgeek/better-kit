@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { z } from "zod";
-import { adiemus } from "../crud";
+import { adiemus } from "../index";
 import { belongsTo, hasMany, belongsToMany } from "../schemas/relationships";
 
 // Define test schemas since we no longer have predefined ones
@@ -46,6 +46,14 @@ const testReviewSchema = z.object({
 	updatedAt: z.date().default(() => new Date()),
 });
 
+const testTagSchema = z.object({
+	id: z.string().optional(),
+	name: z.string().min(1, "Tag name is required"),
+	color: z.string().optional(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+});
+
 describe("CRUD Relationship Management", () => {
 	let crud: any;
 
@@ -83,6 +91,7 @@ describe("CRUD Relationship Management", () => {
 						// Define product relationships using helper functions
 						category: belongsTo("category", "categoryId"),
 						reviews: hasMany("review", "productId"),
+						tags: belongsToMany("tag", "product_tags", "productId", "tagId"),
 					},
 				},
 				{
@@ -93,11 +102,26 @@ describe("CRUD Relationship Management", () => {
 						user: belongsTo("user", "userId"),
 					},
 				},
+				{
+					name: "tag",
+					schema: testTagSchema,
+					relationships: {
+						products: belongsToMany("product", "product_tags", "tagId", "productId"),
+					},
+				},
 			],
 		});
 
 		// Wait a bit for database initialization
 		await new Promise((resolve) => setTimeout(resolve, 100));
+		
+		// Create junction tables for many-to-many relationships
+		const relationshipManager = crud.context.adapter.relationshipManager;
+		const junctionTables = relationshipManager.getRequiredJunctionTables();
+		
+		for (const junctionTable of junctionTables) {
+			await crud.context.adapter.createJunctionTable(junctionTable);
+		}
 	});
 
 	describe("Basic Relationship Configuration", () => {
@@ -207,6 +231,49 @@ describe("CRUD Relationship Management", () => {
 		it("should fetch records with included relationships", async () => {
 			const adapter = crud.context.adapter;
 
+			// Ensure test data exists (since tests might run independently)
+			await adapter.create({
+				model: "user",
+				data: {
+					id: "user-1",
+					email: "john@example.com",
+					name: "John Doe",
+					role: "user",
+				},
+			});
+
+			await adapter.create({
+				model: "category",
+				data: {
+					id: "cat-1",
+					name: "Electronics",
+					slug: "electronics",
+					description: "Electronic devices and gadgets",
+				},
+			});
+
+			await adapter.create({
+				model: "product",
+				data: {
+					id: "prod-1",
+					name: "iPhone 15",
+					description: "Latest iPhone model",
+					price: 999,
+					categoryId: "cat-1",
+					sku: "IPHONE15",
+					stock: 10,
+				},
+			});
+
+			// First check what products exist
+			const allProducts = await adapter.findMany({ model: "product" });
+
+			// First check without relationships
+			const productSimple = await adapter.findFirst({
+				model: "product",
+				where: [{ field: "id", value: "prod-1" }],
+			});
+
 			// Fetch product with category relationship
 			const productWithCategory = await adapter.findFirst({
 				model: "product",
@@ -214,9 +281,23 @@ describe("CRUD Relationship Management", () => {
 				include: { include: ["category"] },
 			});
 
+			expect(productWithCategory).toBeDefined();
 			expect(productWithCategory.id).toBe("prod-1");
 			expect(productWithCategory.category).toBeDefined();
 			expect(productWithCategory.category.name).toBe("Electronics");
+
+			// Create a review for testing reviews relationship
+			await adapter.create({
+				model: "review",
+				data: {
+					id: "rev-1",
+					productId: "prod-1",
+					userId: "user-1",
+					rating: 5,
+					title: "Great phone!",
+					content: "Love the new features and camera quality.",
+				},
+			});
 
 			// Fetch product with reviews relationship
 			const productWithReviews = await adapter.findFirst({
@@ -352,6 +433,248 @@ describe("CRUD Relationship Management", () => {
 			const firstProductWithReviews = productsWithReviews[0];
 			expect(firstProductWithReviews.reviews).toBeDefined();
 			expect(Array.isArray(firstProductWithReviews.reviews)).toBe(true);
+		});
+	});
+
+	describe("Many-to-Many Relationships", () => {
+		it("should create tags and manage many-to-many relationships", async () => {
+			const adapter = crud.context.adapter;
+
+			// Ensure category exists
+			try {
+				await adapter.create({
+					model: "category",
+					data: {
+						id: "cat-1",
+						name: "Electronics",
+						slug: "electronics",
+						description: "Electronic devices and gadgets",
+					},
+				});
+			} catch (e) {
+				// Category already exists, ignore
+			}
+
+			// Ensure product exists
+			try {
+				await adapter.create({
+					model: "product",
+					data: {
+						id: "prod-1",
+						name: "iPhone 15",
+						description: "Latest iPhone model",
+						price: 999,
+						categoryId: "cat-1",
+						sku: "IPHONE15",
+						stock: 10,
+					},
+				});
+			} catch (e) {
+				// Product already exists, ignore  
+			}
+
+			// Create tags
+			const tag1 = await adapter.create({
+				model: "tag",
+				data: {
+					id: "tag-1",
+					name: "Popular",
+					color: "blue",
+				},
+			});
+
+			const tag2 = await adapter.create({
+				model: "tag",
+				data: {
+					id: "tag-2",
+					name: "Sale",
+					color: "red",
+				},
+			});
+
+			expect(tag1.id).toBe("tag-1");
+			expect(tag2.id).toBe("tag-2");
+
+			// Manage many-to-many relationships
+			await adapter.manageManyToMany({
+				sourceModel: "product",
+				sourceId: "prod-1",
+				relationName: "tags",
+				targetIds: ["tag-1", "tag-2"],
+				operation: "set",
+			});
+		});
+
+		it("should fetch products with tags", async () => {
+			const adapter = crud.context.adapter;
+
+			// Ensure test data exists
+			try {
+				await adapter.create({
+					model: "category",
+					data: {
+						id: "cat-1",
+						name: "Electronics",
+						slug: "electronics",
+						description: "Electronic devices and gadgets",
+					},
+				});
+			} catch (e) {
+				// Category already exists, ignore
+			}
+
+			try {
+				await adapter.create({
+					model: "product",
+					data: {
+						id: "prod-1",
+						name: "iPhone 15",
+						description: "Latest iPhone model",
+						price: 999,
+						categoryId: "cat-1",
+						sku: "IPHONE15",
+						stock: 10,
+					},
+				});
+			} catch (e) {
+				// Product already exists, ignore
+			}
+
+			// Create tags  
+			try {
+				await adapter.create({
+					model: "tag",
+					data: {
+						id: "tag-1",
+						name: "Popular",
+						color: "blue",
+					},
+				});
+			} catch (e) {
+				// Tag already exists, ignore
+			}
+
+			try {
+				await adapter.create({
+					model: "tag",
+					data: {
+						id: "tag-2",
+						name: "Sale",
+						color: "red",
+					},
+				});
+			} catch (e) {
+				// Tag already exists, ignore
+			}
+
+			// Also make sure we actually set up the junction table data properly
+			await adapter.manageManyToMany({
+				sourceModel: "product",
+				sourceId: "prod-1",
+				relationName: "tags",
+				targetIds: ["tag-1", "tag-2"],
+				operation: "set",
+			});
+
+			// Fetch product with tags
+			const productWithTags = await adapter.findFirst({
+				model: "product",
+				where: [{ field: "id", value: "prod-1" }],
+				include: { include: ["tags"] },
+			});
+
+			expect(productWithTags.id).toBe("prod-1");
+			expect(productWithTags.tags).toBeDefined();
+			expect(Array.isArray(productWithTags.tags)).toBe(true);
+			expect(productWithTags.tags.length).toBe(2);
+			
+			const tagNames = productWithTags.tags.map((tag: any) => tag.name).sort();
+			expect(tagNames).toEqual(["Popular", "Sale"]);
+		});
+
+		it("should fetch tags with products", async () => {
+			const adapter = crud.context.adapter;
+
+			// Fetch tag with products
+			const tagWithProducts = await adapter.findFirst({
+				model: "tag",
+				where: [{ field: "id", value: "tag-1" }],
+				include: { include: ["products"] },
+			});
+
+			expect(tagWithProducts.id).toBe("tag-1");
+			expect(tagWithProducts.products).toBeDefined();
+			expect(Array.isArray(tagWithProducts.products)).toBe(true);
+			expect(tagWithProducts.products.length).toBe(1);
+			expect(tagWithProducts.products[0].name).toBe("iPhone 15");
+		});
+
+		it("should handle many-to-many add/remove operations", async () => {
+			const adapter = crud.context.adapter;
+
+			// Create another tag
+			const tag3 = await adapter.create({
+				model: "tag",
+				data: {
+					id: "tag-3",
+					name: "New",
+					color: "green",
+				},
+			});
+
+			// Add the new tag
+			await adapter.manageManyToMany({
+				sourceModel: "product",
+				sourceId: "prod-1",
+				relationName: "tags",
+				targetIds: ["tag-3"],
+				operation: "add",
+			});
+
+			// Check product now has 3 tags
+			const productWithAllTags = await adapter.findFirst({
+				model: "product",
+				where: [{ field: "id", value: "prod-1" }],
+				include: { include: ["tags"] },
+			});
+
+			expect(productWithAllTags.tags.length).toBe(3);
+
+			// Remove one tag
+			await adapter.manageManyToMany({
+				sourceModel: "product",
+				sourceId: "prod-1",
+				relationName: "tags",
+				targetIds: ["tag-2"],
+				operation: "remove",
+			});
+
+			// Check product now has 2 tags
+			const productWithRemainingTags = await adapter.findFirst({
+				model: "product",
+				where: [{ field: "id", value: "prod-1" }],
+				include: { include: ["tags"] },
+			});
+
+			expect(productWithRemainingTags.tags.length).toBe(2);
+			const remainingTagNames = productWithRemainingTags.tags.map((tag: any) => tag.name).sort();
+			expect(remainingTagNames).toEqual(["New", "Popular"]);
+		});
+
+		it("should handle junction table creation", async () => {
+			const relationshipManager = crud.context.adapter.relationshipManager;
+			
+			// Get required junction tables
+			const junctionTables = relationshipManager.getRequiredJunctionTables();
+			
+			expect(junctionTables.length).toBeGreaterThan(0);
+			const productTagsJunction = junctionTables.find(jt => jt.tableName === "product_tags");
+			
+			expect(productTagsJunction).toBeDefined();
+			expect(productTagsJunction.sourceKey).toBe("productId");
+			expect(productTagsJunction.targetKey).toBe("tagId");
+			expect(productTagsJunction.sourceTable).toBe("product");
+			expect(productTagsJunction.targetTable).toBe("tag");
 		});
 	});
 });

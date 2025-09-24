@@ -105,6 +105,24 @@ export interface QueryAdapter {
 		fields: Record<string, FieldAttribute>;
 	}[]): Promise<void>;
 
+	/** Manage many-to-many relationships through junction tables */
+	manageManyToMany?(params: {
+		sourceModel: string;
+		sourceId: string;
+		relationName: string;
+		targetIds: string[];
+		operation: "set" | "add" | "remove";
+	}): Promise<void>;
+
+	/** Create junction table for many-to-many relationships */
+	createJunctionTable?(params: {
+		tableName: string;
+		sourceKey: string;
+		targetKey: string;
+		sourceTable: string;
+		targetTable: string;
+	}): Promise<void>;
+
 	/** Configuration specific to the adapter */
 	config?: {
 		/** Database provider type */

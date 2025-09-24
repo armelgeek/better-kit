@@ -31,6 +31,25 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
 }
 
 /**
+ * Map our QueryWhere operators to Kysely operators
+ */
+function mapOperatorToKysely(operator?: string): string {
+	switch (operator) {
+		case "eq": return "=";
+		case "ne": return "!=";
+		case "lt": return "<";
+		case "lte": return "<=";
+		case "gt": return ">";
+		case "gte": return ">=";
+		case "in": return "in";
+		case "notIn": return "not in";
+		case "like": return "like";
+		case "notLike": return "not like";
+		default: return "=";
+	}
+}
+
+/**
  * Transform data after reading from SQLite database
  * Converts ISO strings back to Date objects and JSON strings back to objects/arrays
  */
@@ -133,7 +152,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			let query = this.db.selectFrom(model).selectAll();
 
 			for (const condition of where) {
-				const operator = condition.operator || "=";
+				const operator = mapOperatorToKysely(condition.operator);
 				query = query.where(condition.field, operator as any, condition.value);
 			}
 
@@ -142,7 +161,8 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		}
 
 		// Use relationship-aware query
-		return await this.findWithRelations(model, { where, include, limit: 1 });
+		const results = await this.findWithRelations(model, { where, include, limit: 1 });
+		return results.length > 0 ? results[0] : null;
 	}
 
 	async findMany(params: {
@@ -162,7 +182,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 			// Apply where conditions
 			for (const condition of where) {
-				const operator = condition.operator || "=";
+				const operator = mapOperatorToKysely(condition.operator);
 				query = query.where(condition.field, operator as any, condition.value);
 			}
 
@@ -203,7 +223,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.updateTable(model).set(transformedData);
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -237,7 +257,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.deleteFrom(model);
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -253,7 +273,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.selectFrom(model).select(sql`count(*)`.as("count"));
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -423,7 +443,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 		// Apply where conditions
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(`main.${condition.field}`, operator as any, condition.value);
 		}
 
@@ -432,8 +452,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			query = query.orderBy(`main.${order.field}`, order.direction);
 		}
 
-		// Apply pagination
-		if (limit) {
+		// Apply pagination - but be careful with many-to-many relationships
+		// For many-to-many, we need to get all rows first then group, then limit
+		const hasManyToMany = resolvedIncludes.some(include => include.relation.type === "belongsToMany");
+		
+		if (limit && !hasManyToMany) {
 			query = query.limit(limit);
 		}
 		if (offset) {
@@ -449,6 +472,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			resolvedIncludes,
 			model
 		);
+
+		// Apply limit after grouping for many-to-many relationships
+		if (limit && hasManyToMany) {
+			return nestedResults.slice(0, limit);
+		}
 
 		return limit === 1 ? [nestedResults[0]].filter(Boolean) : nestedResults;
 	}
@@ -491,8 +519,30 @@ export class KyselyQueryAdapter implements QueryAdapter {
 					record[relationName] = relatedMany;
 					break;
 				case "belongsToMany":
-					// TODO: Implement many-to-many relationship loading
-					record[relationName] = [];
+					if (relation.through && relation.sourceKey && relation.targetForeignKey) {
+						// Query through junction table
+						const junctionQuery = this.db
+							.selectFrom(relation.through)
+							.select(relation.targetForeignKey)
+							.where(relation.sourceKey, "=", record.id);
+						
+						const junctionResults = await junctionQuery.execute();
+						const targetIds = junctionResults.map((row: any) => row[relation.targetForeignKey]);
+						
+						if (targetIds.length > 0) {
+							// Query target records
+							const relatedManyToMany = await this.findMany({
+								model: relation.target,
+								where: [{ field: "id", operator: "in", value: targetIds }],
+							});
+							record[relationName] = relatedManyToMany;
+						} else {
+							record[relationName] = [];
+						}
+					} else {
+						console.warn(`Incomplete many-to-many configuration for ${relationName}. Required: through, sourceKey, targetForeignKey`);
+						record[relationName] = [];
+					}
 					break;
 			}
 		}
@@ -527,6 +577,116 @@ export class KyselyQueryAdapter implements QueryAdapter {
 	): Promise<void> {
 		// TODO: Implement relation update logic
 		// This would update/create/delete related records as needed
+	}
+
+	/**
+	 * Manage many-to-many relationships through junction tables
+	 */
+	async manageManyToMany(params: {
+		sourceModel: string;
+		sourceId: string;
+		relationName: string;
+		targetIds: string[];
+		operation: "set" | "add" | "remove";
+	}): Promise<void> {
+		if (!this.relationshipManager) {
+			throw new Error("Relationship manager not available");
+		}
+
+		const relationships = this.relationshipManager.getRelationships(params.sourceModel);
+		const relation = relationships[params.relationName];
+
+		if (!relation || relation.type !== "belongsToMany") {
+			throw new Error(`Invalid many-to-many relationship: ${params.relationName}`);
+		}
+
+		if (!relation.through || !relation.sourceKey || !relation.targetForeignKey) {
+			throw new Error(`Incomplete many-to-many configuration for ${params.relationName}`);
+		}
+
+		const junctionTable = relation.through;
+		const sourceKey = relation.sourceKey;
+		const targetKey = relation.targetForeignKey;
+
+		switch (params.operation) {
+			case "set":
+				// Remove all existing relationships
+				await this.db
+					.deleteFrom(junctionTable)
+					.where(sourceKey, "=", params.sourceId)
+					.execute();
+
+				// Add new relationships
+				if (params.targetIds.length > 0) {
+					const junctionData = params.targetIds.map(targetId => ({
+						[sourceKey]: params.sourceId,
+						[targetKey]: targetId,
+						created_at: new Date().toISOString(),
+					}));
+
+					await this.db
+						.insertInto(junctionTable)
+						.values(junctionData)
+						.execute();
+				}
+				break;
+
+			case "add":
+				// Only add relationships that don't already exist
+				const existingQuery = this.db
+					.selectFrom(junctionTable)
+					.select(targetKey)
+					.where(sourceKey, "=", params.sourceId)
+					.where(targetKey, "in", params.targetIds);
+
+				const existing = await existingQuery.execute();
+				const existingTargetIds = existing.map((row: any) => row[targetKey]);
+				const newTargetIds = params.targetIds.filter(id => !existingTargetIds.includes(id));
+
+				if (newTargetIds.length > 0) {
+					const junctionData = newTargetIds.map(targetId => ({
+						[sourceKey]: params.sourceId,
+						[targetKey]: targetId,
+						created_at: new Date().toISOString(),
+					}));
+
+					await this.db
+						.insertInto(junctionTable)
+						.values(junctionData)
+						.execute();
+				}
+				break;
+
+			case "remove":
+				// Remove specific relationships
+				if (params.targetIds.length > 0) {
+					await this.db
+						.deleteFrom(junctionTable)
+						.where(sourceKey, "=", params.sourceId)
+						.where(targetKey, "in", params.targetIds)
+						.execute();
+				}
+				break;
+		}
+	}
+
+	/**
+	 * Create junction table for many-to-many relationships
+	 */
+	async createJunctionTable(params: {
+		tableName: string;
+		sourceKey: string;
+		targetKey: string;
+		sourceTable: string;
+		targetTable: string;
+	}): Promise<void> {
+		const provider = this.config?.provider || "sqlite";
+		const sql = generateJunctionTableSQL(params, provider);
+		
+		await this.db.executeQuery({
+			sql,
+			parameters: [],
+		});
 	}
 }
 
@@ -725,6 +885,54 @@ export function generateCreateTableSQL(
 	// Combine columns and foreign keys
 	const allConstraints = [...columns, ...foreignKeys];
 
+	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
+		",\n  ",
+	)}\n)`;
+}
+
+/**
+ * Generate CREATE TABLE SQL for a junction table
+ */
+export function generateJunctionTableSQL(
+	params: {
+		tableName: string;
+		sourceKey: string;
+		targetKey: string;
+		sourceTable: string;
+		targetTable: string;
+	},
+	provider: string = "sqlite",
+): string {
+	const { tableName, sourceKey, targetKey, sourceTable, targetTable } = params;
+	
+	const columns: string[] = [];
+	const foreignKeys: string[] = [];
+	
+	if (provider === "postgres") {
+		columns.push(`${sourceKey} VARCHAR(255) NOT NULL`);
+		columns.push(`${targetKey} VARCHAR(255) NOT NULL`);
+		columns.push("created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+		columns.push(`PRIMARY KEY (${sourceKey}, ${targetKey})`);
+		
+		foreignKeys.push(
+			`FOREIGN KEY (${sourceKey}) REFERENCES ${sourceTable}(id) ON DELETE CASCADE`,
+			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`
+		);
+	} else {
+		// SQLite/MySQL
+		columns.push(`${sourceKey} TEXT NOT NULL`);
+		columns.push(`${targetKey} TEXT NOT NULL`);
+		columns.push("created_at TEXT DEFAULT CURRENT_TIMESTAMP");
+		columns.push(`PRIMARY KEY (${sourceKey}, ${targetKey})`);
+		
+		foreignKeys.push(
+			`FOREIGN KEY (${sourceKey}) REFERENCES ${sourceTable}(id) ON DELETE CASCADE`,
+			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`
+		);
+	}
+	
+	const allConstraints = [...columns, ...foreignKeys];
+	
 	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
 		",\n  ",
 	)}\n)`;
