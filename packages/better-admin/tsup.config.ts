@@ -7,7 +7,7 @@ export default defineConfig({
 		ui: "./components/ui/index.ts",
 	},
 	format: ["esm"],
-	dts: true,
+	dts: false,
 	external: ["react", "react-dom"],
 	clean: true,
 	minify: false,

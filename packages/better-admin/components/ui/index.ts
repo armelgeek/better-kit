@@ -22,4 +22,4 @@ export { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink } from "./br
 export { Pagination } from "./pagination";
 export { Sidebar, SidebarContent, SidebarHeader, SidebarFooter } from "./sidebar";
 export { Skeleton } from "./skeleton";
-export { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "./alert";
+export { Alert, AlertTitle, AlertDescription } from "./alert";
