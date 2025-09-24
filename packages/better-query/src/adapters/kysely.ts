@@ -31,6 +31,25 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
 }
 
 /**
+ * Map our QueryWhere operators to Kysely operators
+ */
+function mapOperatorToKysely(operator?: string): string {
+	switch (operator) {
+		case "eq": return "=";
+		case "ne": return "!=";
+		case "lt": return "<";
+		case "lte": return "<=";
+		case "gt": return ">";
+		case "gte": return ">=";
+		case "in": return "in";
+		case "notIn": return "not in";
+		case "like": return "like";
+		case "notLike": return "not like";
+		default: return "=";
+	}
+}
+
+/**
  * Transform data after reading from SQLite database
  * Converts ISO strings back to Date objects and JSON strings back to objects/arrays
  */
@@ -133,7 +152,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			let query = this.db.selectFrom(model).selectAll();
 
 			for (const condition of where) {
-				const operator = condition.operator || "=";
+				const operator = mapOperatorToKysely(condition.operator);
 				query = query.where(condition.field, operator as any, condition.value);
 			}
 
@@ -142,7 +161,8 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		}
 
 		// Use relationship-aware query
-		return await this.findWithRelations(model, { where, include, limit: 1 });
+		const results = await this.findWithRelations(model, { where, include, limit: 1 });
+		return results.length > 0 ? results[0] : null;
 	}
 
 	async findMany(params: {
@@ -162,7 +182,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 			// Apply where conditions
 			for (const condition of where) {
-				const operator = condition.operator || "=";
+				const operator = mapOperatorToKysely(condition.operator);
 				query = query.where(condition.field, operator as any, condition.value);
 			}
 
@@ -203,7 +223,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.updateTable(model).set(transformedData);
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -237,7 +257,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.deleteFrom(model);
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -253,7 +273,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		let query = this.db.selectFrom(model).select(sql`count(*)`.as("count"));
 
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(condition.field, operator as any, condition.value);
 		}
 
@@ -423,7 +443,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 		// Apply where conditions
 		for (const condition of where) {
-			const operator = condition.operator || "=";
+			const operator = mapOperatorToKysely(condition.operator);
 			query = query.where(`main.${condition.field}`, operator as any, condition.value);
 		}
 

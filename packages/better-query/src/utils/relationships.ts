@@ -193,7 +193,7 @@ export class RelationshipManager {
 
 			// Process relationships
 			for (const include of includes) {
-				this.attachRelatedData(mainObj, row, include, resourceName);
+				this.attachRelatedData(mainObj, row, include, "main");
 			}
 		}
 

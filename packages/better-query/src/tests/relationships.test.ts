@@ -231,6 +231,49 @@ describe("CRUD Relationship Management", () => {
 		it("should fetch records with included relationships", async () => {
 			const adapter = crud.context.adapter;
 
+			// Ensure test data exists (since tests might run independently)
+			await adapter.create({
+				model: "user",
+				data: {
+					id: "user-1",
+					email: "john@example.com",
+					name: "John Doe",
+					role: "user",
+				},
+			});
+
+			await adapter.create({
+				model: "category",
+				data: {
+					id: "cat-1",
+					name: "Electronics",
+					slug: "electronics",
+					description: "Electronic devices and gadgets",
+				},
+			});
+
+			await adapter.create({
+				model: "product",
+				data: {
+					id: "prod-1",
+					name: "iPhone 15",
+					description: "Latest iPhone model",
+					price: 999,
+					categoryId: "cat-1",
+					sku: "IPHONE15",
+					stock: 10,
+				},
+			});
+
+			// First check what products exist
+			const allProducts = await adapter.findMany({ model: "product" });
+
+			// First check without relationships
+			const productSimple = await adapter.findFirst({
+				model: "product",
+				where: [{ field: "id", value: "prod-1" }],
+			});
+
 			// Fetch product with category relationship
 			const productWithCategory = await adapter.findFirst({
 				model: "product",
@@ -238,9 +281,23 @@ describe("CRUD Relationship Management", () => {
 				include: { include: ["category"] },
 			});
 
+			expect(productWithCategory).toBeDefined();
 			expect(productWithCategory.id).toBe("prod-1");
 			expect(productWithCategory.category).toBeDefined();
 			expect(productWithCategory.category.name).toBe("Electronics");
+
+			// Create a review for testing reviews relationship
+			await adapter.create({
+				model: "review",
+				data: {
+					id: "rev-1",
+					productId: "prod-1",
+					userId: "user-1",
+					rating: 5,
+					title: "Great phone!",
+					content: "Love the new features and camera quality.",
+				},
+			});
 
 			// Fetch product with reviews relationship
 			const productWithReviews = await adapter.findFirst({
