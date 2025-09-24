@@ -8,6 +8,9 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 - 🔧 **Automatic Endpoint Generation**: Creates full CRUD endpoints for any resource
 - ✅ **Type-Safe**: Full TypeScript support with Zod schema validation
 - 🔒 **Granular Permissions**: Configure permissions per operation (create, read, update, delete, list)
+- 🔐 **Better Auth Integration**: Native integration with Better Auth for authentication and authorization
+- 🛡️ **Role-Based Security**: Define permissions based on user roles and organization membership
+- 🔄 **Schema Migrations**: Automated detection and handling of breaking schema changes
 - 🎛️ **Configurable**: Enable/disable specific endpoints per resource
 - 📊 **Pagination**: Built-in pagination support for list endpoints
 - 🔍 **Search**: Basic search functionality for list operations
@@ -177,6 +180,61 @@ if (result.error?.code) {
   alert(getErrorMessage(result.error.code, "en"));
 }
 ```
+
+## Better Auth Integration
+
+Better Query provides native integration with Better Auth for seamless authentication and authorization:
+
+```typescript
+import { betterAuth } from "better-auth";
+import { betterQuery, betterAuth as betterAuthPlugin } from "better-query";
+
+// 1. Setup Better Auth
+const auth = betterAuth({
+  database: { provider: "sqlite", url: "auth.db" },
+  secret: process.env.BETTER_AUTH_SECRET,
+  emailAndPassword: { enabled: true },
+});
+
+// 2. Integrate with Better Query
+const query = betterQuery({
+  basePath: "/api/query",
+  database: { provider: "sqlite", url: "data.db", autoMigrate: true },
+  
+  // Enable Better Auth plugin
+  plugins: [
+    betterAuthPlugin({
+      auth,
+      rolePermissions: {
+        admin: {
+          resources: ["*"], // Access to all resources
+          operations: ["create", "read", "update", "delete", "list"],
+        },
+        user: {
+          operations: ["read", "create"],
+        }
+      }
+    })
+  ],
+  
+  resources: [
+    createResource({
+      name: "product",
+      schema: productSchema,
+      permissions: {
+        create: async (context) => !!context.user, // Authenticated users only
+        update: async (context) => {
+          const user = context.user as { role?: string; id: string };
+          return user?.role === "admin" || 
+                 context.existingData?.createdBy === user?.id;
+        },
+      }
+    })
+  ]
+});
+```
+
+For detailed Better Auth integration guide, see [Better Auth Integration Documentation](../docs/better-auth-integration.md).
 
 ### 3. Framework Integration
 

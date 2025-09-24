@@ -338,6 +338,31 @@ export const query = betterQuery({
 	},
 });
 
+// Better Auth integration helpers
+import { createBetterAuthContext } from "../../../../packages/better-query/src/";
+
+// Create typed authentication context
+export const authContext = createBetterAuthContext<AppUser>();
+
+// Helper functions for permissions
+export function requireAdmin(context: any): void {
+	if (!authContext.hasRole(context, "admin")) {
+		throw new Error("Admin access required");
+	}
+}
+
+export function requireAuthentication(context: any): AppUser {
+	const user = authContext.getUser(context);
+	if (!user) {
+		throw new Error("Authentication required");
+	}
+	return user;
+}
+
+export function canModerate(context: any): boolean {
+	return authContext.hasAnyRole(context, ["admin", "moderator"]);
+}
+
 // Type-safe query client
 export const queryClient = createQueryClient<typeof query>({
 	baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/query",
