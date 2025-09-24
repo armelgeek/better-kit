@@ -44,3 +44,7 @@ export { createQueryEndpoints, createQueryEndpoint } from "./endpoints";
 
 // Legacy endpoint exports
 export { createQueryEndpoints as createCrudEndpoints, createQueryEndpoint as createCrudEndpoint } from "./endpoints";
+
+// CLI exports (for programmatic use)
+export { templateManager } from "./cli/templates";
+export type { ProjectConfig } from "./cli/templates";

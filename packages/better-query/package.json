@@ -10,23 +10,30 @@
 	},
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
+	"bin": {
+		"better-query": "./dist/cli/index.js"
+	},
 	"exports": {
 		".": "./dist/index.js",
 		"./client": "./dist/client.js",
 		"./react": "./dist/react.js",
 		"./adapters": "./dist/adapters.js",
-		"./plugins": "./dist/plugins.js"
+		"./plugins": "./dist/plugins.js",
+		"./cli": "./dist/cli/index.js"
 	},
 	"dependencies": {
 		"@better-fetch/fetch": "^1.1.4",
 		"@paralleldrive/cuid2": "^2.2.2",
 		"better-call": "^0.1.20",
 		"kysely": "^0.27.4",
-		"zod": "^3.22.5"
+		"zod": "^3.22.5",
+		"commander": "^11.1.0",
+		"prompts": "^2.4.2"
 	},
 	"devDependencies": {
 		"@types/better-sqlite3": "^7.6.11",
 		"@types/react": "^19.1.13",
+		"@types/prompts": "^2.4.9",
 		"better-sqlite3": "^11.1.2",
 		"react": "^19.1.1",
 		"tsup": "^8.2.4",

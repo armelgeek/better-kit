@@ -8,6 +8,7 @@ export default defineConfig([
 			react: "./src/client/react/index.ts",
 			adapters: "./src/adapters/index.ts",
 			plugins: "./src/plugins/index.ts",
+			cli: "./src/cli/index.ts",
 		},
 		format: ["esm", "cjs"],
 		dts: true,
