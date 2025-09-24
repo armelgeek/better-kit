@@ -22,6 +22,7 @@ export type { QueryClient as CrudClient, QueryClientOptions as CrudClientOptions
 export * from "./types";
 export * from "./types/adapter";
 export * from "./types/plugins";
+export * from "./types/better-auth";
 
 // Plugins
 export * from "./plugins";
@@ -29,6 +30,8 @@ export * from "./plugins";
 // Utils
 export { createResource, zodSchemaToFields } from "./utils/schema";
 export { RelationshipManager } from "./utils/relationships";
+export { SchemaMigrationManager, withSchemaVersion, createSchemaMigration } from "./utils/migrations";
+export type { SchemaVersion, Migration, SchemaChange } from "./utils/migrations";
 
 // Schema helpers (no predefined schemas, just utilities)
 export * from "./schemas";
