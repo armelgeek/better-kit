@@ -4,11 +4,11 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 
 ## Features
 
-- 🚀 **Standalone**: Independent package, not tied to better-auth
+- 🚀 **CLI Generator**: Get started instantly with `npx better-query init --with-auth`
 - 🔧 **Automatic Endpoint Generation**: Creates full CRUD endpoints for any resource
 - ✅ **Type-Safe**: Full TypeScript support with Zod schema validation
-- 🔒 **Granular Permissions**: Configure permissions per operation (create, read, update, delete, list)
 - 🔐 **Better Auth Integration**: Native integration with Better Auth for authentication and authorization
+- 🔒 **Granular Permissions**: Configure permissions per operation (create, read, update, delete, list)
 - 🛡️ **Role-Based Security**: Define permissions based on user roles and organization membership
 - 🔄 **Schema Migrations**: Automated detection and handling of breaking schema changes
 - 🎛️ **Configurable**: Enable/disable specific endpoints per resource
@@ -17,6 +17,28 @@ A standalone, type-safe CRUD generator built on top of `better-call` that follow
 - 🏗️ **Database Agnostic**: Works with SQLite, PostgreSQL, and MySQL via Kysely
 - 🌐 **Framework Agnostic**: Works with any framework that supports Web API handlers
 - 🎯 **Type-Safe Client**: Client SDK with full TypeScript support, similar to better-auth
+- 🎨 **Type Generation**: Automatic TypeScript type generation from your schemas
+
+## Quick Start with CLI
+
+The fastest way to get started is using the Better Query CLI:
+
+```bash
+# Create a new Next.js project with Better Auth
+npx better-query init --with-auth
+
+# Create a basic project
+npx better-query init
+
+# Navigate to your project and install dependencies
+cd my-project
+npm install
+
+# Start development
+npm run dev
+```
+
+For complete CLI documentation, see [CLI.md](CLI.md).
 
 ## Installation
 
