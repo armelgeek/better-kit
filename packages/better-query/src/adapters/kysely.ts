@@ -452,8 +452,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			query = query.orderBy(`main.${order.field}`, order.direction);
 		}
 
-		// Apply pagination
-		if (limit) {
+		// Apply pagination - but be careful with many-to-many relationships
+		// For many-to-many, we need to get all rows first then group, then limit
+		const hasManyToMany = resolvedIncludes.some(include => include.relation.type === "belongsToMany");
+		
+		if (limit && !hasManyToMany) {
 			query = query.limit(limit);
 		}
 		if (offset) {
@@ -469,6 +472,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			resolvedIncludes,
 			model
 		);
+
+		// Apply limit after grouping for many-to-many relationships
+		if (limit && hasManyToMany) {
+			return nestedResults.slice(0, limit);
+		}
 
 		return limit === 1 ? [nestedResults[0]].filter(Boolean) : nestedResults;
 	}

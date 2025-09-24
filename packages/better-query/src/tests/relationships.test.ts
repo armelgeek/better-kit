@@ -440,6 +440,39 @@ describe("CRUD Relationship Management", () => {
 		it("should create tags and manage many-to-many relationships", async () => {
 			const adapter = crud.context.adapter;
 
+			// Ensure category exists
+			try {
+				await adapter.create({
+					model: "category",
+					data: {
+						id: "cat-1",
+						name: "Electronics",
+						slug: "electronics",
+						description: "Electronic devices and gadgets",
+					},
+				});
+			} catch (e) {
+				// Category already exists, ignore
+			}
+
+			// Ensure product exists
+			try {
+				await adapter.create({
+					model: "product",
+					data: {
+						id: "prod-1",
+						name: "iPhone 15",
+						description: "Latest iPhone model",
+						price: 999,
+						categoryId: "cat-1",
+						sku: "IPHONE15",
+						stock: 10,
+					},
+				});
+			} catch (e) {
+				// Product already exists, ignore  
+			}
+
 			// Create tags
 			const tag1 = await adapter.create({
 				model: "tag",
@@ -474,6 +507,74 @@ describe("CRUD Relationship Management", () => {
 
 		it("should fetch products with tags", async () => {
 			const adapter = crud.context.adapter;
+
+			// Ensure test data exists
+			try {
+				await adapter.create({
+					model: "category",
+					data: {
+						id: "cat-1",
+						name: "Electronics",
+						slug: "electronics",
+						description: "Electronic devices and gadgets",
+					},
+				});
+			} catch (e) {
+				// Category already exists, ignore
+			}
+
+			try {
+				await adapter.create({
+					model: "product",
+					data: {
+						id: "prod-1",
+						name: "iPhone 15",
+						description: "Latest iPhone model",
+						price: 999,
+						categoryId: "cat-1",
+						sku: "IPHONE15",
+						stock: 10,
+					},
+				});
+			} catch (e) {
+				// Product already exists, ignore
+			}
+
+			// Create tags  
+			try {
+				await adapter.create({
+					model: "tag",
+					data: {
+						id: "tag-1",
+						name: "Popular",
+						color: "blue",
+					},
+				});
+			} catch (e) {
+				// Tag already exists, ignore
+			}
+
+			try {
+				await adapter.create({
+					model: "tag",
+					data: {
+						id: "tag-2",
+						name: "Sale",
+						color: "red",
+					},
+				});
+			} catch (e) {
+				// Tag already exists, ignore
+			}
+
+			// Also make sure we actually set up the junction table data properly
+			await adapter.manageManyToMany({
+				sourceModel: "product",
+				sourceId: "prod-1",
+				relationName: "tags",
+				targetIds: ["tag-1", "tag-2"],
+				operation: "set",
+			});
 
 			// Fetch product with tags
 			const productWithTags = await adapter.findFirst({
