@@ -2,8 +2,9 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
 	entry: {
-		index: "./index.ts",
-		components: "./components/index.ts",
+		index: "./simple-index.ts",
+		components: "./components/simple/index.ts",
+		ui: "./components/ui/index.ts",
 	},
 	format: ["esm"],
 	dts: true,

@@ -12,5 +12,14 @@ export { Create } from "./admin/create";
 export { Edit } from "./admin/edit";
 export { Show } from "./admin/show";
 
+// Simple components (for standalone usage without ra-core)
+export { 
+  SimpleAdmin, 
+  SimpleResource, 
+  SimpleList, 
+  SimpleDataTable 
+} from "./simple";
+export { SimpleTextField } from "./simple/fields";
+
 // UI components
 export * from "./ui";
