@@ -9,6 +9,7 @@ export const productSchema = withId({
 	originalPrice: z.number().positive().optional(),
 	status: z.enum(["active", "inactive", "draft"]).default("draft"),
 	categoryId: z.string().optional(),
+	createdBy: z.string().optional(), // User who created the product
 	tags: z.array(z.string()).default([]),
 	images: z.array(z.string()).default([]),
 	inventory: z.object({

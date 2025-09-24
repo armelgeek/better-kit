@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { betterQuery } from "../../../../packages/better-query/src/query";
-import { createQueryClient, createResource } from "../../../../packages/better-query/src/";
+import { createQueryClient, createResource, betterAuth as betterAuthPlugin } from "../../../../packages/better-query/src/";
 import { 
 	productSchema, 
 	categorySchema, 
@@ -26,7 +26,12 @@ export const auth = betterAuth({
 	},
 });
 
-// Better Query instance with comprehensive resource configuration
+// Define enhanced user interface
+interface AppUser extends typeof auth.$inferredTypes.User {
+	role?: "admin" | "user" | "moderator";
+}
+
+// Better Query instance with Better Auth integration
 export const query = betterQuery({
 	basePath: "/api/query",
 	database: {
@@ -34,8 +39,32 @@ export const query = betterQuery({
 		url: "data.db",
 		autoMigrate: true,
 	},
+	
+	// Enable Better Auth plugin
+	plugins: [
+		betterAuthPlugin({
+			auth,
+			rolePermissions: {
+				admin: {
+					resources: ["*"],
+					operations: ["create", "read", "update", "delete", "list"],
+					scopes: ["admin", "write", "read"]
+				},
+				moderator: {
+					resources: ["product", "category", "review", "userProfile"],
+					operations: ["read", "update", "list"],
+					scopes: ["moderate", "read"]
+				},
+				user: {
+					operations: ["read", "create", "list"],
+					scopes: ["read"]
+				}
+			}
+		})
+	],
+	
 	resources: [
-		// Product resource - demonstrates full CRUD with complex permissions
+		// Product resource - now with Better Auth role-based permissions
 		createResource({
 			name: "product",
 			schema: productSchema,
@@ -45,23 +74,28 @@ export const query = betterQuery({
 				list: async () => true,
 				// Require authentication for modifications
 				create: async (context) => {
-					// Check if user is authenticated
 					return !!context.user;
 				},
 				update: async (context) => {
-					// Allow updates by authenticated users
-					// In real app, you might check if user owns the product or is admin
-					return !!context.user;
+					const user = context.user as AppUser;
+					// Admins can update anything, users need ownership
+					return user?.role === "admin" || 
+						   (!!user && context.existingData?.createdBy === user.id);
 				},
 				delete: async (context) => {
-					// Only allow deletion by authenticated users
-					// In real app, you might require admin role
-					return !!context.user;
+					const user = context.user as AppUser;
+					// Only admins can delete products
+					return user?.role === "admin";
 				},
 			},
 			// Demonstrate hooks for business logic
 			hooks: {
 				beforeCreate: async (context) => {
+					// Set the creator
+					if (context.user) {
+						context.data.createdBy = context.user.id;
+					}
+					
 					// Generate slug from name if not provided
 					if (!context.data.seo?.slug && context.data.name) {
 						const slug = context.data.name
@@ -133,27 +167,30 @@ export const query = betterQuery({
 			schema: orderSchema,
 			permissions: {
 				read: async (context) => {
-					// Users can only read their own orders
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					const user = context.user as AppUser;
+					// Users can only read their own orders, admins can see all
+					return !!user && (
+						user.role === "admin" || 
+						context.existingData?.userId === user.id
 					);
 				},
 				list: async (context) => {
-					// Users can only list their own orders, admins can see all
+					// Authenticated users can list (filtering handled by query logic)
 					return !!context.user;
 				},
 				create: async (context) => !!context.user,
 				update: async (context) => {
+					const user = context.user as AppUser;
 					// Only allow order updates by admin or order owner
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return !!user && (
+						user.role === "admin" || 
+						context.existingData?.userId === user.id
 					);
 				},
 				delete: async (context) => {
+					const user = context.user as AppUser;
 					// Only admins can delete orders
-					return !!context.user && context.user.role === "admin";
+					return user?.role === "admin";
 				},
 			},
 			hooks: {
@@ -198,16 +235,19 @@ export const query = betterQuery({
 				list: async () => true,
 				create: async (context) => !!context.user,
 				update: async (context) => {
-					// Users can update their own reviews, admins can update any
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					const user = context.user as AppUser;
+					// Users can update their own reviews, admins and moderators can update any
+					return !!user && (
+						user.role === "admin" || 
+						user.role === "moderator" ||
+						context.existingData?.userId === user.id
 					);
 				},
 				delete: async (context) => {
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					const user = context.user as AppUser;
+					return !!user && (
+						user.role === "admin" || 
+						context.existingData?.userId === user.id
 					);
 				},
 			},
@@ -228,24 +268,31 @@ export const query = betterQuery({
 			schema: userProfileSchema,
 			permissions: {
 				read: async (context) => {
+					const user = context.user as AppUser;
 					// Users can read their own profile, admins can read any
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return !!user && (
+						user.role === "admin" || 
+						context.existingData?.userId === user.id
 					);
 				},
 				list: async (context) => {
+					const user = context.user as AppUser;
 					// Only admins can list all profiles
-					return !!context.user && context.user.role === "admin";
+					return user?.role === "admin";
 				},
 				create: async (context) => !!context.user,
 				update: async (context) => {
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					const user = context.user as AppUser;
+					return !!user && (
+						user.role === "admin" || 
+						context.existingData?.userId === user.id
 					);
 				},
 				delete: async (context) => {
+					const user = context.user as AppUser;
+					// Only admins can delete user profiles
+					return user?.role === "admin";
+				},
 					return !!context.user && (
 						context.user.role === "admin" || 
 						context.existingData?.userId === context.user.id
@@ -290,6 +337,31 @@ export const query = betterQuery({
 		credentials: true,
 	},
 });
+
+// Better Auth integration helpers
+import { createBetterAuthContext } from "../../../../packages/better-query/src/";
+
+// Create typed authentication context
+export const authContext = createBetterAuthContext<AppUser>();
+
+// Helper functions for permissions
+export function requireAdmin(context: any): void {
+	if (!authContext.hasRole(context, "admin")) {
+		throw new Error("Admin access required");
+	}
+}
+
+export function requireAuthentication(context: any): AppUser {
+	const user = authContext.getUser(context);
+	if (!user) {
+		throw new Error("Authentication required");
+	}
+	return user;
+}
+
+export function canModerate(context: any): boolean {
+	return authContext.hasAnyRole(context, ["admin", "moderator"]);
+}
 
 // Type-safe query client
 export const queryClient = createQueryClient<typeof query>({
