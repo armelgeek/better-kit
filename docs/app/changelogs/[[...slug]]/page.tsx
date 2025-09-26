@@ -24,7 +24,7 @@ import { Callout } from "@/components/ui/callout";
 
 const metaTitle = "Changelogs";
 const metaDescription = "Latest changes , fixes and updates.";
-const ogImage = "https://better-auth.com/release-og/changelog-og.png";
+const ogImage = "https://better-kit.com/release-og/changelog-og.png";
 
 export default async function Page({
 	params,
@@ -131,7 +131,7 @@ export async function generateMetadata({
 	const { slug } = await params;
 	if (!slug) {
 		return {
-			metadataBase: new URL("https://better-auth.com/changelogs"),
+			metadataBase: new URL("https://better-kit.com/changelogs"),
 			title: metaTitle,
 			description: metaDescription,
 			openGraph: {
@@ -142,7 +142,7 @@ export async function generateMetadata({
 						url: ogImage,
 					},
 				],
-				url: "https://better-auth.com/changelogs",
+				url: "https://better-kit.com/changelogs",
 			},
 			twitter: {
 				card: "summary_large_image",
@@ -154,7 +154,7 @@ export async function generateMetadata({
 	}
 	const page = changelogs.getPage(slug);
 	if (page == null) notFound();
-	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL;
+	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 	const url = new URL(`${baseUrl}/release-og/${slug.join("")}.png`);
 	const { title, description } = page.data;
 

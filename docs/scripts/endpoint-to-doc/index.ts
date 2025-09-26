@@ -441,7 +441,7 @@ function generateJSDoc({
 	 * **client:**
 	 * `authClient.organization.setActive`
 	 *
-	 * @see [Read our docs to learn more.](https://better-auth.com/docs/plugins/organization#api-method-organization-set-active)
+	 * @see [Read our docs to learn more.](https://better-kit.com/docs/plugins/organization#api-method-organization-set-active)
 	 */
 
 	let jsdoc: string[] = [];
@@ -460,7 +460,7 @@ function generateJSDoc({
 		jsdoc.push(``);
 	}
 	jsdoc.push(
-		`@see [Read our docs to learn more.](https://better-auth.com/docs/plugins/${
+		`@see [Read our docs to learn more.](https://better-kit.com/docs/plugins/${
 			path.split("/")[1]
 		}#api-method${path.replaceAll("/", "-")})`,
 	);
