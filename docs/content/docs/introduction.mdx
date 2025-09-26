@@ -1,15 +1,28 @@
 ---
 title: Introduction
-description: Introduction to Better Auth.
+description: Introduction to Better Query.
 ---
 
-Better Auth is a framework-agnostic, universal authentication and authorization framework for TypeScript. It provides a comprehensive set of features out of the box and includes a plugin ecosystem that simplifies adding advanced functionalities. Whether you need 2FA, passkey, multi-tenancy, multi-session support, or even enterprise features like SSO, creating your own IDP, it lets you focus on building your application instead of reinventing the wheel.
+Better Query is a standalone, type-safe CRUD generator built on top of `better-call` that follows the architecture patterns of Better Auth. It provides a powerful way to generate REST API endpoints for your resources with minimal configuration while maintaining full TypeScript support and database agnostic operations.
 
 ## Features
 
-Better Auth aims to be the most comprehensive auth library. It provides a wide range of features out of the box and allows you to extend it with plugins. Here are some of the features:
+Better Query aims to provide the most comprehensive CRUD generation toolkit. It provides a wide range of features out of the box and allows you to extend it with plugins. Here are some of the key features:
 
-<Features/>
+- 🚀 **CLI Generator**: Get started instantly with `npx better-query init --with-auth`
+- 🔧 **Automatic Endpoint Generation**: Creates full CRUD endpoints for any resource
+- ✅ **Type-Safe**: Full TypeScript support with Zod schema validation
+- 🔐 **Better Auth Integration**: Native integration with Better Auth for authentication and authorization
+- 🔒 **Granular Permissions**: Configure permissions per operation (create, read, update, delete, list)
+- 🛡️ **Role-Based Security**: Define permissions based on user roles and organization membership
+- 🔄 **Schema Migrations**: Automated detection and handling of breaking schema changes
+- 🎛️ **Configurable**: Enable/disable specific endpoints per resource
+- 📊 **Pagination**: Built-in pagination support for list endpoints
+- 🔍 **Search**: Basic search functionality for list operations
+- 🏗️ **Database Agnostic**: Works with SQLite, PostgreSQL, and MySQL via Kysely
+- 🌐 **Framework Agnostic**: Works with any framework that supports Web API handlers
+- 🎯 **Type-Safe Client**: Client SDK with full TypeScript support, similar to Better Auth
+- 🎨 **Type Generation**: Automatic TypeScript type generation from your schemas
 
 ...and much more!
 
