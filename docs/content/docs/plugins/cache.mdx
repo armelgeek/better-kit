@@ -1,0 +1,570 @@
+---
+title: Cache
+description: Cache plugin for Better Query
+---
+
+The Cache plugin provides intelligent caching for your CRUD operations to improve performance and reduce database load. It supports multiple cache strategies, TTL-based expiration, and automatic cache invalidation on data changes.
+
+## Installation
+
+<Steps>
+  <Step>
+    ### Add the plugin to your query config
+
+    To use the Cache plugin, add it to your query config.
+
+    ```ts title="query.ts"
+    import { betterQuery } from "better-query"
+    import { cachePlugin } from "better-query/plugins" // [!code highlight]
+
+    export const query = betterQuery({
+        // ... other config options
+        plugins: [
+            cachePlugin({
+                enabled: true,
+                defaultTTL: 300, // 5 minutes default TTL
+                storage: "memory", // or "redis", "custom"
+                strategies: {
+                    read: "cache-first", // Cache strategy for read operations
+                    list: "cache-first", // Cache strategy for list operations
+                }
+            }) // [!code highlight]
+        ]
+    })
+    ```
+
+  </Step>
+
+  <Step>
+    ### Add the client plugin
+
+    Include the cache client plugin in your query client instance for client-side cache management.
+
+    ```ts title="query-client.ts"
+    import { createQueryClient } from "better-query/client"
+    import { cacheClient } from "better-query/client/plugins"
+
+    export const queryClient = createQueryClient({
+        plugins: [
+            cacheClient({
+                enabled: true,
+                clientTTL: 60, // Client-side cache TTL in seconds
+            })
+        ]
+    })
+    ```
+
+  </Step>
+</Steps>
+
+## Cache Strategies
+
+The cache plugin supports different caching strategies:
+
+- **`cache-first`**: Check cache first, fallback to database if not found
+- **`network-first`**: Check database first, fallback to cache if error occurs
+- **`cache-only`**: Only use cached data (throws error if not cached)
+- **`network-only`**: Always fetch from database (but still updates cache)
+- **`no-cache`**: Disable caching for specific operations
+
+## Configuration
+
+### Global Cache Settings
+
+Configure cache behavior globally:
+
+```ts title="query.ts"
+cachePlugin({
+    /**
+     * Enable/disable caching
+     */
+    enabled: true,
+    
+    /**
+     * Default TTL in seconds for all cached items
+     */
+    defaultTTL: 300,
+    
+    /**
+     * Cache storage backend
+     */
+    storage: "memory", // "memory" | "redis" | "custom"
+    
+    /**
+     * Redis configuration (if using Redis storage)
+     */
+    redis: {
+        host: "localhost",
+        port: 6379,
+        password: process.env.REDIS_PASSWORD,
+    },
+    
+    /**
+     * Global cache strategies
+     */
+    strategies: {
+        read: "cache-first",
+        list: "cache-first",
+        create: "network-only", // Creates should always hit DB
+        update: "network-only", // Updates should always hit DB
+        delete: "network-only", // Deletes should always hit DB
+    },
+    
+    /**
+     * Resource-specific cache settings
+     */
+    resources: {
+        product: {
+            readTTL: 600, // 10 minutes for product reads
+            listTTL: 300, // 5 minutes for product lists
+            strategy: "cache-first",
+        },
+        category: {
+            readTTL: 1800, // 30 minutes (categories change less frequently)
+            listTTL: 900, // 15 minutes
+            strategy: "cache-first",
+        },
+        user: {
+            readTTL: 120, // 2 minutes (user data changes more frequently)
+            listTTL: 60, // 1 minute
+            strategy: "network-first",
+        }
+    },
+    
+    /**
+     * Cache key generation function
+     */
+    keyGenerator: (operation, resourceType, resourceId, params) => {
+        const base = `bq:${resourceType}:${operation}`
+        if (resourceId) return `${base}:${resourceId}`
+        if (params) return `${base}:${JSON.stringify(params)}`
+        return base
+    },
+    
+    /**
+     * Custom cache invalidation rules
+     */
+    invalidation: {
+        // When a product is updated, invalidate related caches
+        product: {
+            update: ["product:read", "product:list", "category:list"],
+            delete: ["product:read", "product:list", "category:list"],
+        },
+        category: {
+            update: ["category:read", "category:list", "product:list"],
+            delete: ["category:read", "category:list", "product:list"],
+        }
+    }
+})
+```
+
+### Resource-Level Cache Configuration
+
+Configure caching per resource:
+
+```ts title="query.ts"
+import { betterQuery, createResource } from "better-query"
+
+export const query = betterQuery({
+    plugins: [cachePlugin()],
+    resources: [
+        createResource({
+            name: "product",
+            schema: productSchema,
+            cache: {
+                enabled: true,
+                strategies: {
+                    read: "cache-first",
+                    list: "cache-first",
+                },
+                ttl: {
+                    read: 600, // 10 minutes
+                    list: 300, // 5 minutes
+                },
+                invalidateOn: ["update", "delete"], // Auto-invalidate cache on these operations
+            }
+        }),
+        createResource({
+            name: "order",
+            schema: orderSchema,
+            cache: {
+                enabled: false, // Disable caching for orders (sensitive data)
+            }
+        })
+    ]
+})
+```
+
+## Usage
+
+### Automatic Caching
+
+With the plugin configured, caching happens automatically based on your strategy settings:
+
+```ts title="product-service.ts"
+// This will automatically use cache-first strategy if configured
+const product = await queryClient.product.read("product-123")
+
+// This will automatically cache the list results
+const products = await queryClient.product.list({ page: 1, limit: 10 })
+```
+
+### Manual Cache Control
+
+For more granular control, you can override cache behavior per operation:
+
+```ts title="product-service.ts"
+// Force a fresh fetch from database, bypassing cache
+const freshProduct = await queryClient.product.read("product-123", {
+    cache: {
+        strategy: "network-only"
+    }
+})
+
+// Use cached data only, throw error if not in cache
+const cachedProduct = await queryClient.product.read("product-123", {
+    cache: {
+        strategy: "cache-only"
+    }
+})
+
+// Set custom TTL for this specific request
+const productWithCustomTTL = await queryClient.product.read("product-123", {
+    cache: {
+        strategy: "cache-first",
+        ttl: 1800 // 30 minutes
+    }
+})
+```
+
+### Cache Management
+
+The plugin provides methods for manual cache management:
+
+<APIMethod
+  path="/cache/invalidate"
+  method="POST"
+  resultVariable="invalidationResult"
+>
+```ts
+type invalidateCache = {
+    /**
+     * Resource type to invalidate
+     */
+    resourceType?: string = "product"
+    /**
+     * Specific resource ID to invalidate
+     */
+    resourceId?: string = "product-123"
+    /**
+     * Operation type to invalidate
+     */
+    operation?: "read" | "list" | "all" = "all"
+    /**
+     * Cache key pattern to match
+     */
+    pattern?: string = "bq:product:*"
+}
+```
+</APIMethod>
+
+**Client Usage:**
+
+```ts title="cache-management.ts"
+import { queryClient } from "@/lib/query-client"
+
+// Invalidate all caches for a specific resource
+await queryClient.cache.invalidate({
+    resourceType: "product",
+    operation: "all"
+})
+
+// Invalidate cache for a specific resource item
+await queryClient.cache.invalidate({
+    resourceType: "product",
+    resourceId: "product-123"
+})
+
+// Invalidate using pattern matching
+await queryClient.cache.invalidate({
+    pattern: "bq:product:list:*" // Invalidate all product list caches
+})
+
+// Clear all caches
+await queryClient.cache.clear()
+
+// Get cache statistics
+const stats = await queryClient.cache.getStats()
+console.log(stats.data)
+// {
+//   totalKeys: 156,
+//   hitRate: 0.85,
+//   missRate: 0.15,
+//   size: "2.4 MB",
+//   byResource: {
+//     product: { keys: 78, hits: 234, misses: 45 },
+//     category: { keys: 23, hits: 89, misses: 12 }
+//   }
+// }
+```
+
+### Warm-up Cache
+
+Pre-populate cache with frequently accessed data:
+
+```ts title="cache-warmup.ts"
+// Warm up product caches
+await queryClient.cache.warmup("product", {
+    operations: ["list"], // Pre-cache product lists
+    params: [
+        { page: 1, limit: 20 }, // First page
+        { page: 1, limit: 20, status: "active" }, // Active products
+        { page: 1, limit: 20, featured: true }, // Featured products
+    ]
+})
+
+// Warm up specific product reads
+await queryClient.cache.warmup("product", {
+    operations: ["read"],
+    resourceIds: ["product-1", "product-2", "product-3"] // Popular products
+})
+```
+
+## Custom Cache Storage
+
+Implement custom cache storage backend:
+
+```ts title="custom-cache-storage.ts"
+import { CacheStorage } from "better-query/plugins"
+
+class CustomCacheStorage implements CacheStorage {
+    private cache = new Map<string, { value: any; expiry: number }>()
+
+    async get(key: string): Promise<any> {
+        const item = this.cache.get(key)
+        if (!item) return null
+        
+        if (Date.now() > item.expiry) {
+            this.cache.delete(key)
+            return null
+        }
+        
+        return item.value
+    }
+
+    async set(key: string, value: any, ttl: number): Promise<void> {
+        const expiry = Date.now() + (ttl * 1000)
+        this.cache.set(key, { value, expiry })
+    }
+
+    async del(key: string): Promise<void> {
+        this.cache.delete(key)
+    }
+
+    async clear(): Promise<void> {
+        this.cache.clear()
+    }
+
+    async keys(pattern?: string): Promise<string[]> {
+        if (!pattern) return Array.from(this.cache.keys())
+        
+        const regex = new RegExp(pattern.replace(/\*/g, '.*'))
+        return Array.from(this.cache.keys()).filter(key => regex.test(key))
+    }
+
+    async size(): Promise<number> {
+        return this.cache.size
+    }
+}
+
+// Use custom storage
+cachePlugin({
+    storage: "custom",
+    customStorage: new CustomCacheStorage()
+})
+```
+
+## React Hooks
+
+Use caching with React hooks for better UX:
+
+```tsx title="hooks/use-cached-resource.ts"
+import { useState, useEffect } from 'react'
+import { queryClient } from '@/lib/query-client'
+
+export function useCachedResource<T>(resourceType: string, resourceId: string) {
+    const [data, setData] = useState<T | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [fromCache, setFromCache] = useState(false)
+
+    useEffect(() => {
+        const fetchResource = async () => {
+            setLoading(true)
+            
+            // Try cache first
+            try {
+                const cachedResult = await queryClient[resourceType].read(resourceId, {
+                    cache: { strategy: "cache-only" }
+                })
+                
+                if (cachedResult.data) {
+                    setData(cachedResult.data)
+                    setFromCache(true)
+                    setLoading(false)
+                    
+                    // Fetch fresh data in background to update cache
+                    queryClient[resourceType].read(resourceId, {
+                        cache: { strategy: "network-first" }
+                    }).then(freshResult => {
+                        if (freshResult.data && 
+                            JSON.stringify(freshResult.data) !== JSON.stringify(cachedResult.data)) {
+                            setData(freshResult.data)
+                        }
+                    })
+                    return
+                }
+            } catch (error) {
+                // Cache miss, continue to network
+            }
+            
+            // Fetch from network
+            const result = await queryClient[resourceType].read(resourceId)
+            if (result.data) {
+                setData(result.data)
+                setFromCache(false)
+            }
+            setLoading(false)
+        }
+
+        if (resourceType && resourceId) {
+            fetchResource()
+        }
+    }, [resourceType, resourceId])
+
+    const refresh = async (force = false) => {
+        const strategy = force ? "network-only" : "network-first"
+        setLoading(true)
+        
+        const result = await queryClient[resourceType].read(resourceId, {
+            cache: { strategy }
+        })
+        
+        if (result.data) {
+            setData(result.data)
+            setFromCache(false)
+        }
+        setLoading(false)
+    }
+
+    return { 
+        data, 
+        loading, 
+        fromCache, 
+        refresh 
+    }
+}
+```
+
+**Usage in components:**
+
+```tsx title="components/product-details.tsx"
+import { useCachedResource } from '@/hooks/use-cached-resource'
+
+export function ProductDetails({ productId }: { productId: string }) {
+    const { data: product, loading, fromCache, refresh } = useCachedResource('product', productId)
+
+    return (
+        <div>
+            {loading && <div>Loading...</div>}
+            {product && (
+                <div>
+                    <h1>{product.name}</h1>
+                    <p>Price: ${product.price}</p>
+                    {fromCache && (
+                        <p className="text-sm text-gray-500">
+                            Loaded from cache
+                            <button onClick={() => refresh(true)} className="ml-2 text-blue-500">
+                                Refresh
+                            </button>
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
+```
+
+## Performance Monitoring
+
+Monitor cache performance and optimize based on metrics:
+
+```ts title="cache-monitoring.ts"
+import { queryClient } from '@/lib/query-client'
+
+// Get detailed cache statistics
+const cacheStats = await queryClient.cache.getStats()
+
+console.log("Cache Performance Report:")
+console.log(`Overall Hit Rate: ${(cacheStats.data.hitRate * 100).toFixed(1)}%`)
+console.log(`Total Cache Size: ${cacheStats.data.size}`)
+
+// Resource-specific performance
+Object.entries(cacheStats.data.byResource).forEach(([resource, stats]) => {
+    const hitRate = stats.hits / (stats.hits + stats.misses)
+    console.log(`${resource}: ${(hitRate * 100).toFixed(1)}% hit rate (${stats.keys} keys)`)
+})
+
+// Set up cache monitoring (in production)
+if (process.env.NODE_ENV === 'production') {
+    setInterval(async () => {
+        const stats = await queryClient.cache.getStats()
+        
+        // Send metrics to monitoring service
+        analytics.track('cache_performance', {
+            hitRate: stats.data.hitRate,
+            totalKeys: stats.data.totalKeys,
+            cacheSize: stats.data.size,
+        })
+        
+        // Alert if hit rate is too low
+        if (stats.data.hitRate < 0.7) {
+            console.warn('Cache hit rate is below 70%, consider optimizing cache strategies')
+        }
+    }, 60000) // Check every minute
+}
+```
+
+## Best Practices
+
+1. **TTL Selection**: Set appropriate TTL based on data change frequency
+   ```ts
+   // Fast-changing data: shorter TTL
+   user: { readTTL: 60 }
+   
+   // Slow-changing data: longer TTL  
+   category: { readTTL: 1800 }
+   ```
+
+2. **Cache Invalidation**: Set up proper invalidation rules
+   ```ts
+   invalidation: {
+     product: {
+       update: ["product:read", "product:list", "category:list"],
+     }
+   }
+   ```
+
+3. **Memory Management**: Monitor cache size and implement eviction policies
+   ```ts
+   cachePlugin({
+     maxSize: "100MB", // Limit cache size
+     evictionPolicy: "lru", // Least recently used
+   })
+   ```
+
+4. **Selective Caching**: Don't cache sensitive or frequently changing data
+   ```ts
+   // Disable caching for sensitive resources
+   order: { cache: { enabled: false } }
+   ```
