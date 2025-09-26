@@ -39,7 +39,7 @@ See the [CLI](/docs/concepts/cli) documentation for more information on the CLI.
 
 ## Secondary Storage
 
-Secondary storage in Better Auth allows you to use key-value stores for managing session data, rate limiting counters, etc. This can be useful when you want to offload the storage of this intensive records to a high performance storage or even RAM.
+Secondary storage in Better Query allows you to use key-value stores for managing session data, rate limiting counters, etc. This can be useful when you want to offload the storage of this intensive records to a high performance storage or even RAM.
 
 ### Implementation
 
@@ -70,12 +70,12 @@ Here's a basic example using Redis:
 
 ```typescript
 import { createClient } from "redis";
-import { betterAuth } from "better-auth";
+import { betterAuth } from "better-query";
 
 const redis = createClient();
 await redis.connect();
 
-export const auth = betterAuth({
+export const query = betterAuth({
 	// ... other options
 	secondaryStorage: {
 		get: async (key) => {
@@ -94,11 +94,11 @@ export const auth = betterAuth({
 });
 ```
 
-This implementation allows Better Auth to use Redis for storing session data and rate limiting counters. You can also add prefixes to the keys names.
+This implementation allows Better Query to use Redis for storing session data and rate limiting counters. You can also add prefixes to the keys names.
 
 ## Core Schema
 
-Better Auth requires the following tables to be present in the database. The types are in `typescript` format. You can use corresponding types in your database.
+Better Query requires the following tables to be present in the database. The types are in `typescript` format. You can use corresponding types in your database.
 
 ### User
 
@@ -269,7 +269,7 @@ Table Name: `account`
       name: "password",
       type: "string",
       description:
-        "The password of the account. Mainly used for email and password authentication",
+        "The password of the account. Mainly used for email and password query management",
       isOptional: true,
     },
     {
@@ -327,14 +327,14 @@ Table Name: `verification`
 
 ## Custom Tables
 
-Better Auth allows you to customize the table names and column names for the core schema. You can also extend the core schema by adding additional fields to the user and session tables.
+Better Query allows you to customize the table names and column names for the core schema. You can also extend the core schema by adding additional fields to the user and session tables.
 
 ### Custom Table Names
 
-You can customize the table names and column names for the core schema by using the `modelName` and `fields` properties in your auth config:
+You can customize the table names and column names for the core schema by using the `modelName` and `fields` properties in your query config:
 
-```ts title="auth.ts"
-export const auth = betterAuth({
+```ts title="query.ts"
+export const query = betterAuth({
   user: {
     modelName: "users",
     fields: {
@@ -358,11 +358,11 @@ export const auth = betterAuth({
 
 To customize table names and column name for plugins, you can use the `schema` property in the plugin config:
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { twoFactor } from "better-auth/plugins";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
+import { twoFactor } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   plugins: [
     twoFactor({
       schema: {
@@ -380,9 +380,9 @@ export const auth = betterAuth({
 
 ### Extending Core Schema
 
-Better Auth provides a type-safe way to extend the `user` and `session` schemas. You can add custom fields to your auth config, and the CLI will automatically update the database schema. These additional fields will be properly inferred in functions like `useSession`, `signUp.email`, and other endpoints that work with user or session objects.
+Better Query provides a type-safe way to extend the `user` and `session` schemas. You can add custom fields to your query config, and the CLI will automatically update the database schema. These additional fields will be properly inferred in functions like `useSession`, `signUp.email`, and other endpoints that work with user or session objects.
 
-To add custom fields, use the `additionalFields` property in the `user` or `session` object of your auth config. The `additionalFields` object uses field names as keys, with each value being a `FieldAttributes` object containing:
+To add custom fields, use the `additionalFields` property in the `user` or `session` object of your query config. The `additionalFields` object uses field names as keys, with each value being a `FieldAttributes` object containing:
 
 - `type`: The data type of the field (e.g., "string", "number", "boolean").
 - `required`: A boolean indicating if the field is mandatory.
@@ -391,10 +391,10 @@ To add custom fields, use the `additionalFields` property in the `user` or `sess
 
 Here's an example of how to extend the user schema with additional fields:
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   user: {
     additionalFields: {
       role: {
@@ -417,7 +417,7 @@ Now you can access the additional fields in your application logic.
 
 ```ts
 //on signup
-const res = await auth.api.signUpEmail({
+const res = await query.api.signUpEmail({
   email: "test@example.com",
   password: "password",
   name: "John Doe",
@@ -440,10 +440,10 @@ If you're using social / OAuth providers, you may want to provide `mapProfileToU
 
 **Example: Mapping Profile to User For `firstName` and `lastName`**
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   socialProviders: {
     github: {
       clientId: "YOUR_GITHUB_CLIENT_ID",
@@ -471,17 +471,17 @@ export const auth = betterAuth({
 
 ### ID Generation
 
-Better Auth by default will generate unique IDs for users, sessions, and other entities. If you want to customize how IDs are generated, you can configure this in the `advanced.database.generateId` option in your auth config.
+Better Query by default will generate unique IDs for users, sessions, and other entities. If you want to customize how IDs are generated, you can configure this in the `advanced.database.generateId` option in your query config.
 
 You can also disable ID generation by setting the `advanced.database.generateId` option to `false`. This will assume your database will generate the ID automatically.
 
 **Example: Automatic Database IDs**
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 import { db } from "./db";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   database: {
     db: db,
   },
@@ -495,7 +495,7 @@ export const auth = betterAuth({
 
 ### Database Hooks
 
-Database hooks allow you to define custom logic that can be executed during the lifecycle of core database operations in Better Auth. You can create hooks for the following models: **user**, **session**, and **account**.
+Database hooks allow you to define custom logic that can be executed during the lifecycle of core database operations in Better Query. You can create hooks for the following models: **user**, **session**, and **account**.
 
 There are two types of hooks you can define:
 
@@ -511,10 +511,10 @@ There are two types of hooks you can define:
 
 **Example Usage**
 
-```typescript title="auth.ts"
-import { betterAuth } from "better-auth";
+```typescript title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   databaseHooks: {
     user: {
       create: {
@@ -566,13 +566,13 @@ export const auth = betterAuth({
 
 #### Throwing Errors
 
-If you want to stop the database hook from proceeding, you can throw errors using the `APIError` class imported from `better-auth/api`.
+If you want to stop the database hook from proceeding, you can throw errors using the `APIError` class imported from `better-query/api`.
 
-```typescript title="auth.ts"
-import { betterAuth } from "better-auth";
-import { APIError } from "better-auth/api";
+```typescript title="query.ts"
+import { betterAuth } from "better-query";
+import { APIError } from "better-query/api";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   databaseHooks: {
     user: {
       create: {
@@ -598,10 +598,10 @@ export const auth = betterAuth({
 
 The context object (`ctx`), passed as the second argument to the hook, contains useful information. For `update` hooks, this includes the current `session`, which you can use to access the logged-in user's details.
 
-```typescript title="auth.ts"
-import { betterAuth } from "better-auth";
+```typescript title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   databaseHooks: {
     user: {
       update: {
@@ -622,9 +622,9 @@ Much like standard hooks, database hooks also provide a `ctx` object that offers
 
 ## Plugins Schema
 
-Plugins can define their own tables in the database to store additional data. They can also add columns to the core tables to store additional data. For example, the two factor authentication plugin adds the following columns to the `user` table:
+Plugins can define their own tables in the database to store additional data. They can also add columns to the core tables to store additional data. For example, the two factor query management plugin adds the following columns to the `user` table:
 
-- `twoFactorEnabled`: Whether two factor authentication is enabled for the user.
+- `twoFactorEnabled`: Whether two factor query management is enabled for the user.
 - `twoFactorSecret`: The secret key used to generate TOTP codes.
 - `twoFactorBackupCodes`: Encrypted backup codes for account recovery.
 

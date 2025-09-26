@@ -1,10 +1,10 @@
 ---
 title: Convex Integration
-description: Integrate Better Auth with Convex.
+description: Integrate Better Query with Convex.
 ---
 
 <Callout>
-  This documentation comes from the [Convex documentation](https://convex-better-auth.netlify.app/),
+  This documentation comes from the [Convex documentation](https://convex-better-query.netlify.app/),
   for more information, please refer to their documentation.
 </Callout>
 
@@ -14,7 +14,7 @@ description: Integrate Better Auth with Convex.
 <Step>
 ### Create a Convex project
 
-To use Convex + Better Auth, you'll first need a [Convex](https://www.convex.dev/) project.
+To use Convex + Better Query, you'll first need a [Convex](https://www.convex.dev/) project.
 If you don't have one, run the following command to get started.
 ```package-install
 npm create convex@latest
@@ -39,14 +39,14 @@ npx convex dev
 
 
 
-## Installation of Convex + Better Auth
+## Installation of Convex + Better Query
 
 The following documentation assumes you're using Next.js.
 
-If you're not using Next.js, please refer to the [installation guide by Convex](https://convex-better-auth.netlify.app/#select-your-framework).
+If you're not using Next.js, please refer to the [installation guide by Convex](https://convex-better-query.netlify.app/#select-your-framework).
 
 <Callout>
-    For a complete example, check out Convex + Better Auth example with Next.js in this [Github repository](https://github.com/get-convex/better-auth/tree/main/examples/next).
+    For a complete example, check out Convex + Better Query example with Next.js in this [Github repository](https://github.com/get-convex/better-query/tree/main/examples/next).
 </Callout>
 
 ### Installation
@@ -55,7 +55,7 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
     <Step>
         #### Install packages
 
-        Install the component, a pinned version of Better Auth, and ensure the latest version of Convex.
+        Install the component, a pinned version of Better Query, and ensure the latest version of Convex.
 
 
         <Callout>
@@ -63,18 +63,18 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
         </Callout>
 
         ```package-install
-        npm install better-auth@1.3.8 --save-exact
-        npm install convex@latest @convex-dev/better-auth
+        npm install better-query@1.3.8 --save-exact
+        npm install convex@latest @convex-dev/better-query
         ```
     </Step>
     <Step>
         #### Register the component
 
-        Register the Better Auth component in your Convex project.
+        Register the Better Query component in your Convex project.
 
         ```ts title="convex/convex.config.ts"
         import { defineApp } from "convex/server";
-        import betterAuth from "@convex-dev/better-auth/convex.config";
+        import betterAuth from "@convex-dev/better-query/convex.config";
 
         const app = defineApp();
         app.use(betterAuth);
@@ -83,13 +83,13 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
         ```
     </Step>
     <Step>
-        #### Add Convex auth config
+        #### Add Convex query config
 
-        Add a `convex/auth.config.ts` file to configure Better Auth as an authentication provider.
+        Add a `convex/query.config.ts` file to configure Better Query as an CRUD API provider.
 
 
 
-        ```ts title="convex/auth.config.ts"
+        ```ts title="convex/query.config.ts"
         export default {
             providers: [
                 {
@@ -147,24 +147,24 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
         ```
     </Step>
     <Step>
-        ### Create a Better Auth instance
-        Create a Better Auth instance and initialize the component.
+        ### Create a Better Query instance
+        Create a Better Query instance and initialize the component.
 
         <Callout>Some TypeScript errors will show until you save the file.</Callout>
 
-        ```ts title="convex/auth.ts"
-        import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-        import { convex } from "@convex-dev/better-auth/plugins";
+        ```ts title="convex/query.ts"
+        import { createClient, type GenericCtx } from "@convex-dev/better-query";
+        import { convex } from "@convex-dev/better-query/plugins";
         import { components } from "./_generated/api";
         import { DataModel } from "./_generated/dataModel";
         import { query } from "./_generated/server";
-        import { betterAuth } from "better-auth";
+        import { betterAuth } from "better-query";
 
         const siteUrl = process.env.SITE_URL!;
 
-        // The component client has methods needed for integrating Convex with Better Auth,
+        // The component client has methods needed for integrating Convex with Better Query,
         // as well as helper methods for general use.
-        export const authComponent = createClient<DataModel>(components.betterAuth);
+        export const queryComponent = createClient<DataModel>(components.betterAuth);
 
         export const createAuth = (
             ctx: GenericCtx<DataModel>,
@@ -177,7 +177,7 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
                     disabled: optionsOnly,
                 },
                 baseURL: siteUrl,
-                database: authComponent.adapter(ctx),
+                database: queryComponent.adapter(ctx),
                 // Configure simple, non-verified email/password to get started
                 emailAndPassword: {
                     enabled: true,
@@ -195,21 +195,21 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
         export const getCurrentUser = query({
             args: {},
             handler: async (ctx) => {
-                return authComponent.getAuthUser(ctx);
+                return queryComponent.getAuthUser(ctx);
             },
         });
         ```
     </Step>
     <Step>
-        ### Create a Better Auth client instance
+        ### Create a Better Query client instance
 
-        Create a Better Auth client instance for interacting with the Better Auth server from your client.
+        Create a Better Query client instance for interacting with the Better Query server from your client.
 
-        ```ts title="src/lib/auth-client.ts"
-        import { createAuthClient } from "better-auth/react";
-        import { convexClient } from "@convex-dev/better-auth/client/plugins";
+        ```ts title="src/lib/query-client.ts"
+        import { createAuthClient } from "better-query/react";
+        import { convexClient } from "@convex-dev/better-query/client/plugins";
 
-        export const authClient = createAuthClient({
+        export const queryClient = createAuthClient({
             plugins: [convexClient()],
         });
         ```
@@ -217,23 +217,23 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
     <Step>
     ### Mount handlers
 
-    Register Better Auth route handlers on your Convex deployment.
+    Register Better Query route handlers on your Convex deployment.
 
     ```ts title="convex/http.ts"
     import { httpRouter } from "convex/server";
-    import { authComponent, createAuth } from "./auth";
+    import { queryComponent, createAuth } from "./query";
 
     const http = httpRouter();
 
-    authComponent.registerRoutes(http, createAuth);
+    queryComponent.registerRoutes(http, createAuth);
 
     export default http;
     ```
 
-    Set up route handlers to proxy auth requests from your framework server to your Convex deployment.
+    Set up route handlers to proxy query requests from your framework server to your Convex deployment.
 
-    ```ts title="app/api/auth/[...all]/route.ts"
-    import { nextJsHandler } from "@convex-dev/better-auth/nextjs";
+    ```ts title="app/api/query/[...all]/route.ts"
+    import { nextJsHandler } from "@convex-dev/better-query/nextjs";
 
     export const { GET, POST } = nextJsHandler();
     ```
@@ -248,17 +248,17 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
 
     import { ReactNode } from "react";
     import { ConvexReactClient } from "convex/react";
-    import { authClient } from "@/lib/auth-client"; // [!code ++]
-    import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react"; // [!code ++]
+    import { queryClient } from "@/lib/query-client"; // [!code ++]
+    import { ConvexBetterAuthProvider } from "@convex-dev/better-query/react"; // [!code ++]
 
     const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
-      // Optionally pause queries until the user is authenticated // [!code ++]
+      // Optionally pause queries until the user is queryenticated // [!code ++]
       expectAuth: true, // [!code ++]
     });
 
     export function ConvexClientProvider({ children }: { children: ReactNode }) {
       return (
-        <ConvexBetterAuthProvider client={convex} authClient={authClient}> // [!code ++]
+        <ConvexBetterAuthProvider client={convex} queryClient={queryClient}> // [!code ++]
           {children}
         </ConvexBetterAuthProvider> // [!code ++]
       );
@@ -270,35 +270,35 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
 
 ### You're done!
 
-You're now ready to start using Better Auth with Convex.
+You're now ready to start using Better Query with Convex.
 
 ## Usage
 
-### Using Better Auth from the server
+### Using Better Query from the server
 
-To use Better Auth's [server
-methods](https://www.better-auth.com/docs/concepts/api) in server rendering,
+To use Better Query's [server
+methods](https://www.better-query.com/docs/concepts/api) in server rendering,
 server functions, or any other Next.js server code, use Convex functions
 and call the function from your server code.
 
 First, a token helper for calling Convex functions from your server code.
 
-```ts title="src/lib/auth-server.ts"
-import { createAuth } from "convex/auth";
-import { getToken as getTokenNextjs } from "@convex-dev/better-auth/nextjs";
+```ts title="src/lib/query-server.ts"
+import { createAuth } from "convex/query";
+import { getToken as getTokenNextjs } from "@convex-dev/better-query/nextjs";
 
 export const getToken = () => {
   return getTokenNextjs(createAuth);
 };
 ```
 
-Here's an example Convex function that uses Better Auth's server methods, and
+Here's an example Convex function that uses Better Query's server methods, and
 a server action that calls the Convex function.
 
 ```ts title="convex/users.ts"
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { createAuth, authComponent } from "./auth";
+import { createAuth, queryComponent } from "./query";
 
 export const updateUserPassword = mutation({
   args: {
@@ -311,7 +311,7 @@ export const updateUserPassword = mutation({
         currentPassword: args.currentPassword,
         newPassword: args.newPassword,
       },
-      headers: await authComponent.getHeaders(ctx),
+      headers: await queryComponent.getHeaders(ctx),
     });
   },
 });
@@ -322,7 +322,7 @@ export const updateUserPassword = mutation({
 
 import { fetchMutation } from "convex/nextjs";
 import { api } from "../convex/_generated/api";
-import { getToken } from "../lib/auth-server";
+import { getToken } from "../lib/query-server";
 
 // Authenticated mutation via server function
 export async function updatePassword({
@@ -342,6 +342,6 @@ export async function updatePassword({
 ```
 
 <Callout>
-  This documentation comes from the [Convex documentation](https://convex-better-auth.netlify.app/),
+  This documentation comes from the [Convex documentation](https://convex-better-query.netlify.app/),
   for more information, please refer to their documentation.
 </Callout>

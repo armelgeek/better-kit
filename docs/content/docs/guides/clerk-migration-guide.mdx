@@ -1,9 +1,9 @@
 ---
-title: Migrating from Clerk to Better Auth
-description: A step-by-step guide to transitioning from Clerk to Better Auth.
+title: Migrating from Clerk to Better Query
+description: A step-by-step guide to transitioning from Clerk to Better Query.
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Clerk to Better Auth — including email/password with proper hashing, social/external accounts, phone number, two-factor data, and more.
+In this guide, we'll walk through the steps to migrate a project from Clerk to Better Query — including email/password with proper hashing, social/external accounts, phone number, two-factor data, and more.
 
 <Callout type="warn">
 This migration will invalidate all active sessions. This guide doesn't currently show you how to migrate Organization but it should be possible with additional steps and the [Organization](/docs/plugins/organization) Plugin.
@@ -11,7 +11,7 @@ This migration will invalidate all active sessions. This guide doesn't currently
 
 ## Before You Begin
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started. And go to 
+Before starting the migration process, set up Better Query in your project. Follow the [installation guide](/docs/installation) to get started. And go to 
 
 <Steps>
 <Step>
@@ -25,10 +25,10 @@ npm install pg
 
 And then you can use the following code to connect to your database.
 
-```ts title="auth.ts"
+```ts title="query.ts"
 import { Pool } from "pg";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -38,12 +38,12 @@ export const auth = betterAuth({
 <Step>
 ### Enable Email and Password (Optional)
 
-Enable the email and password in your auth config and implement your own logic for sending verification emails, reset password emails, etc.
+Enable the email and password in your query config and implement your own logic for sending verification emails, reset password emails, etc.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -58,17 +58,17 @@ export const auth = betterAuth({
 })
 ```
 
-See [Email and Password](/docs/authentication/email-password) for more configuration options.
+See [Email and Password](/docs/resource management/email-password) for more configuration options.
 </Step>
 <Step>
 ### Setup Social Providers (Optional)
 
-Add social providers you have enabled in your Clerk project in your auth config.
+Add social providers you have enabled in your Clerk project in your query config.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -87,22 +87,22 @@ export const auth = betterAuth({
 <Step>
 ### Add Plugins (Optional)
 
-You can add the following plugins to your auth config based on your needs.
+You can add the following plugins to your query config based on your needs.
 
 [Admin](/docs/plugins/admin) Plugin will allow you to manage users, user impersonations and app level roles and permissions.
 
-[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor authentication to your application.
+[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor resource management to your application.
 
-[Phone Number](/docs/plugins/phone-number) Plugin will allow you to add phone number authentication to your application.
+[Phone Number](/docs/plugins/phone-number) Plugin will allow you to add phone number resource management to your application.
 
-[Username](/docs/plugins/username) Plugin will allow you to add username authentication to your application.
+[Username](/docs/plugins/username) Plugin will allow you to add username resource management to your application.
 
-```ts title="auth.ts"
+```ts title="query.ts"
 import { Pool } from "pg";
-import { betterAuth } from "better-auth";
-import { admin, twoFactor, phoneNumber, username } from "better-auth/plugins";
+import { betterAuth } from "better-query";
+import { admin, twoFactor, phoneNumber, username } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -125,13 +125,13 @@ export const auth = betterAuth({
   If you're using a custom database adapter, generate the schema:
 
   ```sh
-  npx @better-auth/cli generate
+  npx @better-query/cli generate
   ```
 
   or if you're using the default adapter, you can use the following command:
 
   ```sh
-  npx @better-auth/cli migrate
+  npx @better-query/cli migrate
   ```
   </Step>
   <Step>
@@ -144,9 +144,9 @@ export const auth = betterAuth({
   Create a new file called `migrate-clerk.ts` in the `scripts` folder and add the following code:
 
   ```ts title="scripts/migrate-clerk.ts"
-import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
+import { generateRandomString, symmetricEncrypt } from "better-query/crypto";
 
-import { auth } from "@/lib/auth"; // import your auth instance
+import { query } from "@/lib/query"; // import your query instance
 
 function getCSVData(csv: string) {
     const lines = csv.split('\n').filter(line => line.trim());
@@ -266,7 +266,7 @@ function safeDateConversion(timestamp?: number): Date {
 async function migrateFromClerk() {
     const jsonData = getCSVData(exportedUserCSV);
     const clerkUsers = await getClerkUsers(jsonData.length);
-    const ctx = await auth.$context
+    const ctx = await query.$context
     const isAdminEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "admin");
     const isTwoFactorEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "two-factor");
     const isUsernameEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "username");
@@ -344,7 +344,7 @@ async function migrateFromClerk() {
                         model: "account",
                         data: {
                             id,
-                            providerId: provider.replace("oauth_", ""),
+                            providerId: provider.replace("oquery_", ""),
                             accountId: externalAccount.provider_user_id,
                             scope: approved_scopes,
                             userId: createdUser?.id,
@@ -397,7 +397,7 @@ migrateFromClerk()
   Make sure to:
   1. Test the migration in a development environment first
   2. Monitor the migration process for any errors
-  3. Verify the migrated data in Better Auth before proceeding
+  3. Verify the migrated data in Better Query before proceeding
   4. Keep Clerk installed and configured until the migration is complete
   </Callout>
 
@@ -410,14 +410,14 @@ migrateFromClerk()
   <Step>
   ### Update your components
 
-  Now that the data is migrated, you can start updating your components to use Better Auth. Here's an example for the sign-in component:
+  Now that the data is migrated, you can start updating your components to use Better Query. Here's an example for the sign-in component:
 
-  ```tsx title="components/auth/sign-in.tsx"
-  import { authClient } from "better-auth/client";
+  ```tsx title="components/query/sign-in.tsx"
+  import { queryClient } from "better-query/client";
 
   export const SignIn = () => {
     const handleSignIn = async () => {
-      const { data, error } = await authClient.signIn.email({
+      const { data, error } = await queryClient.signIn.email({
         email: "user@example.com",
         password: "password",
       });
@@ -440,12 +440,12 @@ migrateFromClerk()
 <Step>
   ### Update the middleware
 
-  Replace your Clerk middleware with Better Auth's middleware:
+  Replace your Clerk middleware with Better Query's middleware:
 
   ```ts title="middleware.ts"
 
   import { NextRequest, NextResponse } from "next/server";
-  import { getSessionCookie } from "better-auth/cookies";
+  import { getSessionCookie } from "better-query/cookies";
   export async function middleware(request: NextRequest) {
     const sessionCookie = getSessionCookie(request);
     const { pathname } = request.nextUrl;
@@ -466,7 +466,7 @@ migrateFromClerk()
   <Step>
   ### Remove Clerk Dependencies
 
-  Once you've verified that everything is working correctly with Better Auth, you can remove Clerk:
+  Once you've verified that everything is working correctly with Better Query, you can remove Clerk:
 
   ```bash title="Remove Clerk"
   pnpm remove @clerk/nextjs @clerk/themes @clerk/types
@@ -476,10 +476,10 @@ migrateFromClerk()
 
 ## Additional Resources
 
-[Goodbye Clerk, Hello Better Auth – Full Migration Guide!](https://www.youtube.com/watch?v=Za_QihbDSuk)
+[Goodbye Clerk, Hello Better Query – Full Migration Guide!](https://www.youtube.com/watch?v=Za_QihbDSuk)
 
 ## Wrapping Up
 
-Congratulations! You've successfully migrated from Clerk to Better Auth.
+Congratulations! You've successfully migrated from Clerk to Better Query.
 
-Better Auth offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential.
+Better Query offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential.

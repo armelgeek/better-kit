@@ -102,7 +102,7 @@ To read a specific resource, you can use the `read` function provided by the cli
 ```ts title="get-product"
 const { data, error } = await queryClient.product.read("product-id", {
     headers: {
-        "Authorization": "Bearer your-token"
+        "X-API-Key": "your-api-key"
     }
 });
 ```
@@ -143,7 +143,7 @@ const { data, error } = await queryClient.product.update("product-id", {
     status: "active"
 }, {
     headers: {
-        "Authorization": "Bearer your-token"
+        "X-API-Key": "your-api-key"
     }
 });
 ```
@@ -157,7 +157,7 @@ import { queryClient } from "@/lib/query-client"; //import the query client // [
 
 await queryClient.product.delete("product-id", {
     headers: {
-        "Authorization": "Bearer your-token"
+        "X-API-Key": "your-api-key"
     }
 });
 ```
@@ -191,7 +191,7 @@ const { data, error } = await queryClient.product.list({
     sortOrder: "asc",
 }, {
     headers: {
-        "Authorization": "Bearer your-token"
+        "X-API-Key": "your-api-key"
     }
 });
 
@@ -219,7 +219,7 @@ Once resources are defined, you'll want to control access and manage data. Bette
 
 Better Query provides type-safe client methods to interact with your resources, similar to Better Auth's approach.
 
-<Tabs items={["React", "Vue","Svelte", "Solid", "Vanilla"]} defaultValue="react">
+<Tabs items={["React", "Vanilla"]} defaultValue="react">
     <Tab value="React">
         ```tsx title="product-manager.tsx"
         import { queryClient } from "@/lib/query-client" // import the query client // [!code highlight] 
@@ -260,81 +260,6 @@ Better Query provides type-safe client methods to interact with your resources, 
         ```
     </Tab>
 
-     <Tab value="Vue">
-        ```vue title="product-manager.vue"
-        <script setup lang="ts">
-        import { queryClient } from "~/lib/query-client" // [!code highlight]
-
-        const products = ref([]);
-        const loading = ref(false);
-
-        const fetchProducts = async () => {
-            loading.value = true;
-            const result = await queryClient.product.list({
-                page: 1,
-                limit: 10
-            });
-            if (result.data) {
-                products.value = result.data.items;
-            }
-            loading.value = false;
-        };
-
-        const createProduct = async (productData) => {
-            const result = await queryClient.product.create(productData);
-            if (result.data) {
-                products.value.push(result.data);
-            }
-        };
-        </script>
-
-        <template>
-            <div>
-                <div v-if="loading">Loading...</div>
-                <div v-else>
-                    <div v-for="product in products" :key="product.id">
-                        {{ product.name }}
-                    </div>
-                </div>
-            </div>
-        </template>
-        ```
-        </Tab>
-
-        <Tab value="Svelte">
-            ```svelte title="product-manager.svelte"
-            <script lang="ts">
-            import { queryClient } from "$lib/query-client"; // [!code highlight]
-
-            let products = [];
-            let loading = false;
-
-            const fetchProducts = async () => {
-                loading = true;
-                const result = await queryClient.product.list({
-                    page: 1,
-                    limit: 10
-                });
-                if (result.data) {
-                    products = result.data.items;
-                }
-                loading = false;
-            };
-
-            onMount(fetchProducts);
-            </script>
-
-            <div>
-                {#if loading}
-                    <p>Loading...</p>
-                {:else}
-                    {#each products as product (product.id)}
-                        <div>{product.name}</div>
-                    {/each}
-                {/if}
-            </div>
-            ```
-        </Tab>
          <Tab value="Vanilla">
             ```ts title="product-manager.js"
             import { queryClient } from "~/lib/query-client"; //import the query client
@@ -361,42 +286,6 @@ Better Query provides type-safe client methods to interact with your resources, 
             };
             ```
         </Tab>
-
-        <Tab value="Solid">
-            ```tsx title="product-manager.tsx"
-            import { queryClient } from "~/lib/query-client"; // [!code highlight]
-            import { createSignal, onMount } from "solid-js";
-
-            export default function ProductManager() {
-                const [products, setProducts] = createSignal([]);
-                const [loading, setLoading] = createSignal(false);
-
-                const fetchProducts = async () => {
-                    setLoading(true);
-                    const result = await queryClient.product.list({
-                        page: 1,
-                        limit: 10
-                    });
-                    if (result.data) {
-                        setProducts(result.data.items);
-                    }
-                    setLoading(false);
-                };
-
-                onMount(fetchProducts);
-
-                return (
-                    <div>
-                        {loading() ? "Loading..." : (
-                            products().map(product => (
-                                <div>{product.name}</div>
-                            ))
-                        )}
-                    </div>
-                );
-            }
-            ```
-        </Tab>
 </Tabs>
 
 ### Server Side
@@ -405,7 +294,7 @@ The server provides resource management methods that you can use to handle resou
 
 **Example: Using some popular frameworks**
 
-<Tabs items={["Next.js", "Nuxt", "Svelte", "Astro", "Hono", "TanStack"]}>
+<Tabs items={["Next.js", "Hono"]}>
     <Tab value="Next.js">
     ```ts title="server.ts"
     import { query } from "./query"; // path to your Better Query server instance
@@ -420,57 +309,6 @@ The server provides resource management methods that you can use to handle resou
     })
     ```
     </Tab>
-    <Tab value="Remix">
-    ```ts title="route.ts"
-    import { query } from "lib/query"; // path to your Better Query server instance
-
-    export async function action({ request }: ActionFunctionArgs) {
-        const formData = await request.formData();
-        const product = await query.api.createProduct({
-            body: {
-                name: formData.get('name'),
-                price: Number(formData.get('price'))
-            },
-            headers: request.headers
-        })
-
-        return json({ product })
-    }
-    ```
-    </Tab>
-    <Tab value="Astro">
-    ```astro title="create-product.astro"
-    ---
-    import { query } from "./query";
-
-    const product = await query.api.createProduct({
-        body: {
-            name: "Astro Product",
-            price: 59.99
-        },
-	    headers: Astro.request.headers,
-    });
-    ---
-    <!-- Your Astro Template -->
-    ```
-    </Tab>
-    <Tab value="Svelte">
-    ```ts title="+page.server.ts"
-    import { query } from "./query";
-
-    export async function load({ request }) {
-        const products = await query.api.listProducts({
-            headers: request.headers
-        })
-        return {
-            props: {
-                products
-            }
-        }
-    }
-    ```
-    </Tab>
-    <Tab value="Hono">
     ```ts title="index.ts"
     import { query } from "./query";
 
@@ -487,37 +325,6 @@ The server provides resource management methods that you can use to handle resou
     ```
     </Tab>
 
-    <Tab value="Nuxt">
-    ```ts title="server/create-product.ts"
-    import { query } from "~/utils/query";
-
-    export default defineEventHandler(async (event) => {
-        const body = await readBody(event);
-        const product = await query.api.createProduct({
-            body,
-            headers: event.headers,
-        })
-        return product;
-    });
-    ```
-    </Tab>
-    <Tab value="TanStack">
-    ```ts title="app/routes/api/products.ts"
-    import { query } from "./query";
-    import { createAPIFileRoute } from "@tanstack/start/api";
-
-    export const APIRoute = createAPIFileRoute("/api/products")({
-        POST: async ({ request }) => {
-            const body = await request.json();
-            const product = await query.api.createProduct({
-                body,
-                headers: request.headers
-            })
-            return Response.json(product);
-        },
-    });
-    ```
-    </Tab>
 </Tabs>
 
 <Callout>

@@ -1,18 +1,18 @@
 ---
 title: SAML SSO with Okta
-description: A guide to integrating SAML Single Sign-On (SSO) with Better Auth, featuring Okta
+description: A guide to integrating SAML Single Sign-On (SSO) with Better Query, featuring Okta
 ---
 
 This guide walks you through setting up SAML Single Sign-On (SSO) with your Identity Provider (IdP), using Okta as an example. For advanced configuration details and the full API reference, check out the [SSO Plugin Documentation](/docs/plugins/sso).
 
 ## What is SAML?
 
-SAML (Security Assertion Markup Language) is an XML-based standard for exchanging authentication and authorization data between an Identity Provider (IdP) (e.g., Okta, Azure AD, OneLogin) and a Service Provider (SP) (in this case, Better Auth).
+SAML (Security Assertion Markup Language) is an XML-based standard for exchanging resource management and queryorization data between an Identity Provider (IdP) (e.g., Okta, Azure AD, OneLogin) and a Service Provider (SP) (in this case, Better Query).
 
 In this setup:
 
 - **IdP (Okta)**: Authenticates users and sends assertions about their identity.
-- **SP (Better Auth)**: Validates assertions and logs the user in.up.
+- **SP (Better Query)**: Validates assertions and logs the user in.up.
 
 ### Step 1: Create a SAML Application in Okta
 
@@ -22,13 +22,13 @@ In this setup:
 4. Select "SAML 2.0" as the Sign-in method
 5. Configure the following settings:
 
-   - **Single Sign-on URL**: Your Better Auth ACS endpoint (e.g., `http://localhost:3000/api/auth/sso/saml2/sp/acs/sso`). while `sso` being your providerId
-   - **Audience URI (SP Entity ID)**: Your Better Auth metadata URL (e.g., `http://localhost:3000/api/auth/sso/saml2/sp/metadata`)
+   - **Single Sign-on URL**: Your Better Query ACS endpoint (e.g., `http://localhost:3000/api/query/sso/saml2/sp/acs/sso`). while `sso` being your providerId
+   - **Audience URI (SP Entity ID)**: Your Better Query metadata URL (e.g., `http://localhost:3000/api/query/sso/saml2/sp/metadata`)
    - **Name ID format**: Email Address or any of your choice.
 
 6. Download the IdP metadata XML file and certificate
 
-### Step 2: Configure Better Auth
+### Step 2: Configure Better Query
 
 Here’s an example configuration for Okta in a dev environment:
 
@@ -39,9 +39,9 @@ const ssoConfig = {
     providerId: "sso",
     samlConfig: {
       // SP Configuration
-      issuer: "http://localhost:3000/api/auth/sso/saml2/sp/metadata",
+      issuer: "http://localhost:3000/api/query/sso/saml2/sp/metadata",
       entryPoint: "https://trial-1076874.okta.com/app/trial-1076874_samltest_1/exktofb0a62hqLAUL697/sso/saml",
-      callbackUrl: "/dashboard", // Redirect after successful authentication
+      callbackUrl: "/dashboard", // Redirect after successful resource management
       
       // IdP Configuration
       idpMetadata: {
@@ -118,7 +118,7 @@ You can start an SSO flow in three ways:
 
 ```typescript
 // Explicitly specify which provider to use
-await authClient.signIn.sso({
+await queryClient.signIn.sso({
   providerId: "company-okta",
   callbackURL: "/dashboard"
 });
@@ -128,7 +128,7 @@ await authClient.signIn.sso({
 
 ```typescript
 // Automatically matches provider based on email domain
-await authClient.signIn.sso({
+await queryClient.signIn.sso({
   email: "user@company.com",
   callbackURL: "/dashboard"
 });
@@ -138,7 +138,7 @@ await authClient.signIn.sso({
 
 ```typescript
 // Explicitly specify domain for matching
-await authClient.signIn.sso({
+await queryClient.signIn.sso({
   domain: "partner.com",
   callbackURL: "/dashboard"
 });
@@ -157,7 +157,7 @@ For dynamic registration, you should register SAML providers using the API. See 
 Example registration:
 
 ```typescript
-await authClient.sso.register({
+await queryClient.sso.register({
   providerId: "okta-prod",
   issuer: "https://your-domain.com",
   domain: "your-domain.com",

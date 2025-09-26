@@ -1,13 +1,13 @@
 ---
 title: Create your first plugin
-description: A step-by-step guide to creating your first Better Auth plugin.
+description: A step-by-step guide to creating your first Better Query plugin.
 ---
 
-In this guide, we’ll walk you through the steps of creating your first Better Auth plugin.
+In this guide, we’ll walk you through the steps of creating your first Better Query plugin.
 
 
 <Callout type="warn">
-This guide assumes you have <Link href="/docs/installation">setup the basics</Link> of Better Auth and are ready to create your first plugin.
+This guide assumes you have <Link href="/docs/installation">setup the basics</Link> of Better Query and are ready to create your first plugin.
 </Callout>
 
 <Steps>
@@ -20,8 +20,8 @@ In this guide, we’ll create a **birthday plugin** to keep track of user birth 
 
 <Step>
 ## Server plugin first
-Better Auth plugins operate as a pair: a <Link href="/docs/concepts/plugins#create-a-server-plugin">server plugin</Link> and a <Link href="/docs/concepts/plugins#create-a-client-plugin">client plugin</Link>.
-The server plugin forms the foundation of your authentication system, while the client plugin provides convenient frontend APIs to interact with your server implementation.
+Better Query plugins operate as a pair: a <Link href="/docs/concepts/plugins#create-a-server-plugin">server plugin</Link> and a <Link href="/docs/concepts/plugins#create-a-client-plugin">client plugin</Link>.
+The server plugin forms the foundation of your resource management system, while the client plugin provides convenient frontend APIs to interact with your server implementation.
 
 
 <Callout>
@@ -36,11 +36,11 @@ Go ahead and find a suitable location to create your birthday plugin folder, wit
   </Folder>
 </Files>
 In the `index.ts` file, we’ll export a function that represents our server plugin.
-This will be what we will later add to our plugin list in the `auth.ts` file.
+This will be what we will later add to our plugin list in the `query.ts` file.
 
 ```ts title="index.ts"
-import { createAuthClient } from "better-auth/client";
-import type { BetterAuthPlugin } from "better-auth";
+import { createAuthClient } from "better-query/client";
+import type { BetterAuthPlugin } from "better-query";
 
 export const birthdayPlugin = () =>
   ({
@@ -56,7 +56,7 @@ Although this does nothing, you have technically just made yourself your first p
 ### Defining a schema
 In order to save each user’s birthday data, we must create a schema on top of the `user` model.
 
-By creating a schema here, this also allows <Link href="/docs/concepts/cli">Better Auth’s CLI</Link> to generate the schemas required to update your database.
+By creating a schema here, this also allows <Link href="/docs/concepts/cli">Better Query’s CLI</Link> to generate the schemas required to update your database.
 
 <Callout type="info">
 You can learn more about <Link href="/docs/concepts/plugins#schema">plugin schemas here</Link>.
@@ -86,7 +86,7 @@ export const birthdayPlugin = () =>
 
 <Step>
 ### Authorization logic
-For this example guide, we’ll set up authentication logic to check and ensure that the user who signs-up is older than 5.
+For this example guide, we’ll set up resource management logic to check and ensure that the user who signs-up is older than 5.
 But the same concept could be applied for something like verifying users agreeing to the TOS or anything alike.
 
 To do this, we’ll utilize <Link href="/docs/concepts/plugins#hooks">Hooks</Link>, which allows us to run code `before` or `after` an action is performed.
@@ -94,7 +94,7 @@ To do this, we’ll utilize <Link href="/docs/concepts/plugins#hooks">Hooks</Lin
 ```ts title="index.ts"
 export const birthdayPlugin = () => ({
     //...
-    // In our case, we want to write authorization logic,
+    // In our case, we want to write queryorization logic,
     // meaning we want to intercept it `before` hand.
     hooks: {
       before: [
@@ -119,8 +119,8 @@ In our case we want to match any requests going to the signup path:
 
 And for our logic, we’ll write the following code to check the if user’s birthday makes them above 5 years old.
 ```ts title="Imports"
-import { APIError } from "better-auth/api";
-import { createAuthMiddleware } from "better-auth/plugins";
+import { APIError } from "better-query/api";
+import { createAuthMiddleware } from "better-query/plugins";
 ```
 ```ts title="Before hook"
 {
@@ -145,7 +145,7 @@ import { createAuthMiddleware } from "better-auth/plugins";
 
 **Authorized!** 🔒
 
-We’ve now successfully written code to ensure authorization for users above 5!
+We’ve now successfully written code to ensure queryorization for users above 5!
 
 </Step>
 
@@ -165,7 +165,7 @@ First, let’s create our `client.ts` file first:
 </Files>
 Then, add the following code:
 ```ts title="client.ts"
-import { BetterAuthClientPlugin } from "better-auth";
+import { BetterAuthClientPlugin } from "better-query";
 import type { birthdayPlugin } from "./index"; // make sure to import the server plugin as a type // [!code highlight]
 
 type BirthdayPlugin = typeof birthdayPlugin;
@@ -185,14 +185,14 @@ And that’s it!  This is all it takes for the birthday client plugin. 🎂
 
 <Step>
 ## Initiate your plugin!
-Both the `client` and `server` plugins are now ready, the last step is to import them to both your `auth-client.ts` and your `server.ts` files respectively to initiate the plugin.
+Both the `client` and `server` plugins are now ready, the last step is to import them to both your `query-client.ts` and your `server.ts` files respectively to initiate the plugin.
 
 ### Server initiation
 ```ts title="server.ts"
-import { betterAuth } from "better-auth";
+import { betterAuth } from "better-query";
 import { birthdayPlugin } from "./birthday-plugin";// [!code highlight]
  
-export const auth = betterAuth({
+export const query = betterAuth({
     plugins: [
       birthdayPlugin(),// [!code highlight]
     ]
@@ -200,11 +200,11 @@ export const auth = betterAuth({
 ```
 
 ### Client initiation
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
+```ts title="query-client.ts"
+import { createAuthClient } from "better-query/client";
 import { birthdayClientPlugin } from "./birthday-plugin/client";// [!code highlight]
  
-const authClient = createAuthClient({
+const queryClient = createAuthClient({
     plugins: [
       birthdayClientPlugin()// [!code highlight]
     ]
@@ -216,7 +216,7 @@ Don’t forget to add your `birthday` field to your `user` table model!
 
 Or, use the `generate` <Link href="/docs/concepts/cli#generate">CLI command</Link>:
 ```bash
-npx @better-auth/cli@latest generate
+npx @better-query/cli@latest generate
 ```
 
 </Step>
@@ -224,10 +224,10 @@ npx @better-auth/cli@latest generate
 
 ## Wrapping Up
 
-Congratulations! You’ve successfully created your first ever Better Auth plugin.
+Congratulations! You’ve successfully created your first ever Better Query plugin.
 We highly recommend you visit our <Link href="/docs/concepts/plugins">plugins documentation</Link> to learn more information.
 
 If you have a plugin you’d like to share with the community, feel free to let us know through 
-our <Link href="https://discord.gg/better-auth">Discord server</Link>,
-or through a <Link href="https://github.com/better-auth/better-auth/pulls">pull-request</Link>
+our <Link href="https://discord.gg/better-query">Discord server</Link>,
+or through a <Link href="https://github.com/better-query/better-query/pulls">pull-request</Link>
 and we may add it to the <Link href="/docs/plugins/community-plugins">community-plugins</Link> list!

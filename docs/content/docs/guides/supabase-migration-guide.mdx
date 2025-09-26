@@ -1,9 +1,9 @@
 ---
-title: Migrating from Supabase Auth to Better Auth
-description: A step-by-step guide to transitioning from Supabase Auth to Better Auth.
+title: Migrating from Supabase Auth to Better Query
+description: A step-by-step guide to transitioning from Supabase Auth to Better Query.
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Supabase Auth to Better Auth. 
+In this guide, we'll walk through the steps to migrate a project from Supabase Auth to Better Query. 
 
 <Callout type="warn">
 This migration will invalidate all active sessions. While this guide doesn't currently cover migrating two-factor (2FA) or Row Level Security (RLS) configurations, both should be possible with additional steps.
@@ -12,7 +12,7 @@ This migration will invalidate all active sessions. While this guide doesn't cur
 
 ## Before You Begin
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started.
+Before starting the migration process, set up Better Query in your project. Follow the [installation guide](/docs/installation) to get started.
 
 
 <Steps>
@@ -27,10 +27,10 @@ npm install pg
 
 And then you can use the following code to connect to your database.
 
-```ts title="auth.ts"
+```ts title="query.ts"
 import { Pool } from "pg";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -40,12 +40,12 @@ export const auth = betterAuth({
 <Step>
 ### Enable Email and Password (Optional)
 
-Enable the email and password in your auth config.
+Enable the email and password in your query config.
 
-```ts title="auth.ts"
-import { admin, anonymous } from "better-auth/plugins";
+```ts title="query.ts"
+import { admin, anonymous } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -64,12 +64,12 @@ export const auth = betterAuth({
 <Step>
 ### Setup Social Providers (Optional)
 
-Add social providers you have enabled in your Supabase project in your auth config.
+Add social providers you have enabled in your Supabase project in your query config.
 
-```ts title="auth.ts"
-import { admin, anonymous } from "better-auth/plugins";
+```ts title="query.ts"
+import { admin, anonymous } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -88,12 +88,12 @@ export const auth = betterAuth({
 <Step>
 ### Add admin and anonymous plugins (Optional)
 
-Add the [admin](/docs/plugins/admin) and [anonymous](/docs/plugins/anonymous) plugins to your auth config.
+Add the [admin](/docs/plugins/admin) and [anonymous](/docs/plugins/anonymous) plugins to your query config.
 
-```ts title="auth.ts"
-import { admin, anonymous } from "better-auth/plugins";
+```ts title="query.ts"
+import { admin, anonymous } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -116,7 +116,7 @@ export const auth = betterAuth({
 Run the migration to create the necessary tables in your database.
 
 ```bash title="Terminal"
-npx @better-auth/cli migrate
+npx @better-query/cli migrate
 ```
 
 This will create the following tables in your database:
@@ -131,7 +131,7 @@ This tables will be created on the `public` schema.
 <Step>
 ### Copy the migration script
 
-Now that we have the necessary tables in our database, we can run the migration script to migrate the users and accounts from Supabase to Better Auth.
+Now that we have the necessary tables in our database, we can run the migration script to migrate the users and accounts from Supabase to Better Query.
 
 Start by creating a `.ts` file in your project.
 
@@ -143,7 +143,7 @@ And then copy and paste the following code into the file.
 
 ```ts title="migration.ts"
 import { Pool } from "pg";
-import { auth } from "./auth";
+import { query } from "./query";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 type User = SupabaseUser & {
@@ -168,7 +168,7 @@ type User = SupabaseUser & {
 };
 
 const migrateFromSupabase = async () => {
-	const ctx = await auth.$context;
+	const ctx = await query.$context;
 	const db = ctx.options.database as Pool;
 	const users = await db
 		.query(`
@@ -180,8 +180,8 @@ const migrateFromSupabase = async () => {
 					) FILTER (WHERE i.id IS NOT NULL),
 					'[]'::json
 				) as identities
-			FROM auth.users u
-			LEFT JOIN auth.identities i ON u.id = i.user_id
+			FROM query.users u
+			LEFT JOIN query.identities i ON u.id = i.user_id
 			GROUP BY u.id
 		`)
 		.then((res) => res.rows as User[]);
@@ -257,7 +257,7 @@ migrateFromSupabase();
 ### Customize the migration script (Optional)
 
 - `name`: the migration script will use the user's email as the name. You might want to customize it if you have the user display name in your database.
-- `socialProviderList`: the migration script will use the social providers you have enabled in your auth config. You might want to customize it if you have additional social providers that you haven't enabled in your auth config.
+- `socialProviderList`: the migration script will use the social providers you have enabled in your query config. You might want to customize it if you have additional social providers that you haven't enabled in your query config.
 - `role`: remove `role` if you're not using the `admin` plugin 
 - `isAnonymous`: remove `isAnonymous` if you're not using the `anonymous` plugin.
 - update other tables that reference the `users` table to use the `id` field.
@@ -265,7 +265,7 @@ migrateFromSupabase();
 <Step>
 ### Run the migration script
 
-Run the migration script to migrate the users and accounts from Supabase to Better Auth.
+Run the migration script to migrate the users and accounts from Supabase to Better Query.
 
 ```bash title="Terminal"
 bun migration.ts # or use node, ts-node, etc.
@@ -274,25 +274,25 @@ bun migration.ts # or use node, ts-node, etc.
 <Step>
 ### Update your code
 
-Update your codebase from Supabase auth calls to Better Auth API.
+Update your codebase from Supabase query calls to Better Query API.
 
-Here's a list of the Supabase auth API calls and their Better Auth counterparts.
+Here's a list of the Supabase query API calls and their Better Query counterparts.
 
-- `supabase.auth.signUp` -> `authClient.signUp.email`
-- `supabase.auth.signInWithPassword` -> `authClient.signIn.email`
-- `supabase.auth.signInWithOAuth` -> `authClient.signIn.social`
-- `supabase.auth.signInAnonymously` -> `authClient.signIn.anonymous`
-- `supabase.auth.signOut` -> `authClient.signOut`
-- `supabase.auth.getSession` -> `authClient.getSession` -  you can also use `authClient.useSession` for reactive state
+- `supabase.query.signUp` -> `queryClient.signUp.email`
+- `supabase.query.signInWithPassword` -> `queryClient.signIn.email`
+- `supabase.query.signInWithOAuth` -> `queryClient.signIn.social`
+- `supabase.query.signInAnonymously` -> `queryClient.signIn.anonymous`
+- `supabase.query.signOut` -> `queryClient.signOut`
+- `supabase.query.getSession` -> `queryClient.getSession` -  you can also use `queryClient.useSession` for reactive state
 
 Learn more:
-- [Basic Usage](/docs/basic-usage): Learn how to use the auth client to sign up, sign in, and sign out.
-- [Email and Password](/docs/authentication/email-and-password): Learn how to add email and password authentication to your project.
-- [Anonymous](/docs/plugins/anonymous): Learn how to add anonymous authentication to your project.
-- [Admin](/docs/plugins/admin): Learn how to add admin authentication to your project.
-- [Email OTP](/docs/authentication/email-otp): Learn how to add email OTP authentication to your project.
+- [Basic Usage](/docs/basic-usage): Learn how to use the query client to sign up, sign in, and sign out.
+- [Email and Password](/docs/resource management/email-and-password): Learn how to add email and password resource management to your project.
+- [Anonymous](/docs/plugins/anonymous): Learn how to add anonymous resource management to your project.
+- [Admin](/docs/plugins/admin): Learn how to add admin resource management to your project.
+- [Email OTP](/docs/resource management/email-otp): Learn how to add email OTP resource management to your project.
 - [Hooks](/docs/concepts/hooks): Learn how to use the hooks to listen for events.
-- [Next.js](/docs/integrations/next): Learn how to use the auth client in a Next.js project.
+- [Next.js](/docs/integrations/next): Learn how to use the query client in a Next.js project.
 </Step>
 </Steps>
 
@@ -302,6 +302,6 @@ To protect routes with middleware, refer to the [Next.js middleware guide](/docs
 
 ## Wrapping Up
 
-Congratulations! You've successfully migrated from Supabase Auth to Better Auth.
+Congratulations! You've successfully migrated from Supabase Auth to Better Query.
 
-Better Auth offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential.
+Better Query offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential.

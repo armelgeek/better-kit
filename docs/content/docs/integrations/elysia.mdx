@@ -1,11 +1,11 @@
 ---
 title: Elysia Integration
-description: Integrate Better Auth with Elysia.
+description: Integrate Better Query with Elysia.
 ---
 
 This integration guide is assuming you are using Elysia with bun server.
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+Before you start, make sure you have a Better Query instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
 
 ### Mount the handler
 
@@ -13,9 +13,9 @@ We need to mount the handler to Elysia endpoint.
 
 ```ts
 import { Elysia } from "elysia";
-import { auth } from "./auth";
+import { query } from "./query";
 
-const app = new Elysia().mount(auth.handler).listen(3000);
+const app = new Elysia().mount(query.handler).listen(3000);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
@@ -30,7 +30,7 @@ To configure cors, you can use the `cors` plugin from `@elysiajs/cors`.
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 
-import { auth } from "./auth";
+import { query } from "./query";
 
 const app = new Elysia()
   .use(
@@ -41,7 +41,7 @@ const app = new Elysia()
       allowedHeaders: ["Content-Type", "Authorization"],
     }),
   )
-  .mount(auth.handler)
+  .mount(query.handler)
   .listen(3000);
 
 console.log(
@@ -55,15 +55,15 @@ You can use [macro](https://elysiajs.com/patterns/macro.html#macro) with [resolv
 
 ```ts
 import { Elysia } from "elysia";
-import { auth } from "./auth";
+import { query } from "./query";
 
 // user middleware (compute user and session and pass to routes)
-const betterAuth = new Elysia({ name: "better-auth" })
-  .mount(auth.handler)
+const betterAuth = new Elysia({ name: "better-query" })
+  .mount(query.handler)
   .macro({
-    auth: {
+    query: {
       async resolve({ status, request: { headers } }) {
-        const session = await auth.api.getSession({
+        const session = await query.api.getSession({
           headers,
         });
 
@@ -80,7 +80,7 @@ const betterAuth = new Elysia({ name: "better-auth" })
 const app = new Elysia()
   .use(betterAuth)
   .get("/user", ({ user }) => user, {
-    auth: true,
+    query: true,
   })
   .listen(3000);
 
