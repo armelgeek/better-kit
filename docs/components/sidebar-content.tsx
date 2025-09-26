@@ -485,49 +485,10 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				title: "MongoDB",
-				href: "/docs/adapters/mongo",
-				icon: () => (
-					<svg
-						fill="currentColor"
-						width="16px"
-						height="16px"
-						viewBox="0 0 32 32"
-						version="1.1"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path d="M15.821 23.185s0-10.361 0.344-10.36c0.266 0 0.612 13.365 0.612 13.365-0.476-0.056-0.956-2.199-0.956-3.005zM22.489 12.945c-0.919-4.016-2.932-7.469-5.708-10.134l-0.007-0.006c-0.338-0.516-0.647-1.108-0.895-1.732l-0.024-0.068c0.001 0.020 0.001 0.044 0.001 0.068 0 0.565-0.253 1.070-0.652 1.409l-0.003 0.002c-3.574 3.034-5.848 7.505-5.923 12.508l-0 0.013c-0.001 0.062-0.001 0.135-0.001 0.208 0 4.957 2.385 9.357 6.070 12.115l0.039 0.028 0.087 0.063q0.241 1.784 0.412 3.576h0.601c0.166-1.491 0.39-2.796 0.683-4.076l-0.046 0.239c0.396-0.275 0.742-0.56 1.065-0.869l-0.003 0.003c2.801-2.597 4.549-6.297 4.549-10.404 0-0.061-0-0.121-0.001-0.182l0 0.009c-0.003-0.981-0.092-1.94-0.261-2.871l0.015 0.099z"></path>
-					</svg>
-				),
-			},
-			{
 				group: true,
 				title: "Others",
 				href: "",
 				icon: () => <Database className="w-4 h-4 text-current" />,
-			},
-			{
-				title: "Community Adapters",
-				href: "/docs/adapters/community-adapters",
-				icon: () => (
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="1em"
-						height="1em"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						className="lucide lucide-users"
-					>
-						<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-						<circle cx="9" cy="7" r="4" />
-						<path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-						<path d="M16 3.13a4 4 0 0 1 0 7.75" />
-					</svg>
-				),
 			},
 		],
 	},
@@ -551,52 +512,9 @@ export const contents: Content[] = [
 		),
 		list: [
 			{
-				group: true,
-				title: "Full Stack",
-				href: "",
-				icon: LucideAArrowDown,
-			},
-			{
-				title: "Astro",
-				icon: Icons.astro,
-				href: "/docs/integrations/astro",
-			},
-
-			{
-				title: "Remix",
-				icon: Icons.remix,
-				href: "/docs/integrations/remix",
-			},
-			{
 				title: "Next",
 				icon: Icons.nextJS,
 				href: "/docs/integrations/next",
-			},
-			{
-				title: "Nuxt",
-				icon: Icons.nuxt,
-				href: "/docs/integrations/nuxt",
-			},
-			{
-				title: "SvelteKit",
-				icon: Icons.svelteKit,
-				href: "/docs/integrations/svelte-kit",
-			},
-			{
-				title: "SolidStart",
-				icon: Icons.solidStart,
-				href: "/docs/integrations/solid-start",
-			},
-			{
-				title: "TanStack Start",
-				icon: Icons.tanstack,
-				href: "/docs/integrations/tanstack",
-			},
-			{
-				group: true,
-				title: "Backend",
-				href: "",
-				icon: LucideAArrowDown,
 			},
 			{
 				title: "Hono",
@@ -604,50 +522,9 @@ export const contents: Content[] = [
 				href: "/docs/integrations/hono",
 			},
 			{
-				title: "Fastify",
-				icon: Icons.fastify,
-				href: "/docs/integrations/fastify",
-			},
-			{
 				title: "Express",
 				icon: Icons.express,
 				href: "/docs/integrations/express",
-			},
-			{
-				title: "Elysia",
-				icon: Icons.elysia,
-				href: "/docs/integrations/elysia",
-			},
-			{
-				title: "Nitro",
-				icon: Icons.nitro,
-				href: "/docs/integrations/nitro",
-			},
-			{
-				title: "NestJS",
-				icon: Icons.nestJS,
-				href: "/docs/integrations/nestjs",
-			},
-			{
-				title: "Convex",
-				icon: Icons.convex,
-				href: "/docs/integrations/convex",
-			},
-			{
-				group: true,
-				title: "Mobile & Desktop",
-				href: "",
-				icon: LucideAArrowDown,
-			},
-			{
-				title: "Expo",
-				icon: Icons.expo,
-				href: "/docs/integrations/expo",
-			},
-			{
-				title: "Lynx",
-				icon: Icons.lynx,
-				href: "/docs/integrations/lynx",
 			},
 		],
 	},
@@ -1462,102 +1339,6 @@ export const contents: Content[] = [
 						></path>
 					</svg>
 				),
-			},
-			{
-				title: "Contributing",
-				href: "/docs/reference/contributing",
-				icon: () => (
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="1.2em"
-						height="1.2em"
-						viewBox="0 0 24 24"
-					>
-						<path
-							fill="#888888"
-							d="M6 3a3 3 0 0 1 3 3c0 1.31-.83 2.42-2 2.83v6.34c1.17.41 2 1.52 2 2.83a3 3 0 0 1-3 3a3 3 0 0 1-3-3c0-1.31.83-2.42 2-2.83V8.83A2.99 2.99 0 0 1 3 6a3 3 0 0 1 3-3m0 2a1 1 0 0 0-1 1a1 1 0 0 0 1 1a1 1 0 0 0 1-1a1 1 0 0 0-1-1m0 12a1 1 0 0 0-1 1a1 1 0 0 0 1 1a1 1 0 0 0 1-1a1 1 0 0 0-1-1m15 1a3 3 0 0 1-3 3a3 3 0 0 1-3-3c0-1.31.83-2.42 2-2.83V7h-2v3.25L10.75 6L15 1.75V5h2a2 2 0 0 1 2 2v8.17c1.17.41 2 1.52 2 2.83m-3-1a1 1 0 0 0-1 1a1 1 0 0 0 1 1a1 1 0 0 0 1-1a1 1 0 0 0-1-1"
-						></path>
-					</svg>
-				),
-			},
-			{
-				title: "Resources",
-				href: "/docs/reference/resources",
-				icon: () => <Book className="w-4 h-4 text-current" />,
-			},
-
-			{
-				title: "Security",
-				href: "/docs/reference/security",
-				icon: () => <ShieldCheck className="w-4 h-4 text-current" />,
-			},
-			{
-				title: "Telemetry",
-				href: "/docs/reference/telemetry",
-				icon: () => <Binoculars className="w-4 h-4 text-current" />,
-			},
-			{
-				title: "FAQ",
-				href: "/docs/reference/faq",
-				icon: () => <CircleHelp className="w-4 h-4 text-current" />,
-			},
-		],
-	},
-];
-
-export const examples: Content[] = [
-	{
-		title: "Examples",
-		href: "/docs/examples/next",
-		Icon: () => (
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="1.4em"
-				height="1.4em"
-				viewBox="0 0 24 24"
-			>
-				<path
-					fill="currentColor"
-					d="M2 6.95c0-.883 0-1.324.07-1.692A4 4 0 0 1 5.257 2.07C5.626 2 6.068 2 6.95 2c.386 0 .58 0 .766.017a4 4 0 0 1 2.18.904c.144.119.28.255.554.529L11 4c.816.816 1.224 1.224 1.712 1.495a4 4 0 0 0 .848.352C14.098 6 14.675 6 15.828 6h.374c2.632 0 3.949 0 4.804.77q.119.105.224.224c.77.855.77 2.172.77 4.804V14c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14z"
-					opacity=".5"
-				></path>
-				<path
-					fill="currentColor"
-					d="M20 6.238c0-.298-.005-.475-.025-.63a3 3 0 0 0-2.583-2.582C17.197 3 16.965 3 16.5 3H9.988c.116.104.247.234.462.45L11 4c.816.816 1.224 1.224 1.712 1.495a4 4 0 0 0 .849.352C14.098 6 14.675 6 15.829 6h.373c1.78 0 2.957 0 3.798.238"
-				></path>
-				<path
-					fill="currentColor"
-					fillRule="evenodd"
-					d="M12.25 10a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1-.75-.75"
-					clipRule="evenodd"
-				></path>
-			</svg>
-		),
-		list: [
-			{
-				title: "Astro + SolidJs",
-				href: "/docs/examples/astro",
-				icon: Icons.astro,
-			},
-			{
-				title: "Remix",
-				href: "/docs/examples/remix",
-				icon: Icons.remix,
-			},
-			{
-				title: "Next.js",
-				href: "/docs/examples/next-js",
-				icon: Icons.nextJS,
-			},
-			{
-				title: "Nuxt",
-				href: "/docs/examples/nuxt",
-				icon: Icons.nuxt,
-			},
-			{
-				title: "SvelteKit",
-				href: "/docs/examples/svelte-kit",
-				icon: Icons.svelteKit,
 			},
 		],
 	},
