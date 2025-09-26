@@ -1,66 +1,66 @@
 ---
 title: Client
-description: Better Auth client library for authentication.
+description: Better Query client library for resource management.
 ---
 
-Better Auth offers a client library compatible with popular frontend frameworks like React, Vue, Svelte, and more. This client library includes a set of functions for interacting with the Better Auth server. Each framework's client library is built on top of a core client library that is framework-agnostic, so that all methods and hooks are consistently available across all client libraries.
+Better Query offers a client library compatible with popular frontend frameworks like React, Vue, Svelte, and more. This client library includes a set of functions for interacting with the Better Query server for CRUD operations. Each framework's client library is built on top of a core client library that is framework-agnostic, so that all methods and hooks are consistently available across all client libraries.
 
 ## Installation
 
-If you haven't already, install better-auth.
+If you haven't already, install better-query.
 
 ```package-install 
-npm i better-auth
+npm i better-query
 ```
 
 ## Create Client Instance
 
-Import `createAuthClient` from the package for your framework (e.g., "better-auth/react" for React). Call the function to create your client. Pass the base URL of your auth server. If the auth server is running on the same domain as your client, you can skip this step.
+Import `createQueryClient` from the package for your framework (e.g., "better-query/react" for React). Call the function to create your client. Pass the base URL of your query server. If the query server is running on the same domain as your client, you can skip this step.
 
 <Callout type="info">
-If you're using a different base path other than `/api/auth`, make sure to pass the whole URL, including the path. (e.g., `http://localhost:3000/custom-path/auth`)
+If you're using a different base path other than `/api`, make sure to pass the whole URL, including the path. (e.g., `http://localhost:3000/api/query`)
 </Callout>
 
 
 <Tabs items={["react", "vue", "svelte", "solid", 
   "vanilla"]} defaultValue="react">
     <Tab value="vanilla">
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/client"
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+            ```ts  title="lib/query-client.ts" 
+            import { createQueryClient } from "better-query/client"
+            export const queryClient = createQueryClient({
+                baseURL: "http://localhost:3000/api" // The base URL of your query server // [!code highlight]
             })
             ```
     </Tab>
-    <Tab value="react" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts"  
-            import { createAuthClient } from "better-auth/react"
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    <Tab value="react" title="lib/query-client.ts">
+            ```ts  title="lib/query-client.ts"  
+            import { createQueryClient } from "better-query/react"
+            export const queryClient = createQueryClient({
+                baseURL: "http://localhost:3000/api" // The base URL of your query server // [!code highlight]
             })
             ```
     </Tab>
-    <Tab value="vue" title="lib/auth-client.ts">
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/vue"
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    <Tab value="vue" title="lib/query-client.ts">
+            ```ts  title="lib/query-client.ts" 
+            import { createQueryClient } from "better-query/vue"
+            export const queryClient = createQueryClient({
+                baseURL: "http://localhost:3000/api" // The base URL of your query server // [!code highlight]
             })
             ```
     </Tab>
-    <Tab value="svelte" title="lib/auth-client.ts"> 
-            ```ts  title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/svelte"
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    <Tab value="svelte" title="lib/query-client.ts"> 
+            ```ts  title="lib/query-client.ts" 
+            import { createQueryClient } from "better-query/svelte"
+            export const queryClient = createQueryClient({
+                baseURL: "http://localhost:3000/api" // The base URL of your query server // [!code highlight]
             })
             ```
     </Tab>
-    <Tab value="solid" title="lib/auth-client.ts">
-            ```ts title="lib/auth-client.ts" 
-            import { createAuthClient } from "better-auth/solid"
-            export const authClient = createAuthClient({
-                baseURL: "http://localhost:3000" // The base URL of your auth server // [!code highlight]
+    <Tab value="solid" title="lib/query-client.ts">
+            ```ts title="lib/query-client.ts" 
+            import { createQueryClient } from "better-query/solid"
+            export const queryClient = createQueryClient({
+                baseURL: "http://localhost:3000/api" // The base URL of your query server // [!code highlight]
             })
             ```
     </Tab>
@@ -68,35 +68,49 @@ If you're using a different base path other than `/api/auth`, make sure to pass 
 
 ## Usage
 
-Once you've created your client instance, you can use the client to interact with the Better Auth server. The client provides a set of functions by default and they can be extended with plugins.
+Once you've created your client instance, you can use the client to interact with the Better Query server. The client provides a set of CRUD functions by default and they can be extended with plugins.
 
-**Example: Sign In**
+**Example: Create a Resource**
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client"
-const authClient = createAuthClient()
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client"
+const queryClient = createQueryClient()
 
-await authClient.signIn.email({
-    email: "test@user.com",
-    password: "password1234"
+await queryClient.product.create({
+    name: "Awesome T-Shirt",
+    price: 29.99,
+    status: "active"
 })
+```
+
+**Example: List Resources**
+
+```ts title="query-client.ts"
+const result = await queryClient.product.list({
+    page: 1,
+    limit: 10,
+    search: "shirt"
+});
+
+console.log(result.data.items); // Array of products
+console.log(result.data.pagination); // Pagination info
 ```
 
 ### Hooks
 
 In addition to the standard methods, the client provides hooks to easily access different reactive data. Every hook is available in the root object of the client and they all start with `use`.
 
-**Example: useSession**
+**Example: useResource**
 
 
 <Tabs items={["React", "Vue","Svelte", "Solid"]} defaultValue="react">
     <Tab value="React">
-        ```tsx title="user.tsx"
+        ```tsx title="products.tsx"
         //make sure you're using the react client
-        import { createAuthClient } from "better-auth/react"
-        const { useSession } = createAuthClient() // [!code highlight]
+        import { createQueryClient } from "better-query/react"
+        const { useResource } = createQueryClient<typeof query>() // [!code highlight]
     
-        export function User() {
+        export function Products() {
             const {
                 data: session,
                 isPending, //loading state

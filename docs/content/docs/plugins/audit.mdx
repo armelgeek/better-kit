@@ -1,0 +1,485 @@
+---
+title: Audit
+description: Audit plugin for Better Query
+---
+
+The Audit plugin provides comprehensive audit logging for all CRUD operations performed on your resources. It automatically tracks who performed what operations, when they were performed, and captures the data changes for compliance and debugging purposes.
+
+## Installation
+
+<Steps>
+  <Step>
+    ### Add the plugin to your query config
+
+    To use the Audit plugin, add it to your query config.
+
+    ```ts title="query.ts"
+    import { betterQuery } from "better-query"
+    import { auditPlugin } from "better-query/plugins" // [!code highlight]
+
+    export const query = betterQuery({
+        // ... other config options
+        plugins: [
+            auditPlugin({
+                enabled: true,
+                operations: ["create", "update", "delete"], // Operations to audit
+                includeData: true, // Store the actual data being modified
+                retention: 90, // Keep audit logs for 90 days
+            }) // [!code highlight]
+        ]
+    })
+    ```
+
+  </Step>
+
+    <Step>
+        ### Migrate the database
+
+        Run the migration or generate the schema to add the necessary audit tables to the database.
+
+        <Tabs items={["migrate", "generate"]}>
+            <Tab value="migrate">
+            ```bash
+            npx better-query migrate
+            ```
+            </Tab>
+            <Tab value="generate">
+            ```bash
+            npx better-query generate
+            ```
+            </Tab>
+        </Tabs>
+        See the [Schema](#schema) section to add the fields manually.
+    </Step>
+
+  <Step>
+    ### Add the client plugin
+
+    Next, include the audit client plugin in your query client instance.
+
+    ```ts title="query-client.ts"
+    import { createQueryClient } from "better-query/client"
+    import { auditClient } from "better-query/client/plugins"
+
+    export const queryClient = createQueryClient({
+        plugins: [
+            auditClient()
+        ]
+    })
+    ```
+
+  </Step>
+</Steps>
+
+## Usage
+
+The audit plugin automatically captures all CRUD operations. No additional code is required in your resource operations - the plugin handles everything in the background.
+
+### Viewing Audit Logs
+
+Retrieve audit logs for analysis and compliance reporting.
+
+<APIMethod
+  path="/audit/logs"
+  method="GET"
+  resultVariable="auditLogs"
+>
+```ts
+type listAuditLogs = {
+    /**
+     * Filter by resource type
+     */
+    resourceType?: string = "product"
+    /**
+     * Filter by operation type
+     */
+    operation?: "create" | "read" | "update" | "delete" | "list" = "update"
+    /**
+     * Filter by user who performed the operation
+     */
+    userId?: string = "user-123"
+    /**
+     * Filter by resource ID that was affected
+     */
+    resourceId?: string = "product-456"
+    /**
+     * Date range filter - start date
+     */
+    startDate?: Date = new Date("2024-01-01")
+    /**
+     * Date range filter - end date
+     */
+    endDate?: Date = new Date("2024-12-31")
+    /**
+     * Pagination
+     */
+    page?: number = 1
+    /**
+     * Number of results per page
+     */
+    limit?: number = 50
+}
+```
+</APIMethod>
+
+**Client Usage:**
+
+```ts title="audit-logs.tsx"
+import { queryClient } from "@/lib/query-client"
+
+// Get all audit logs
+const auditLogs = await queryClient.audit.list({
+    page: 1,
+    limit: 20
+})
+
+// Get audit logs for a specific resource type
+const productAuditLogs = await queryClient.audit.list({
+    resourceType: "product",
+    operation: "update"
+})
+
+// Get audit logs for a specific user
+const userAuditLogs = await queryClient.audit.list({
+    userId: "user-123",
+    startDate: new Date("2024-01-01"),
+    endDate: new Date("2024-01-31")
+})
+```
+
+### Resource Audit History
+
+Get the complete audit history for a specific resource.
+
+<APIMethod
+  path="/audit/resource/:resourceId"
+  method="GET"
+  resultVariable="resourceHistory"
+>
+```ts
+type getResourceAuditHistory = {
+    /**
+     * The ID of the resource
+     */
+    resourceId: string = "product-456"
+    /**
+     * The type of resource
+     */
+    resourceType: string = "product"
+    /**
+     * Include the actual data changes
+     */
+    includeData?: boolean = true
+}
+```
+</APIMethod>
+
+**Client Usage:**
+
+```ts title="resource-history.tsx"
+import { queryClient } from "@/lib/query-client"
+
+// Get complete history of a product
+const productHistory = await queryClient.audit.getResourceHistory("product-456", {
+    resourceType: "product",
+    includeData: true
+})
+
+// The result includes all changes made to the resource over time
+console.log(productHistory.data)
+// [
+//   {
+//     id: "audit-1",
+//     operation: "create",
+//     timestamp: "2024-01-15T10:30:00Z",
+//     userId: "user-123",
+//     resourceType: "product",
+//     resourceId: "product-456",
+//     data: { name: "T-Shirt", price: 29.99 },
+//     changes: null // null for create operations
+//   },
+//   {
+//     id: "audit-2", 
+//     operation: "update",
+//     timestamp: "2024-01-16T14:20:00Z",
+//     userId: "user-124",
+//     resourceType: "product",
+//     resourceId: "product-456",
+//     data: { name: "Premium T-Shirt", price: 34.99 },
+//     changes: {
+//       name: { from: "T-Shirt", to: "Premium T-Shirt" },
+//       price: { from: 29.99, to: 34.99 }
+//     }
+//   }
+// ]
+```
+
+### Audit Statistics
+
+Get audit statistics and insights.
+
+**Client Usage:**
+
+```ts title="audit-stats.tsx"
+import { queryClient } from "@/lib/query-client"
+
+// Get audit statistics for the last 30 days
+const auditStats = await queryClient.audit.getStats({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    endDate: new Date(),
+    groupBy: "operation" // or "resourceType", "userId", "day"
+})
+
+console.log(auditStats.data)
+// {
+//   total: 156,
+//   breakdown: {
+//     create: 45,
+//     update: 78,
+//     delete: 12,
+//     read: 21
+//   }
+// }
+```
+
+## Configuration
+
+### Plugin Options
+
+Configure the audit plugin behavior:
+
+```ts title="query.ts"
+auditPlugin({
+    /**
+     * Enable/disable audit logging
+     */
+    enabled: true,
+    
+    /**
+     * Which operations to audit
+     */
+    operations: ["create", "update", "delete"],
+    
+    /**
+     * Whether to include the actual data in audit logs
+     */
+    includeData: true,
+    
+    /**
+     * Whether to capture data changes (before/after for updates)
+     */
+    captureChanges: true,
+    
+    /**
+     * Retention period in days (0 = keep forever)
+     */
+    retention: 90,
+    
+    /**
+     * Resources to audit (empty = all resources)
+     */
+    resources: [], // or ["product", "user"] to limit to specific resources
+    
+    /**
+     * Custom audit data transformer
+     */
+    transform: (auditData) => {
+        // Add custom fields or modify audit data
+        return {
+            ...auditData,
+            environment: process.env.NODE_ENV,
+            ipAddress: auditData.context?.request?.ip,
+        }
+    },
+    
+    /**
+     * Custom storage for audit logs (optional)
+     */
+    storage: {
+        // Implement custom storage adapter if needed
+        save: async (auditLog) => { /* custom save logic */ },
+        query: async (filters) => { /* custom query logic */ },
+    }
+})
+```
+
+### Resource-Level Configuration
+
+You can also configure audit settings per resource:
+
+```ts title="query.ts"
+import { betterQuery, createResource } from "better-query"
+
+export const query = betterQuery({
+    plugins: [auditPlugin()],
+    resources: [
+        createResource({
+            name: "product",
+            schema: productSchema,
+            audit: {
+                operations: ["create", "update", "delete"], // Override global settings
+                includeData: false, // Don't store sensitive product data
+                retention: 365, // Keep product audits for 1 year
+            }
+        }),
+        createResource({
+            name: "order",
+            schema: orderSchema,
+            audit: {
+                operations: ["create", "update"], // Only audit creates and updates
+                includeData: true,
+                captureChanges: true,
+            }
+        })
+    ]
+})
+```
+
+## Schema
+
+The audit plugin creates the following database table:
+
+<DatabaseSchema>
+```sql
+CREATE TABLE audit_logs (
+    id TEXT PRIMARY KEY,
+    operation TEXT NOT NULL, -- 'create', 'read', 'update', 'delete', 'list'
+    resource_type TEXT NOT NULL,
+    resource_id TEXT,
+    user_id TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data TEXT, -- JSON string of the resource data
+    changes TEXT, -- JSON string of before/after changes
+    metadata TEXT, -- Additional context like IP address, user agent, etc.
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for efficient querying
+CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
+CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_audit_logs_operation ON audit_logs(operation);
+```
+</DatabaseSchema>
+
+## React Hook Example
+
+Here's a React hook for easily accessing audit data in your components:
+
+```tsx title="hooks/use-audit.ts"
+import { useState, useEffect } from 'react'
+import { queryClient } from '@/lib/query-client'
+
+export function useAuditLogs(filters = {}) {
+    const [auditLogs, setAuditLogs] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+
+    useEffect(() => {
+        const fetchAuditLogs = async () => {
+            setLoading(true)
+            try {
+                const result = await queryClient.audit.list(filters)
+                if (result.data) {
+                    setAuditLogs(result.data.items)
+                } else {
+                    setError(result.error)
+                }
+            } catch (err) {
+                setError(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchAuditLogs()
+    }, [JSON.stringify(filters)])
+
+    return { auditLogs, loading, error }
+}
+
+export function useResourceAuditHistory(resourceId: string, resourceType: string) {
+    const [history, setHistory] = useState([])
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            setLoading(true)
+            const result = await queryClient.audit.getResourceHistory(resourceId, {
+                resourceType,
+                includeData: true
+            })
+            if (result.data) {
+                setHistory(result.data)
+            }
+            setLoading(false)
+        }
+
+        if (resourceId && resourceType) {
+            fetchHistory()
+        }
+    }, [resourceId, resourceType])
+
+    return { history, loading }
+}
+```
+
+**Usage in components:**
+
+```tsx title="components/audit-log-viewer.tsx"
+import { useAuditLogs } from '@/hooks/use-audit'
+
+export function AuditLogViewer() {
+    const { auditLogs, loading, error } = useAuditLogs({
+        resourceType: 'product',
+        operation: 'update'
+    })
+
+    if (loading) return <div>Loading audit logs...</div>
+    if (error) return <div>Error: {error.message}</div>
+
+    return (
+        <div>
+            <h2>Product Update Audit Logs</h2>
+            {auditLogs.map(log => (
+                <div key={log.id} className="audit-entry">
+                    <p><strong>{log.operation}</strong> on {log.resourceType} {log.resourceId}</p>
+                    <p>By user: {log.userId} at {new Date(log.timestamp).toLocaleString()}</p>
+                    {log.changes && (
+                        <details>
+                            <summary>View Changes</summary>
+                            <pre>{JSON.stringify(log.changes, null, 2)}</pre>
+                        </details>
+                    )}
+                </div>
+            ))}
+        </div>
+    )
+}
+```
+
+## Integration with Better Auth
+
+When using the Better Query audit plugin with Better Auth integration, user information is automatically captured:
+
+```ts title="query.ts"
+import { betterQuery } from "better-query"
+import { auditPlugin, betterAuth } from "better-query/plugins"
+
+export const query = betterQuery({
+    plugins: [
+        betterAuth({ auth }), // Better Auth integration
+        auditPlugin({
+            enabled: true,
+            operations: ["create", "update", "delete"],
+            includeData: true,
+        })
+    ]
+})
+```
+
+With this setup, audit logs will automatically include:
+- User ID from the authenticated session
+- User email and name for better reporting
+- User roles and permissions context
+- IP address and user agent from the request

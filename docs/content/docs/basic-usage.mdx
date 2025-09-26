@@ -1,241 +1,300 @@
 ---
 title: Basic Usage
-description: Getting started with Better Auth
+description: Getting started with Better Query
 ---
 
-Better Auth provides built-in authentication support for:
+Better Query provides built-in CRUD endpoint generation for any resource you define with:
 
-- **Email and password**
-- **Social provider (Google, GitHub, Apple, and more)**
+- **Type-safe schemas** using Zod
+- **Permission controls** per operation (create, read, update, delete, list)
+- **Automatic client generation** with full TypeScript support
 
-But also can easily be extended using plugins, such as: [username](/docs/plugins/username), [magic link](/docs/plugins/magic-link), [passkey](/docs/plugins/passkey), [email-otp](/docs/plugins/email-otp), and more.
+But can also be easily extended using plugins, such as: [audit](/docs/plugins/audit), [cache](/docs/plugins/cache), [better-auth integration](/docs/plugins/better-auth), and more.
 
-## Email & Password
+## Resource Definition
 
-To enable email and password authentication:
+To create CRUD endpoints for a resource, you need to define it using `createResource`:
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
+```ts title="query.ts"
+import { betterQuery, createResource, withId } from "better-query"
+import { z } from "zod"
 
-export const auth = betterAuth({
-    emailAndPassword: {    // [!code highlight]
-        enabled: true // [!code highlight]
-    } // [!code highlight]
+// Define your schema
+const productSchema = withId({
+  name: z.string().min(1),
+  price: z.number().min(0),
+  status: z.enum(["active", "inactive", "draft"]).default("draft"),
+})
+
+export const query = betterQuery({
+    resources: [ // [!code highlight]
+        createResource({ // [!code highlight]
+            name: "product", // [!code highlight]
+            schema: productSchema, // [!code highlight]
+        }) // [!code highlight]
+    ] // [!code highlight]
 })
 ```
 
-### Sign Up
+## Generated Endpoints
 
-To sign up a user you need to call the client method `signUp.email` with the user's information.
+For each resource, the following endpoints are automatically created:
 
-```ts title="sign-up.ts"
-import { authClient } from "@/lib/auth-client"; //import the auth client // [!code highlight]
+- `POST /api/product` - Create a product
+- `GET /api/product/:id` - Get a product by ID  
+- `PATCH /api/product/:id` - Update a product
+- `DELETE /api/product/:id` - Delete a product
+- `GET /api/products` - List products (with pagination)
 
-const { data, error } = await authClient.signUp.email({
-        email, // user email address
-        password, // user password -> min 8 characters by default
-        name, // user display name
-        image, // User image URL (optional)
-        callbackURL: "/dashboard" // A URL to redirect to after the user verifies their email (optional)
-    }, {
-        onRequest: (ctx) => {
-            //show loading
-        },
-        onSuccess: (ctx) => {
-            //redirect to the dashboard or sign in page
-        },
-        onError: (ctx) => {
-            // display the error message
-            alert(ctx.error.message);
-        },
+## Creating Resources
+
+To create a resource, you can use the client method `create` with the resource data.
+
+```ts title="create-product.ts"
+import { queryClient } from "@/lib/query-client"; //import the query client // [!code highlight]
+
+const { data, error } = await queryClient.product.create({
+    name: "Awesome T-Shirt",
+    price: 29.99,
+    status: "active"
+}, {
+    onRequest: (ctx) => {
+        //show loading
+    },
+    onSuccess: (ctx) => {
+        //redirect to the product page or show success message
+    },
+    onError: (ctx) => {
+        // display the error message
+        alert(ctx.error.message);
+    },
 });
 ```
 
-By default, the users are automatically signed in after they successfully sign up. To disable this behavior you can set `autoSignIn` to `false`.
+By default, the resources are created with auto-generated IDs and timestamps. You can customize this behavior in your schema definition.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
+```ts title="query.ts"
+import { betterQuery, createResource } from "better-query"
+import { z } from "zod"
 
-export const auth = betterAuth({
-    emailAndPassword: {
-    	enabled: true,
-    	autoSignIn: false //defaults to true // [!code highlight]
-  },
+const productSchema = z.object({
+    id: z.string().optional(), // Will be auto-generated if not provided
+    name: z.string().min(1),
+    price: z.number().min(0),
+    createdAt: z.date().default(() => new Date()),
+    updatedAt: z.date().default(() => new Date()),
+})
+
+export const query = betterQuery({
+    resources: [
+        createResource({
+            name: "product",
+            schema: productSchema,
+        })
+    ]
 })
 ```
 
+## Reading Resources
 
-### Sign In
+To read a specific resource, you can use the `read` function provided by the client.
 
-To sign a user in, you can use the `signIn.email` function provided by the client.
-
-```ts title="sign-in"
-const { data, error } = await authClient.signIn.email({
-        /**
-         * The user email
-         */
-        email,
-        /**
-         * The user password
-         */
-        password,
-        /**
-         * A URL to redirect to after the user verifies their email (optional)
-         */
-        callbackURL: "/dashboard",
-        /**
-         * remember the user session after the browser is closed. 
-         * @default true
-         */
-        rememberMe: false
-}, {
-    //callbacks
-})
+```ts title="get-product"
+const { data, error } = await queryClient.product.read("product-id", {
+    headers: {
+        "Authorization": "Bearer your-token"
+    }
+});
 ```
 
 <Callout type="warn">
 Always invoke client methods from the client side. Don't call them from the server.
 </Callout>
 
-### Server-Side Authentication
+## Server-Side Resource Management
 
-To authenticate a user on the server, you can use the `auth.api` methods.
+To manage resources on the server, you can use the `query.api` methods.
 
 ```ts title="server.ts"
-import { auth } from "./auth"; // path to your Better Auth server instance
+import { query } from "./query"; // path to your Better Query server instance
 
-const response = await auth.api.signInEmail({
+const response = await query.api.createProduct({
     body: {
-        email,
-        password
+        name: "New Product",
+        price: 49.99
     },
     asResponse: true // returns a response object instead of data
 });
 ```
 
 <Callout>
-If the server cannot return a response object, you'll need to manually parse and set cookies. But for frameworks like Next.js we provide [a plugin](/docs/integrations/next#server-action-cookies) to handle this automatically
+If the server cannot return a response object, you'll need to manually parse and set headers. But for frameworks like Next.js we provide [framework-specific helpers](/docs/integrations/next) to handle this automatically
 </Callout>
 
-## Social Sign-On
+## Updating Resources
 
-Better Auth supports multiple social providers, including Google, GitHub, Apple, Discord, and more. To use a social provider, you need to configure the ones you need in the `socialProviders` option on your `auth` object.
+To update a resource, you can use the `update` method provided by the client.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="update-product.ts"
+import { queryClient } from "@/lib/query-client"; //import the query client // [!code highlight]
 
-export const auth = betterAuth({
-    socialProviders: { // [!code highlight]
-        github: { // [!code highlight]
-            clientId: process.env.GITHUB_CLIENT_ID!, // [!code highlight]
-            clientSecret: process.env.GITHUB_CLIENT_SECRET!, // [!code highlight]
-        } // [!code highlight]
-    }, // [!code highlight]
-})
-```
-
-### Sign in with social providers
-
-To sign in using a social provider you need to call `signIn.social`. It takes an object with the following properties:
-
-```ts title="sign-in.ts"
-import { authClient } from "@/lib/auth-client"; //import the auth client // [!code highlight]
-
-await authClient.signIn.social({
-    /**
-     * The social provider ID
-     * @example "github", "google", "apple"
-     */
-    provider: "github",
-    /**
-     * A URL to redirect after the user authenticates with the provider
-     * @default "/"
-     */
-    callbackURL: "/dashboard", 
-    /**
-     * A URL to redirect if an error occurs during the sign in process
-     */
-    errorCallbackURL: "/error",
-    /**
-     * A URL to redirect if the user is newly registered
-     */
-    newUserCallbackURL: "/welcome",
-    /**
-     * disable the automatic redirect to the provider. 
-     * @default false
-     */
-    disableRedirect: true,
+const { data, error } = await queryClient.product.update("product-id", {
+    price: 24.99, // Partial updates are supported
+    status: "active"
+}, {
+    headers: {
+        "Authorization": "Bearer your-token"
+    }
 });
 ```
 
-You can also authenticate using `idToken` or `accessToken` from the social provider instead of redirecting the user to the provider's site. See social providers documentation for more details. 
+## Deleting Resources
 
-## Signout
+To delete a resource, you can use the `delete` method provided by the client.
 
-To signout a user, you can use the `signOut` function provided by the client.
+```ts title="delete-product.ts"
+import { queryClient } from "@/lib/query-client"; //import the query client // [!code highlight]
 
-```ts title="user-card.tsx"
-await authClient.signOut();
+await queryClient.product.delete("product-id", {
+    headers: {
+        "Authorization": "Bearer your-token"
+    }
+});
 ```
 
-you can pass `fetchOptions` to redirect onSuccess
+You can pass `fetchOptions` to handle success/error callbacks:
   
-```ts title="user-card.tsx" 
-await authClient.signOut({
-  fetchOptions: {
-    onSuccess: () => {
-      router.push("/login"); // redirect to login page
+```ts title="delete-product.ts" 
+await queryClient.product.delete("product-id", {
+    fetchOptions: {
+        onSuccess: () => {
+            // Redirect to products list or show success message
+            router.push("/products");
+        },
+        onError: (ctx) => {
+            alert("Failed to delete product");
+        }
     },
-  },
 });
 ```
 
-## Session
+## Listing Resources
 
-Once a user is signed in, you'll want to access the user session. Better Auth allows you to easily access the session data from both the server and client sides.
+To list resources with pagination and filtering, you can use the `list` method.
+
+```ts title="list-products.ts"
+const { data, error } = await queryClient.product.list({
+    page: 1,
+    limit: 10,
+    search: "shirt", // Search in searchable fields
+    sortBy: "name",
+    sortOrder: "asc",
+}, {
+    headers: {
+        "Authorization": "Bearer your-token"
+    }
+});
+
+console.log(data);
+// {
+//   items: [...products],
+//   pagination: {
+//     page: 1,
+//     limit: 10,
+//     total: 25,
+//     totalPages: 3,
+//     hasNext: true,
+//     hasPrev: false
+//   }
+// }
+```
+
+## Resource Management
+
+Once resources are defined, you'll want to control access and manage data. Better Query allows you to easily manage resources from both the server and client sides.
 
 ### Client Side
 
-#### Use Session
+#### Using Client Methods
 
-Better Auth provides a `useSession` hook to easily access session data on the client side. This hook is implemented using nanostore and has support for each supported framework and vanilla client, ensuring that any changes to the session (such as signing out) are immediately reflected in your UI.
+Better Query provides type-safe client methods to interact with your resources, similar to Better Auth's approach.
 
 <Tabs items={["React", "Vue","Svelte", "Solid", "Vanilla"]} defaultValue="react">
     <Tab value="React">
-        ```tsx title="user.tsx"
-        import { authClient } from "@/lib/auth-client" // import the auth client // [!code highlight] 
+        ```tsx title="product-manager.tsx"
+        import { queryClient } from "@/lib/query-client" // import the query client // [!code highlight] 
 
-        export function User(){
+        export function ProductManager(){
+            const [products, setProducts] = useState([]);
+            const [loading, setLoading] = useState(false);
 
-            const { // [!code highlight]
-                data: session, // [!code highlight]
-                isPending, //loading state // [!code highlight]
-                error, //error object // [!code highlight]
-                refetch //refetch the session
-            } = authClient.useSession() // [!code highlight]
+            const fetchProducts = async () => {
+                setLoading(true);
+                const result = await queryClient.product.list({
+                    page: 1,
+                    limit: 10
+                });
+                if (result.data) {
+                    setProducts(result.data.items);
+                }
+                setLoading(false);
+            };
+
+            const createProduct = async (productData) => {
+                const result = await queryClient.product.create(productData);
+                if (result.data) {
+                    setProducts(prev => [...prev, result.data]);
+                }
+            };
 
             return (
-                //...
+                <div>
+                    {loading ? "Loading..." : (
+                        products.map(product => (
+                            <div key={product.id}>{product.name}</div>
+                        ))
+                    )}
+                </div>
             )
         }
         ```
     </Tab>
 
      <Tab value="Vue">
-        ```vue title="index.vue"
+        ```vue title="product-manager.vue"
         <script setup lang="ts">
-        import { authClient } from "~/lib/auth-client" // [!code highlight]
+        import { queryClient } from "~/lib/query-client" // [!code highlight]
 
-        const session = authClient.useSession() // [!code highlight]
+        const products = ref([]);
+        const loading = ref(false);
+
+        const fetchProducts = async () => {
+            loading.value = true;
+            const result = await queryClient.product.list({
+                page: 1,
+                limit: 10
+            });
+            if (result.data) {
+                products.value = result.data.items;
+            }
+            loading.value = false;
+        };
+
+        const createProduct = async (productData) => {
+            const result = await queryClient.product.create(productData);
+            if (result.data) {
+                products.value.push(result.data);
+            }
+        };
         </script>
 
         <template>
             <div>
-                <div>
-                    <pre>{{ session.data }}</pre>
-                    <button v-if="session.data" @click="authClient.signOut()">
-                        Sign out
-                    </button>
+                <div v-if="loading">Loading...</div>
+                <div v-else>
+                    <div v-for="product in products" :key="product.id">
+                        {{ product.name }}
+                    </div>
                 </div>
             </div>
         </template>
@@ -243,89 +302,152 @@ Better Auth provides a `useSession` hook to easily access session data on the cl
         </Tab>
 
         <Tab value="Svelte">
-            ```svelte title="user.svelte"
+            ```svelte title="product-manager.svelte"
             <script lang="ts">
-            import { authClient } from "$lib/auth-client"; // [!code highlight]
+            import { queryClient } from "$lib/query-client"; // [!code highlight]
 
-            const session = authClient.useSession(); // [!code highlight]
+            let products = [];
+            let loading = false;
+
+            const fetchProducts = async () => {
+                loading = true;
+                const result = await queryClient.product.list({
+                    page: 1,
+                    limit: 10
+                });
+                if (result.data) {
+                    products = result.data.items;
+                }
+                loading = false;
+            };
+
+            onMount(fetchProducts);
             </script>
-            <p>
-                {$session.data?.user.email}
-            </p>
+
+            <div>
+                {#if loading}
+                    <p>Loading...</p>
+                {:else}
+                    {#each products as product (product.id)}
+                        <div>{product.name}</div>
+                    {/each}
+                {/if}
+            </div>
             ```
         </Tab>
          <Tab value="Vanilla">
-            ```ts title="user.svelte"
-            import { authClient } from "~/lib/auth-client"; //import the auth client
+            ```ts title="product-manager.js"
+            import { queryClient } from "~/lib/query-client"; //import the query client
 
-            authClient.useSession.subscribe((value)=>{
-                //do something with the session //
-            }) 
+            const products = [];
+            let loading = false;
+
+            const fetchProducts = async () => {
+                loading = true;
+                const result = await queryClient.product.list({
+                    page: 1,
+                    limit: 10
+                });
+                if (result.data) {
+                    products.push(...result.data.items);
+                }
+                loading = false;
+                renderProducts();
+            };
+
+            const renderProducts = () => {
+                const container = document.getElementById('products');
+                container.innerHTML = products.map(p => `<div>${p.name}</div>`).join('');
+            };
             ```
         </Tab>
 
         <Tab value="Solid">
-            ```tsx title="user.tsx"
-            import { authClient } from "~/lib/auth-client"; // [!code highlight]
+            ```tsx title="product-manager.tsx"
+            import { queryClient } from "~/lib/query-client"; // [!code highlight]
+            import { createSignal, onMount } from "solid-js";
 
-            export default function Home() {
-                const session = authClient.useSession() // [!code highlight]
+            export default function ProductManager() {
+                const [products, setProducts] = createSignal([]);
+                const [loading, setLoading] = createSignal(false);
+
+                const fetchProducts = async () => {
+                    setLoading(true);
+                    const result = await queryClient.product.list({
+                        page: 1,
+                        limit: 10
+                    });
+                    if (result.data) {
+                        setProducts(result.data.items);
+                    }
+                    setLoading(false);
+                };
+
+                onMount(fetchProducts);
+
                 return (
-                    <pre>{JSON.stringify(session(), null, 2)}</pre>
+                    <div>
+                        {loading() ? "Loading..." : (
+                            products().map(product => (
+                                <div>{product.name}</div>
+                            ))
+                        )}
+                    </div>
                 );
             }
             ```
         </Tab>
 </Tabs>
 
-#### Get Session
-
-If you prefer not to use the hook, you can use the `getSession` method provided by the client.
-
-```ts title="user.tsx"
-import { authClient } from "@/lib/auth-client" // import the auth client // [!code highlight]
-
-const { data: session, error } = await authClient.getSession()
-```
-
-You can also use it with client-side data-fetching libraries like [TanStack Query](https://tanstack.com/query/latest).
-
 ### Server Side
 
-The server provides a `session` object that you can use to access the session data. It requires request headers object to be passed to the `getSession` method.
+The server provides resource management methods that you can use to handle resources directly. It requires request headers object to be passed when needed.
 
 **Example: Using some popular frameworks**
 
 <Tabs items={["Next.js", "Nuxt", "Svelte", "Astro", "Hono", "TanStack"]}>
     <Tab value="Next.js">
     ```ts title="server.ts"
-    import { auth } from "./auth"; // path to your Better Auth server instance
+    import { query } from "./query"; // path to your Better Query server instance
     import { headers } from "next/headers";
 
-    const session = await auth.api.getSession({
+    const product = await query.api.createProduct({
+        body: {
+            name: "Server Product",
+            price: 99.99
+        },
         headers: await headers() // you need to pass the headers object.
     })
     ```
     </Tab>
     <Tab value="Remix">
     ```ts title="route.ts"
-    import { auth } from "lib/auth"; // path to your Better Auth server instance
+    import { query } from "lib/query"; // path to your Better Query server instance
 
-    export async function loader({ request }: LoaderFunctionArgs) {
-        const session = await auth.api.getSession({
+    export async function action({ request }: ActionFunctionArgs) {
+        const formData = await request.formData();
+        const product = await query.api.createProduct({
+            body: {
+                name: formData.get('name'),
+                price: Number(formData.get('price'))
+            },
             headers: request.headers
         })
 
-        return json({ session })
+        return json({ product })
     }
     ```
     </Tab>
     <Tab value="Astro">
-    ```astro title="index.astro"
+    ```astro title="create-product.astro"
     ---
-    import { auth } from "./auth";
+    import { query } from "./query";
 
-    const session = await auth.api.getSession({
+    const product = await query.api.createProduct({
+        body: {
+            name: "Astro Product",
+            price: 59.99
+        },
 	    headers: Astro.request.headers,
     });
     ---
@@ -333,16 +455,16 @@ The server provides a `session` object that you can use to access the session da
     ```
     </Tab>
     <Tab value="Svelte">
-    ```ts title="+page.ts"
-    import { auth } from "./auth";
+    ```ts title="+page.server.ts"
+    import { query } from "./query";
 
     export async function load({ request }) {
-        const session = await auth.api.getSession({
+        const products = await query.api.listProducts({
             headers: request.headers
         })
         return {
             props: {
-                session
+                products
             }
         }
     }
@@ -350,39 +472,48 @@ The server provides a `session` object that you can use to access the session da
     </Tab>
     <Tab value="Hono">
     ```ts title="index.ts"
-    import { auth } from "./auth";
+    import { query } from "./query";
 
     const app = new Hono();
 
-    app.get("/path", async (c) => {
-        const session = await auth.api.getSession({
+    app.post("/create-product", async (c) => {
+        const body = await c.req.json();
+        const product = await query.api.createProduct({
+            body,
             headers: c.req.raw.headers
         })
+        return c.json(product);
     });
     ```
     </Tab>
 
     <Tab value="Nuxt">
-    ```ts title="server/session.ts"
-    import { auth } from "~/utils/auth";
+    ```ts title="server/create-product.ts"
+    import { query } from "~/utils/query";
 
-    export default defineEventHandler((event) => {
-        const session = await auth.api.getSession({
+    export default defineEventHandler(async (event) => {
+        const body = await readBody(event);
+        const product = await query.api.createProduct({
+            body,
             headers: event.headers,
         })
+        return product;
     });
     ```
     </Tab>
     <Tab value="TanStack">
-    ```ts title="app/routes/api/index.ts"
-    import { auth } from "./auth";
+    ```ts title="app/routes/api/products.ts"
+    import { query } from "./query";
     import { createAPIFileRoute } from "@tanstack/start/api";
 
-    export const APIRoute = createAPIFileRoute("/api/$")({
-        GET: async ({ request }) => {
-            const session = await auth.api.getSession({
+    export const APIRoute = createAPIFileRoute("/api/products")({
+        POST: async ({ request }) => {
+            const body = await request.json();
+            const product = await query.api.createProduct({
+                body,
                 headers: request.headers
             })
+            return Response.json(product);
         },
     });
     ```
@@ -390,34 +521,34 @@ The server provides a `session` object that you can use to access the session da
 </Tabs>
 
 <Callout>
-For more details check [session-management](/docs/concepts/session-management) documentation.
+For more details check [resource management](/docs/concepts/resources) documentation.
 </Callout>
 
 ## Using Plugins
 
-One of the unique features of Better Auth is a plugins ecosystem. It allows you to add complex auth related functionality with small lines of code.
+One of the key features of Better Query is a plugins ecosystem. It allows you to add complex functionality with small lines of code, similar to Better Auth.
 
-Below is an example of how to add two factor authentication using two factor plugin.
+Below is an example of how to add audit logging using the audit plugin.
 
 <Steps>
 
 <Step>
 ### Server Configuration
 
-To add a plugin, you need to import the plugin and pass it to the `plugins` option of the auth instance. For example, to add two factor authentication, you can use the following code:
+To add a plugin, you need to import the plugin and pass it to the `plugins` option of the query instance. For example, to add audit logging, you can use the following code:
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth"
-import { twoFactor } from "better-auth/plugins" // [!code highlight]
+```ts title="query.ts"
+import { betterQuery, createResource } from "better-query"
+import { auditPlugin } from "better-query/plugins" // [!code highlight]
 
-export const auth = betterAuth({
+export const query = betterQuery({
     //...rest of the options
     plugins: [ // [!code highlight]
-        twoFactor() // [!code highlight]
+        auditPlugin() // [!code highlight]
     ] // [!code highlight]
 })
 ```
-now two factor related routes and method will be available on the server.
+now audit-related routes and methods will be available on the server.
 
 </Step>
 <Step>
@@ -428,76 +559,63 @@ After adding the plugin, you'll need to add the required tables to your database
 generating the schema:
 
 ```bash title="terminal"
-npx @better-auth/cli generate
+npx better-query generate
 ```
 
 using the `migrate` command:
 
 ```bash title="terminal"
-npx @better-auth/cli migrate
+npx better-query migrate
 ```
 
 <Callout>
-If you prefer adding the schema manually, you can check the schema required on the [two factor plugin](/docs/plugins/2fa#schema) documentation.
+If you prefer adding the schema manually, you can check the schema required on the [audit plugin](/docs/plugins/audit#schema) documentation.
 </Callout>
 
 </Step>
 <Step>
 ### Client Configuration
 
-Once we're done with the server, we need to add the plugin to the client. To do this, you need to import the plugin and pass it to the `plugins` option of the auth client. For example, to add two factor authentication, you can use the following code:
+Once we're done with the server, we need to add the plugin to the client. To do this, you need to import the plugin and pass it to the `plugins` option of the query client. For example, to add audit functionality, you can use the following code:
 
-```ts title="auth-client.ts"  
-import { createAuthClient } from "better-auth/client";
-import { twoFactorClient } from "better-auth/client/plugins"; // [!code highlight]
+```ts title="query-client.ts"  
+import { createQueryClient } from "better-query/client";
+import { auditClient } from "better-query/client/plugins"; // [!code highlight]
 
-const authClient = createAuthClient({
+const queryClient = createQueryClient({
     plugins: [ // [!code highlight]
-        twoFactorClient({ // [!code highlight]
-            twoFactorPage: "/two-factor" // the page to redirect if a user needs to verify 2nd factor // [!code highlight]
+        auditClient({ // [!code highlight]
+            // Configuration options // [!code highlight]
         }) // [!code highlight]
     ] // [!code highlight]
 })
 ```
 
-now two factor related methods will be available on the client.
+now audit-related methods will be available on the client.
 
-```ts title="profile.ts"
-import { authClient } from "./auth-client"
+```ts title="audit-example.ts"
+import { queryClient } from "./query-client"
 
-const enableTwoFactor = async() => {
-    const data = await authClient.twoFactor.enable({
-        password // the user password is required
-    }) // this will enable two factor
-}
-
-const disableTwoFactor = async() => {
-    const data = await authClient.twoFactor.disable({
-        password // the user password is required
-    }) // this will disable two factor
-}
-
-const signInWith2Factor = async() => {
-    const data = await authClient.signIn.email({
-        //...
+const getAuditLogs = async() => {
+    const logs = await queryClient.audit.list({
+        resourceType: "product", // Filter by resource type
+        action: "create", // Filter by action
+        page: 1,
+        limit: 20
     })
-    //if the user has two factor enabled, it will redirect to the two factor page
+    return logs;
 }
 
-const verifyTOTP = async() => {
-    const data = await authClient.twoFactor.verifyTOTP({
-        code: "123456", // the code entered by the user 
-        /**
-         * If the device is trusted, the user won't
-         * need to pass 2FA again on the same device
-         */
-        trustDevice: true
+const getResourceAuditHistory = async(resourceId: string) => {
+    const history = await queryClient.audit.getResourceHistory(resourceId, {
+        resourceType: "product"
     })
+    return history;
 }
 ```
 </Step>
 
 <Step>
-Next step: See the <Link href="/docs/plugins/2fa">two factor plugin documentation</Link>.
+Next step: See the <Link href="/docs/plugins/audit">audit plugin documentation</Link>.
 </Step>
 </Steps>
