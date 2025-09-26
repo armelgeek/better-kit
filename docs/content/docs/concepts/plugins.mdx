@@ -1,46 +1,56 @@
 ---
 title: Plugins
-description: Learn how to use plugins with Better Auth.
+description: Learn how to use plugins with Better Query.
 ---
 
-Plugins are a key part of Better Auth, they let you extend the base functionalities. You can use them to add new authentication methods, features, or customize behaviors.
+Plugins are a key part of Better Query, they let you extend the base CRUD functionalities. You can use them to add new features like audit logging, caching, authentication integration, or customize resource behaviors.
 
-Better Auth comes with many built-in plugins ready to use. Check the plugins section for details. You can also create your own plugins.
+Better Query comes with built-in plugins ready to use. Check the plugins section for details. You can also create your own plugins.
 
 ## Using a Plugin
 
 Plugins can be a server-side plugin, a client-side plugin, or both.
 
-To add a plugin on the server, include it in the `plugins` array in your auth configuration. The plugin will initialize with the provided options.
+To add a plugin on the server, include it in the `plugins` array in your query configuration. The plugin will initialize with the provided options.
 
 ```ts title="server.ts"
-import { betterAuth } from "better-auth";
+import { betterQuery } from "better-query";
+import { auditPlugin, cachePlugin } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterQuery({
     plugins: [
-        // Add your plugins here
+        auditPlugin({
+            enabled: true,
+            operations: ["create", "update", "delete"],
+        }),
+        cachePlugin({
+            enabled: true,
+            defaultTTL: 300,
+        }),
     ]
 });
 ```
 
-Client plugins are added when creating the client. Most plugin require both server and client plugins to work correctly.
-The Better Auth auth client on the frontend uses the `createAuthClient` function provided by `better-auth/client`.
+Client plugins are added when creating the client. Most plugins require both server and client plugins to work correctly.
+The Better Query client on the frontend uses the `createQueryClient` function provided by `better-query/client`.
 
-```ts title="auth-client.ts"
-import { createAuthClient } from "better-auth/client";
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client";
+import { auditClient, cacheClient } from "better-query/client/plugins";
 
-const authClient =  createAuthClient({
+const queryClient = createQueryClient({
     plugins: [
-        // Add your client plugins here
+        auditClient(),
+        cacheClient(),
     ]
 });
 ```
 
-We recommend keeping the auth-client and your normal auth instance in separate files.
+We recommend keeping the query-client and your normal query instance in separate files.
 <Files>
-  <Folder name="auth" defaultOpen>
-    <File name="server.ts" />
-    <File name="auth-client.ts" />
+  <Folder name="lib" defaultOpen>
+    <File name="query.ts" />
+    <File name="query-client.ts" />
   </Folder>
 </Files>
 
