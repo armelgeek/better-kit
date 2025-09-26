@@ -43,13 +43,23 @@ export default function BetterQueryDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Better Query Dashboard</h1>
+              <h1 className="text-3xl font-bold text-gray-900">BETTER QUERY HOME</h1>
               <p className="mt-1 text-sm text-gray-600">
                 Comprehensive demonstration of all Better Query features
               </p>
             </div>
-            <div className="text-sm text-gray-500">
-              Complete CRUD • Type Safety • Pagination • Search • Validation
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-500">
+                Complete CRUD • Type Safety • Pagination • Search • Validation
+              </div>
+              <div className="flex space-x-2">
+                <a 
+                  href="/sign-in" 
+                  className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Sign In
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -95,7 +105,7 @@ function OverviewTab({ stats }: { stats: any }) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Better Query Feature Overview</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">BETTER QUERY HOME Feature Overview</h2>
         <div className="prose max-w-none">
           <p className="text-gray-600 mb-6">
             This dashboard demonstrates all the key features of Better Query, a standalone, type-safe CRUD generator 

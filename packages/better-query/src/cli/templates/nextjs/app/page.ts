@@ -8,7 +8,7 @@ import { auth } from "@/lib/query";` : "";
   if (!session) {
     return (
       <main className="container mx-auto p-8">
-        <h1 className="text-3xl font-bold mb-8">Welcome to Better Query</h1>
+        <h1 className="text-3xl font-bold mb-8">Welcome to BETTER QUERY HOME</h1>
         <p className="mb-4">Please sign in to continue.</p>
         <a 
           href="/api/auth/signin"
@@ -78,7 +78,7 @@ export default function HomePage() {${authSection}
 
   return (
     <main className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Better Query Demo</h1>
+      <h1 className="text-3xl font-bold mb-8">BETTER QUERY HOME</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>

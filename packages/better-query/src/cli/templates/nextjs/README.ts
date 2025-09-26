@@ -24,7 +24,7 @@ BETTER_AUTH_SECRET=your-secret-key-here
 - \`/api/auth/signout\` - Sign out
 ` : "";
 
-	return `# Better Query App
+	return `# BETTER QUERY HOME
 
 This is a [Next.js](https://nextjs.org/) project with [Better Query](https://github.com/armelgeek/better-kit) for type-safe CRUD operations.
 
