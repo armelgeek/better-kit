@@ -1,6 +1,6 @@
-# Better Auth Docs
+# Better Kit Docs
 
-This is the documentation site for Better Auth.
+This is the documentation site for Better Kit.
 
 ## Contributing
 

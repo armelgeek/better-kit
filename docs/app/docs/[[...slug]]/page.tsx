@@ -49,8 +49,8 @@ export default async function Page({
 			toc={page.data.toc}
 			full={page.data.full}
 			editOnGithub={{
-				owner: "better-auth",
-				repo: "better-auth",
+				owner: "armelgeek",
+				repo: "better-kit",
 				sha: "main",
 				path: `/docs/content/docs/${page.path}`,
 			}}
@@ -64,7 +64,7 @@ export default async function Page({
 					<LLMCopyButton />
 					<ViewOptions
 						markdownUrl={`${page.url}.mdx`}
-						githubUrl={`https://github.com/better-auth/better-auth/blob/main/docs/content/docs/${page.file.path}`}
+						githubUrl={`https://github.com/armelgeek/better-kit/blob/main/docs/content/docs/${page.file.path}`}
 					/>
 				</div>
 			)}
@@ -172,7 +172,7 @@ export async function generateMetadata({
 	const { slug } = await params;
 	const page = source.getPage(slug);
 	if (page == null) notFound();
-	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL;
+	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 	const url = new URL(`${baseUrl}/api/og`);
 	const { title, description } = page.data;
 	const pageSlug = page.file.path;
