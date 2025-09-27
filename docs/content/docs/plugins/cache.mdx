@@ -38,21 +38,18 @@ The Cache plugin provides intelligent caching for your CRUD operations to improv
   <Step>
     ### Add the client plugin
 
-    Include the cache client plugin in your query client instance for client-side cache management.
+    The cache plugin works automatically on the server side. No additional client configuration is required - caching is handled transparently for all your resource operations.
 
-    ```ts title="query-client.ts"
-    import { createQueryClient } from "better-query/client"
-    import { cacheClient } from "better-query/client/plugins"
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client"
 
-    export const queryClient = createQueryClient({
-        plugins: [
-            cacheClient({
-                enabled: true,
-                clientTTL: 60, // Client-side cache TTL in seconds
-            })
-        ]
-    })
-    ```
+export const queryClient = createQueryClient({
+    baseURL: "http://localhost:3000/api"
+})
+
+// All operations automatically benefit from server-side caching
+const products = await queryClient.product.list();
+```
 
   </Step>
 </Steps>
