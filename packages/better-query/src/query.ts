@@ -173,6 +173,21 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 		options,
 		context: queryContext,
 		schema,
+		// Custom operations support
+		customOperation: async (operationName: string, params: any) => {
+			if (!queryContext.adapter.executeCustomOperation) {
+				throw new Error(`Adapter does not support custom operations`);
+			}
+			return await queryContext.adapter.executeCustomOperation(operationName, params, queryContext);
+		},
+		// Get available custom operations
+		getCustomOperations: () => {
+			return queryContext.adapter.customOperations || {};
+		},
+		// Check if custom operation exists
+		hasCustomOperation: (operationName: string) => {
+			return !!(queryContext.adapter.customOperations && queryContext.adapter.customOperations[operationName]);
+		},
 	};
 }
 
@@ -237,6 +252,12 @@ export type BetterQuery<
 	options: O;
 	context: QueryContext;
 	schema: Record<string, { fields: Record<string, any> }>;
+	/** Execute a custom operation defined in the adapter */
+	customOperation: (operationName: string, params: any) => Promise<any>;
+	/** Get all available custom operations from the adapter */
+	getCustomOperations: () => Record<string, (params: any, context?: any) => Promise<any>>;
+	/** Check if a custom operation exists */
+	hasCustomOperation: (operationName: string) => boolean;
 };
 
 // Legacy alias for backward compatibility
