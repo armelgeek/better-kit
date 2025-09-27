@@ -44,16 +44,13 @@ Create a standalone query client that works independently:
 
 ```typescript
 import { createQueryClient } from "better-query/client";
+import type { MyQuery } from "./my-query-config"; // Your server-side query instance type
 
-const queryClient = createQueryClient({
-  baseURL: "http://localhost:3000/api/auth",
-  resources: [
-    { name: "product", schema: productSchema },
-    { name: "category", schema: categorySchema },
-  ],
+const queryClient = createQueryClient<typeof MyQuery>({
+  baseURL: "http://localhost:3000/api/query", // Point to your query endpoint, not auth
 });
 
-// Type-safe operations
+// Type-safe operations (resources are inferred from server-side configuration)
 await queryClient.product.create({
   name: "New Product",
   price: 29.99,
@@ -249,7 +246,25 @@ Configure the Better Query plugin on the server to match client expectations:
 
 ```typescript
 import { betterAuth } from "better-auth";
-import { betterQuery, createResource, productSchema, categorySchema } from "better-query/plugin";
+import { betterQuery, createResource } from "better-query";
+import { z } from "zod";
+
+// Define schemas
+const productSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  price: z.number().positive(),
+  description: z.string().optional(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+
+const categorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  createdAt: z.date().default(() => new Date()),
+});
 
 export const auth = betterAuth({
   // ... other config
