@@ -68,38 +68,9 @@ The command displays:
 - **Frameworks**: Detected frameworks (Next.js, React, Vue, etc.)
 - **Databases**: Database clients and ORMs (Prisma, Drizzle, etc.)
 
-### Options
-
-- `--config` - Path to your Better Query config file
-- `--json` - Output as JSON for sharing or programmatic use
-
 ### Examples
 
 ```bash
 # Basic usage
 npx better-query info
-
-# Custom config path
-npx @better-auth/cli@latest info --config ./config/auth.ts
-
-# JSON output
-npx @better-auth/cli@latest info --json > auth-info.json
 ```
-
-Sensitive data like secrets, API keys, and database URLs are automatically replaced with `[REDACTED]` for safe sharing.
-
-## Secret
-
-The CLI also provides a way to generate a secret key for your Better Auth instance.
-
-```bash title="Terminal"
-npx @better-auth/cli@latest secret
-```
-
-## Common Issues
-
-**Error: Cannot find module X**
-
-If you see this error, it means the CLI can't resolve imported modules in your Better Auth config file. We are working on a fix for many of these issues, but in the meantime, you can try the following:
-
-- Remove any import aliases in your config file and use relative paths instead. After running the CLI, you can revert to using aliases.

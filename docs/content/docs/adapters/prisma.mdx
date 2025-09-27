@@ -12,13 +12,13 @@ Make sure you have Prisma installed and configured.
 Then, you can use the Prisma adapter to connect to your database.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { prismaAdapter } from "better-query/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: prismaAdapter(prisma, {
     provider: "sqlite",
   }),

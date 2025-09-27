@@ -22,7 +22,7 @@ const features = [
 		label: "Framework Agnostic",
 		title: "Support for popular <strong>frameworks</strong>.",
 		description:
-			"Supports popular frameworks, including React, Vue, Svelte, Astro, Solid, Next.js, Nuxt, Tanstack Start, Hono, and more.",
+			"Supports popular frameworks, including React, Vue, Next.js, Nuxt, Tanstack Start, Hono, and more.",
 		icon: PlugZap2Icon,
 	},
 	{

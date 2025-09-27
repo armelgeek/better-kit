@@ -7,7 +7,7 @@ import { useSearchContext } from "fumadocs-ui/provider";
 import { ChevronDownIcon, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { contents, examples } from "./sidebar-content";
+import { contents } from "./sidebar-content";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 
@@ -32,7 +32,7 @@ export default function ArticleLayout() {
 		setCurrentOpen(getDefaultValue());
 	}, [pathname]);
 
-	const cts = group === "docs" ? contents : examples;
+	const cts = group === "docs" ? contents : null;
 
 	return (
 		<div className={cn("fixed start-0 top-0")}>

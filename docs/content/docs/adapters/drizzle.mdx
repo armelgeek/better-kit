@@ -12,11 +12,11 @@ Make sure you have Drizzle installed and configured.
 Then, you can use the Drizzle adapter to connect to your database.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { drizzleAdapter } from "better-query/adapters/drizzle";
 import { db } from "./database.ts";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: drizzleAdapter(db, {
     // [!code highlight]
     provider: "sqlite", // or "pg" or "mysql" // [!code highlight]
@@ -48,12 +48,12 @@ npx drizzle-kit migrate # apply the migration
 The Drizzle adapter expects the schema you define to match the table names. For example, if your Drizzle schema maps the `user` table to `users`, you need to manually pass the schema and map it to the user table.
 
 ```ts
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { db } from "./drizzle";
 import { drizzleAdapter } from "better-query/adapters/drizzle";
 import { schema } from "./schema";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: drizzleAdapter(db, {
     provider: "sqlite", // or "pg" or "mysql"
     schema: {
@@ -66,7 +66,7 @@ export const query = betterAuth({
 
 If all your tables are using plural form, you can just pass the `usePlural` option:
 ```ts
-export const query = betterAuth({
+export const query = betterQuery({
   database: drizzleAdapter(db, {
     ...
     usePlural: true,
