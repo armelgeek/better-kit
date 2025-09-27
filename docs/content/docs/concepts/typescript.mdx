@@ -40,107 +40,118 @@ then please make sure you're following the instructions above, as well as ensuri
 Both the client SDK and the server offer types that can be inferred using the `$Infer` property. Plugins can extend base types like `User` and `Session`, and you can use `$Infer` to infer these types. Additionally, plugins can provide extra types that can also be inferred through `$Infer`.
 
 ```ts title="query-client.ts" 
-import { createAuthClient } from "better-query/client"
+import { createQueryClient } from "better-query/client"
 
-const queryClient = createAuthClient()
+const queryClient = createQueryClient()
 
-export type Session = typeof queryClient.$Infer.Session
+export type QueryResponse = typeof queryClient.$Infer.QueryResponse
 ```
 
-The `Session` type includes both `session` and `user` properties. The user property represents the user object type, and the `session` property represents the `session` object type.
+The `QueryResponse` type includes both the data and metadata properties. You can also infer specific resource types.
 
 You can also infer types on the server side.
 
 ```ts title="query.ts" 
-import { betterAuth } from "better-query"
+import { betterQuery } from "better-query"
 import Database from "better-sqlite3"
 
-export const query = betterAuth({
+export const query = betterQuery({
     database: new Database("database.db")
 })
 
-type Session = typeof query.$Infer.Session
+type QueryInstance = typeof query.$Infer.QueryInstance
 ```
 
 
-## Additional Fields
+## Resource Schema Types
 
-Better Query allows you to add additional fields to the user and session objects. All additional fields are properly inferred and available on the server and client side.
+Better Query allows you to define resource schemas that are automatically typed. All fields are properly inferred and available on the server and client side.
 
 ```ts 
-import { betterAuth } from "better-query"
+import { betterQuery } from "better-query"
 import Database from "better-sqlite3"
+import { z } from "zod"
 
-export const query = betterAuth({
+export const query = betterQuery({
     database: new Database("database.db"),
-    user: {
-       additionalFields: {
-          role: {
-              type: "string",
-              input: false
-            } 
+    resources: [
+        {
+            name: "user",
+            schema: z.object({
+                id: z.string(),
+                name: z.string(),
+                email: z.string().email(),
+                role: z.enum(["admin", "user"]).default("user")
+            })
         }
-    }
-   
+    ]
 })
 
-type Session = typeof query.$Infer.Session
+type UserResource = typeof query.$Infer.Resources.User
 ```
 
-In the example above, we added a `role` field to the user object. This field is now available on the `Session` type.
+In the example above, we defined a `User` resource schema. This schema is now available as a type.
 
 
-### The `input` property
+### Schema Validation
 
-The `input` property in an additional field configuration determines whether the field should be included in the user input. This property defaults to `true`, meaning the field will be part of the user input during operations like registration.
+Schema fields determine the structure and validation rules for your resources. This includes type checking and validation during runtime.
 
-To prevent a field from being part of the user input, you must explicitly set `input: false`:
+To define custom validation for a field, you can use Zod's validation methods:
 
 ```ts
-additionalFields: {
-    role: {
-        type: "string",
-        input: false
-    }
-}
+import { z } from "zod"
+
+const userSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email format"),
+    age: z.number().min(18, "Must be at least 18 years old").optional()
+})
 ```
 
-When `input` is set to `false`, the field will be excluded from user input, preventing users from passing a value for it.
+When defining resources, schema validation ensures that data conforms to the expected structure both on creation and updates.
 
-By default, additional fields are included in the user input, which can lead to security vulnerabilities if not handled carefully. For fields that should not be set by the user, like a `role`, it is crucial to set `input: false` in the configuration.
+By default, all schema fields are included in resource operations, which provides type safety throughout your application. For fields that should be computed or set automatically, you can handle this in hooks or plugins.
 
-### Inferring Additional Fields on Client
+### Inferring Resource Types on Client
 
-To make sure proper type inference for additional fields on the client side, you need to inform the client about these fields. There are two approaches to achieve this, depending on your project structure:
+To make sure proper type inference for resources on the client side, you need to inform the client about these types. There are two approaches to achieve this, depending on your project structure:
 
 1. For Monorepo or Single-Project Setups
 
-If your server and client code reside in the same project, you can use the `inferAdditionalFields` plugin to automatically infer the additional fields from your server configuration.
+If your server and client code reside in the same project, you can use the `inferResourceTypes` plugin to automatically infer the resource types from your server configuration.
 
 ```ts
-import { inferAdditionalFields } from "better-query/client/plugins";
-import { createAuthClient } from "better-query/react";
+import { inferResourceTypes } from "better-query/client/plugins";
+import { createQueryClient } from "better-query/react";
 import type { query } from "./query";
 
-export const queryClient = createAuthClient({
-  plugins: [inferAdditionalFields<typeof query>()],
+export const queryClient = createQueryClient({
+  plugins: [inferResourceTypes<typeof query>()],
 });
 ```
 
 2. For Separate Client-Server Projects
 
-If your client and server are in separate projects, you'll need to manually specify the additional fields when creating the query client.
+If your client and server are in separate projects, you'll need to manually specify the resource types when creating the query client.
 
 ```ts
-import { inferAdditionalFields } from "better-query/client/plugins";
+import { inferResourceTypes } from "better-query/client/plugins";
+import { z } from "zod";
 
-export const queryClient = createAuthClient({
-  plugins: [inferAdditionalFields({
-      user: {
-        role: {
-          type: "string"
+export const queryClient = createQueryClient({
+  plugins: [inferResourceTypes({
+      resources: [
+        {
+          name: "user",
+          schema: z.object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string().email(),
+            role: z.enum(["admin", "user"])
+          })
         }
-      }
+      ]
   })],
 });
 ```

@@ -1,26 +1,26 @@
 ---
 title: API
-description: Better Auth API.
+description: Better Query API.
 ---
 
-When you create a new Better Auth instance, it provides you with an `api` object. This object exposes every endpoint that exists in your Better Auth instance. And you can use this to interact with Better Auth server side.
+When you create a new Better Query instance, it provides you with an `api` object. This object exposes every endpoint that exists in your Better Query instance. And you can use this to interact with Better Query server side.
 
-Any endpoint added to Better Auth, whether from plugins or the core, will be accessible through the `api` object.
+Any endpoint added to Better Query, whether from plugins or the core, will be accessible through the `api` object.
 
 ## Calling API Endpoints on the Server
 
-To call an API endpoint on the server, import your `auth` instance and call the endpoint using the `api` object.
+To call an API endpoint on the server, import your `query` instance and call the endpoint using the `api` object.
 
 ```ts title="server.ts"
-import { betterAuth } from "better-auth";
+import { betterQuery } from "better-query";
 import { headers } from "next/headers";
 
-export const auth = betterAuth({
+export const query = betterQuery({
     //...
 })
 
-// calling get session on the server
-await auth.api.getSession({
+// calling list resources on the server
+await query.api.listUsers({
     headers: await headers() // some endpoints might require headers
 })
 ```
@@ -30,27 +30,28 @@ await auth.api.getSession({
 Unlike the client, the server needs the values to be passed as an object with the key `body` for the body, `headers` for the headers, and `query` for query parameters.
 
 ```ts title="server.ts"
-await auth.api.getSession({
+await query.api.listUsers({
     headers: await headers()
 })
 
-await auth.api.signInEmail({
+await query.api.createUser({
     body: {
+        name: "John Doe",
         email: "john@doe.com",
-        password: "password"
+        role: "user"
     },
     headers: await headers() // optional but would be useful to get the user IP, user agent, etc.
 })
 
-await auth.api.verifyEmail({
+await query.api.getUser({
     query: {
-        token: "my_token"
+        id: "user_123"
     }
 })
 ```
 
 <Callout>
-Better Auth API endpoints are built on top of [better-call](https://github.com/bekacru/better-call), a tiny web framework that lets you call REST API endpoints as if they were regular functions and allows us to easily infer client types from the server.
+Better Query API endpoints are built on top of [better-call](https://github.com/bekacru/better-call), a tiny web framework that lets you call REST API endpoints as if they were regular functions and allows us to easily infer client types from the server.
 </Callout>
 
 ### Getting `headers` and `Response` Object
@@ -64,12 +65,12 @@ But there are times when you might want to get the `headers` or the `Response` o
 To get the `headers`, you can pass the `returnHeaders` option to the endpoint.
 
 ```ts
-const { headers, response } = await auth.api.signUpEmail({
+const { headers, response } = await query.api.createUser({
 	returnHeaders: true,
 	body: {
-		email: "john@doe.com",
-		password: "password",
 		name: "John Doe",
+		email: "john@doe.com",
+		role: "user",
 	},
 });
 ```
@@ -78,7 +79,7 @@ The `headers` will be a `Headers` object, which you can use to get the cookies o
 
 ```ts
 const cookies = headers.get("set-cookie");
-const headers = headers.get("x-custom-header");
+const customHeader = headers.get("x-custom-header");
 ```
 
 #### Getting `Response` Object
@@ -86,10 +87,10 @@ const headers = headers.get("x-custom-header");
 To get the `Response` object, you can pass the `asResponse` option to the endpoint.
 
 ```ts title="server.ts"
-const response = await auth.api.signInEmail({
+const response = await query.api.createUser({
     body: {
-        email: "",
-        password: ""
+        name: "John Doe",
+        email: "john@doe.com"
     },
     asResponse: true
 })
@@ -100,13 +101,13 @@ const response = await auth.api.signInEmail({
 When you call an API endpoint on the server, it will throw an error if the request fails. You can catch the error and handle it as you see fit. The error instance is an instance of `APIError`.
 
 ```ts title="server.ts"
-import { APIError } from "better-auth/api";
+import { APIError } from "better-query/api";
 
 try {
-    await auth.api.signInEmail({
+    await query.api.createUser({
         body: {
-            email: "",
-            password: ""
+            name: "",
+            email: ""
         }
     })
 } catch (error) {
