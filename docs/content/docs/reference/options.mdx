@@ -1,46 +1,46 @@
 ---
 title: Options
-description: Better Auth configuration options reference.
+description: Better Query configuration options reference.
 ---
 
-List of all the available options for configuring Better Auth. See [Better Auth Options](https://github.com/better-auth/better-auth/blob/main/packages/better-auth/src/types/options.ts#L13).
+List of all the available options for configuring Better Query. See [Better Query Options](https://github.com/better-query/better-query/blob/main/packages/better-query/src/types/options.ts#L13).
 
 ## `appName`
 
 The name of the application.
 
 ```ts
-import { betterAuth } from "better-auth";
-export const auth = betterAuth({
+import { betterQuery } from "better-query";
+export const query = betterQuery({
 	appName: "My App",
 })
 ```
 
 ## `baseURL`
 
-Base URL for Better Auth. This is typically the root URL where your application server is hosted. Note: If you include a path in the baseURL, it will take precedence over the default path.
+Base URL for Better Query. This is typically the root URL where your application server is hosted. Note: If you include a path in the baseURL, it will take precedence over the default path.
 
 ```ts
-import { betterAuth } from "better-auth";
-export const auth = betterAuth({
+import { betterQuery } from "better-query";
+export const query = betterQuery({
 	baseURL: "https://example.com",
 })
 ```
 
-If not explicitly set, the system will check for the environment variable `process.env.BETTER_AUTH_URL`
+If not explicitly set, the system will check for the environment variable `process.env.BETTER_QUERY_URL`
 
 ## `basePath`
 
-Base path for Better Auth. This is typically the path where the Better Auth routes are mounted. It will be overridden if there is a path component within `baseURL`.
+Base path for Better Query. This is typically the path where the Better Query routes are mounted. It will be overridden if there is a path component within `baseURL`.
 
 ```ts
-import { betterAuth } from "better-auth";
-export const auth = betterAuth({
-	basePath: "/api/auth",
+import { betterQuery } from "better-query";
+export const query = betterQuery({
+	basePath: "/api/query",
 })
 ```
 
-Default: `/api/auth`
+Default: `/api/query`
 
 ## `trustedOrigins`
 
@@ -51,8 +51,8 @@ List of trusted origins. You can provide a static array of origins, a function t
 You can provide a static array of origins:
 
 ```ts
-import { betterAuth } from "better-auth";
-export const auth = betterAuth({
+import { betterQuery } from "better-query";
+export const query = betterQuery({
 	trustedOrigins: ["http://localhost:3000", "https://example.com"],
 })
 ```
@@ -62,7 +62,7 @@ export const auth = betterAuth({
 You can provide a function that returns origins dynamically:
 
 ```ts
-export const auth = betterAuth({
+export const query = betterQuery({
 	trustedOrigins: async (request: Request) => {
 		// Return an array of trusted origins based on the request
 		return ["https://dynamic-origin.com"];
@@ -75,7 +75,7 @@ export const auth = betterAuth({
 You can use wildcard patterns in trusted origins:
 
 ```ts
-export const auth = betterAuth({
+export const query = betterQuery({
 	trustedOrigins: [
 		"*.example.com",             // Trust all subdomains of example.com
 		"https://*.example.com",     // Trust only HTTPS subdomains
@@ -89,15 +89,15 @@ export const auth = betterAuth({
 The secret used for encryption, signing, and hashing.
 
 ```ts
-import { betterAuth } from "better-auth";
-export const auth = betterAuth({
+import { betterQuery } from "better-query";
+export const query = betterQuery({
 	secret: "your-secret-key",
 })
 ```
 
-By default, Better Auth will look for the following environment variables:
-- `process.env.BETTER_AUTH_SECRET`
-- `process.env.AUTH_SECRET`
+By default, Better Query will look for the following environment variables:
+- `process.env.BETTER_QUERY_SECRET`
+- `process.env.QUERY_SECRET`
 
 If none of these environment variables are set, it will default to `"better-auth-secret-123456789"`. In production, if it's not set, it will throw an error.
 

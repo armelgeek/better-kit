@@ -12,7 +12,7 @@ Make sure you have MS SQL installed and configured.
 Then, you can connect it straight into Better Query.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { MssqlDialect } from "kysely";
 import * as Tedious from 'tedious'
 import * as Tarn from 'tarn'
@@ -45,7 +45,7 @@ const dialect = new MssqlDialect({
   },
 })
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: {
     dialect,
     type: "mssql"

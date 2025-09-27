@@ -12,10 +12,10 @@ Make sure you have MySQL installed and configured.
 Then, you can connect it straight into Better Query.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { createPool } from "mysql2/promise";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: createPool({
     host: "localhost",
     user: "root",
