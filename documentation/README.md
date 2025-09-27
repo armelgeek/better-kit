@@ -132,7 +132,7 @@ const productSchema = z.object({
 });
 
 // Server: Create CRUD instance
-const crud = adiemus({
+const query = betterQuery({
   resources: [createResource({ name: "product", schema: productSchema })],
   database: { provider: "sqlite", url: "database.db" }
 });
@@ -277,7 +277,7 @@ app.all("/api/*", async (req, res) => {
 
 ```typescript
 // lib/crud-client.ts
-import { createCrudClient } from "adiemus";
+import { createCrudClient } from "better-query";
 import type { crud } from "./crud";
 
 export const crudClient = createCrudClient<typeof crud>({
@@ -337,7 +337,7 @@ import {
   withTimestamps,
   belongsTo,
   hasMany 
-} from "adiemus";
+} from "better-query";
 import { z } from "zod";
 
 // Create schemas with helper utilities
@@ -355,7 +355,7 @@ const categorySchema = withId({
   slug: z.string().min(1),
 });
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [
     createResource({ 
       name: "product", 
@@ -456,7 +456,7 @@ Adiemus supports multiple database providers through the Kysely query builder:
 #### SQLite
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: {
     provider: "sqlite",
@@ -469,7 +469,7 @@ const crud = adiemus({
 #### PostgreSQL
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: {
     provider: "postgres",
@@ -482,7 +482,7 @@ const crud = adiemus({
 #### MySQL
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: {
     provider: "mysql",
@@ -497,7 +497,7 @@ const crud = adiemus({
 Auto-migration automatically creates and updates database tables based on your Zod schemas:
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [
     createResource({
       name: "product",
@@ -546,7 +546,7 @@ Adiemus uses an adapter pattern for database abstraction. The built-in Kysely ad
 #### Custom Adapter
 
 ```typescript
-import { CrudAdapter } from "adiemus";
+import { CrudAdapter } from "better-query";
 
 class PrismaAdapter implements CrudAdapter {
   constructor(private prisma: PrismaClient) {}
@@ -566,7 +566,7 @@ class PrismaAdapter implements CrudAdapter {
 }
 
 // Use custom adapter
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: {
     adapter: new PrismaAdapter(prisma),
@@ -579,7 +579,7 @@ const crud = adiemus({
 Adiemus supports defining relationships between resources:
 
 ```typescript
-import { RelationshipManager } from "adiemus";
+import { RelationshipManager } from "better-query";
 
 const productSchema = z.object({
   id: z.string(),
@@ -592,7 +592,7 @@ const categorySchema = z.object({
   name: z.string(),
 });
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [
     createResource({ name: "product", schema: productSchema }),
     createResource({ name: "category", schema: categorySchema }),
@@ -677,7 +677,7 @@ createResource({
 Apply hooks to all resources:
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: { provider: "sqlite", url: "database.db" },
   hooks: {
@@ -831,7 +831,7 @@ createResource({
 Adiemus provides utility functions for common hook patterns:
 
 ```typescript
-import { HookUtils } from "adiemus";
+import { HookUtils } from "better-query";
 
 createResource({
   name: "product",
@@ -890,9 +890,9 @@ interface Plugin {
 Automatically logs all CRUD operations:
 
 ```typescript
-import { auditPlugin } from "adiemus/plugins";
+import { auditPlugin } from "better-query";
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: { provider: "sqlite", url: "database.db" },
   plugins: [
@@ -925,9 +925,9 @@ const crud = adiemus({
 Enhanced validation with sanitization:
 
 ```typescript
-import { validationPlugin } from "adiemus/plugins";
+import { validationPlugin } from "better-query/plugins";
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   plugins: [
     validationPlugin({
@@ -959,9 +959,9 @@ const crud = adiemus({
 Intelligent caching for read operations:
 
 ```typescript
-import { cachePlugin } from "adiemus/plugins";
+import { cachePlugin } from "better-query";
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   plugins: [
     cachePlugin({
@@ -993,9 +993,9 @@ const crud = adiemus({
 Automatic API documentation generation:
 
 ```typescript
-import { openApiPlugin } from "adiemus/plugins";
+import { openApiPlugin } from "better-query/plugins";
 
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   plugins: [
     openApiPlugin({
@@ -1022,7 +1022,7 @@ const crud = adiemus({
 #### Basic Plugin
 
 ```typescript
-import { createPlugin } from "adiemus";
+import { createPlugin } from "better-query";
 
 const timestampPlugin = createPlugin({
   id: "timestamp",
@@ -1099,7 +1099,7 @@ const auditTrailPlugin = createPlugin({
 Plugins can be composed and configured together:
 
 ```typescript
-const crud = adiemus({
+const query = betterQuery({
   resources: [/* ... */],
   database: { provider: "sqlite", url: "database.db" },
   plugins: [
@@ -1432,7 +1432,7 @@ Adiemus follows the patterns established by Better-Auth. When contributing:
 ### Project Structure
 
 ```
-packages/better-crud/
+packages/better-query/
 ├── src/
 │   ├── adapters/          # Database adapters
 │   ├── client/            # Client SDK
@@ -1441,7 +1441,7 @@ packages/better-crud/
 │   ├── schemas/           # Pre-defined schemas
 │   ├── types/             # TypeScript types
 │   ├── utils/             # Utility functions
-│   ├── crud.ts            # Main factory function
+│   ├── query.ts           # Main factory function
 │   └── index.ts           # Package exports
 ├── examples/              # Usage examples
 ├── tests/                 # Test files
