@@ -35,62 +35,77 @@ If you're running into issues with TypeScript inference exceeding maximum length
 then please make sure you're following the instructions above, as well as ensuring that both `declaration` and `composite` are not enabled.
 </Callout>
 
-## Inferring Types
+## Type Inference
 
-Both the client SDK and the server offer types that can be inferred using the `$Infer` property. Plugins can extend base types like `User` and `Session`, and you can use `$Infer` to infer these types. Additionally, plugins can provide extra types that can also be inferred through `$Infer`.
+Better Query provides excellent TypeScript support through type inference from your server configuration. When you create a typed client, all resource methods and their types are automatically inferred.
+
+### Basic Type Inference
 
 ```ts title="query-client.ts" 
+import { createQueryClient } from "better-query/client"
+import { query } from "./query" // Your server instance
+
+// Create a typed client - types are inferred from server config
+const queryClient = createQueryClient<typeof query>({
+    baseURL: "http://localhost:3000/api"
+})
+
+// Now all resource methods are fully typed
+// queryClient.product.create() - typed based on your product schema
+// queryClient.user.list() - typed based on your user schema
+```
+
+### Error Code Types
+
+The client exposes error codes for type-safe error handling:
+
+```ts title="error-handling.ts"
 import { createQueryClient } from "better-query/client"
 
 const queryClient = createQueryClient()
 
-export type QueryResponse = typeof queryClient.$Infer.QueryResponse
-```
+// Access typed error codes
+const errorCodes = queryClient.$ERROR_CODES
+// Contains: VALIDATION_FAILED, FORBIDDEN, NOT_FOUND, etc.
 
-The `QueryResponse` type includes both the data and metadata properties. You can also infer specific resource types.
-
-You can also infer types on the server side.
-
-```ts title="query.ts" 
-import { betterQuery } from "better-query"
-import Database from "better-sqlite3"
-
-export const query = betterQuery({
-    database: new Database("database.db")
-})
-
-type QueryInstance = typeof query.$Infer.QueryInstance
+const { data, error } = await queryClient.product.create({ name: "" })
+if (error?.code === queryClient.$ERROR_CODES.VALIDATION_FAILED) {
+    // Handle validation error
+}
 ```
 
 
 ## Resource Schema Types
 
-Better Query allows you to define resource schemas that are automatically typed. All fields are properly inferred and available on the server and client side.
+Better Query allows you to define resource schemas using Zod that are automatically typed throughout your application.
 
-```ts 
-import { betterQuery } from "better-query"
-import Database from "better-sqlite3"
+```ts title="query.ts"
+import { betterQuery, createResource, withId } from "better-query"
 import { z } from "zod"
+import Database from "better-sqlite3"
+
+// Define your schema with proper typing
+const userSchema = withId({
+    name: z.string().min(1),
+    email: z.string().email(),
+    age: z.number().min(0).optional(),
+    role: z.enum(["user", "admin"]).default("user"),
+    createdAt: z.date().default(() => new Date()),
+})
 
 export const query = betterQuery({
     database: new Database("database.db"),
     resources: [
-        {
+        createResource({
             name: "user",
-            schema: z.object({
-                id: z.string(),
-                name: z.string(),
-                email: z.string().email(),
-                role: z.enum(["admin", "user"]).default("user")
-            })
-        }
+            schema: userSchema,
+        })
     ]
 })
 
-type UserResource = typeof query.$Infer.Resources.User
+// The schema types are automatically available to your typed client
+// when you use: createQueryClient<typeof query>()
 ```
-
-In the example above, we defined a `User` resource schema. This schema is now available as a type.
 
 
 ### Schema Validation
@@ -115,43 +130,47 @@ By default, all schema fields are included in resource operations, which provide
 
 ### Inferring Resource Types on Client
 
-To make sure proper type inference for resources on the client side, you need to inform the client about these types. There are two approaches to achieve this, depending on your project structure:
+## Client Type Inference
 
-1. For Monorepo or Single-Project Setups
+To ensure proper type inference for resources on the client side, you need to pass your server's type when creating the client. There are two approaches depending on your project structure:
 
-If your server and client code reside in the same project, you can use the `inferResourceTypes` plugin to automatically infer the resource types from your server configuration.
+### 1. Monorepo or Single-Project Setups
 
-```ts
-import { inferResourceTypes } from "better-query/client/plugins";
-import { createQueryClient } from "better-query/react";
-import type { query } from "./query";
+If your server and client code reside in the same project, you can directly import and reference your server configuration:
 
-export const queryClient = createQueryClient({
-  plugins: [inferResourceTypes<typeof query>()],
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client";
+import type { query } from "./query"; // Import the server instance type
+
+export const queryClient = createQueryClient<typeof query>({
+    baseURL: "http://localhost:3000/api"
 });
+
+// Now queryClient has full type inference for all your resources
 ```
 
-2. For Separate Client-Server Projects
+### 2. Separate Client-Server Projects
 
-If your client and server are in separate projects, you'll need to manually specify the resource types when creating the query client.
+If your client and server are in separate projects, you'll need to export the server type and import it into your client project:
 
-```ts
-import { inferResourceTypes } from "better-query/client/plugins";
-import { z } from "zod";
+**Server project:**
+```ts title="query.ts"
+import { betterQuery, createResource, withId } from "better-query";
 
-export const queryClient = createQueryClient({
-  plugins: [inferResourceTypes({
-      resources: [
-        {
-          name: "user",
-          schema: z.object({
-            id: z.string(),
-            name: z.string(),
-            email: z.string().email(),
-            role: z.enum(["admin", "user"])
-          })
-        }
-      ]
-  })],
+export const query = betterQuery({
+    // ... configuration
+});
+
+// Export the type for the client to use
+export type QueryInstance = typeof query;
+```
+
+**Client project:**
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client";
+import type { QueryInstance } from "../server/query"; // Import from server
+
+export const queryClient = createQueryClient<QueryInstance>({
+    baseURL: "http://localhost:3000/api"
 });
 ```

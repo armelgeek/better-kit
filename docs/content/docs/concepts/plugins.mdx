@@ -31,20 +31,19 @@ export const query = betterQuery({
 });
 ```
 
-Client plugins are added when creating the client. Most plugins require both server and client plugins to work correctly.
-The Better Query client on the frontend uses the `createQueryClient` function provided by `better-query/client`.
+## Client Usage
+
+Better Query plugins work entirely on the server side. The client accesses plugin functionality through the standard API endpoints that plugins create. There are no separate client-side plugins to install.
 
 ```ts title="query-client.ts"
 import { createQueryClient } from "better-query/client";
-import { auditClient, cacheClient } from "better-query/client/plugins";
 
 const queryClient = createQueryClient({
-    plugins: [
-        auditClient(),
-        cacheClient(),
-    ]
+    baseURL: "http://localhost:3000/api"
 });
 ```
+
+Once server plugins are configured, their endpoints become available through the client's `$fetch` method or through generated resource endpoints.
 
 We recommend keeping the query-client and your normal query instance in separate files.
 <Files>
