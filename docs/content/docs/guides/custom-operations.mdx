@@ -1,0 +1,549 @@
+---
+title: Custom Operations
+description: Learn how to use and create custom operations for ORM-specific functionality in Better Query
+---
+
+Custom operations allow you to leverage ORM-specific functionality without overloading the core Better Query library. This feature enables you to define operations that are specific to your ORM (Drizzle, Prisma, etc.) while maintaining type safety and integration with the Better Query system.
+
+## Why Custom Operations?
+
+Custom operations provide a way to:
+- **Use advanced ORM features**: Access batch operations, raw SQL, complex joins, and other ORM-specific functionality
+- **Keep core library lean**: Avoid bloating Better Query with ORM-specific features that only some users need
+- **Maintain type safety**: All operations maintain full TypeScript support and integration
+- **Optimize performance**: Use database-specific optimizations and bulk operations
+- **Extend functionality**: Add domain-specific operations for your business logic
+
+<Callout>
+Custom operations bridge the gap between Better Query's standardized CRUD operations and your ORM's full feature set, giving you the best of both worlds.
+</Callout>
+
+## Quick Start
+
+<Steps>
+<Step>
+### Create an adapter with custom operations
+
+Most adapters come with built-in custom operations ready to use:
+
+```typescript title="lib/query.ts"
+import { betterQuery, DrizzleCrudAdapter } from "better-query";
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
+
+const sqlite = new Database('database.db');
+const db = drizzle(sqlite);
+
+// The DrizzleCrudAdapter comes with built-in custom operations
+const adapter = new DrizzleCrudAdapter(db, schema);
+
+const query = betterQuery({
+  resources: [
+    // your resources
+  ],
+  database: {
+    adapter: adapter,
+  },
+});
+```
+</Step>
+
+<Step>
+### Use custom operations
+
+Check if an operation exists before using it:
+
+```typescript
+// Check if an operation exists
+if (query.hasCustomOperation('batchInsert')) {
+  // Execute the custom operation
+  const result = await query.customOperation('batchInsert', {
+    model: 'product',
+    data: [
+      { name: 'Product 1', price: 100 },
+      { name: 'Product 2', price: 200 },
+    ],
+  });
+}
+
+// Get all available custom operations
+const availableOperations = query.getCustomOperations();
+console.log(Object.keys(availableOperations)); 
+// Output: ['batchInsert', 'upsert', 'rawQuery', 'aggregate', ...]
+```
+</Step>
+</Steps>
+
+## Built-in Custom Operations
+
+### Drizzle Adapter Operations
+
+The `DrizzleCrudAdapter` includes these powerful custom operations:
+
+#### Raw Query Execution
+
+Execute raw SQL queries directly for maximum performance:
+
+```typescript
+const results = await query.customOperation('rawQuery', {
+  sql: 'SELECT COUNT(*) as total FROM products WHERE price > ?',
+  values: [100]
+});
+```
+
+#### Batch Insert
+
+Efficiently insert multiple records in a single operation:
+
+```typescript
+const products = await query.customOperation('batchInsert', {
+  model: 'product',
+  data: [
+    { name: 'Laptop', price: 1000 },
+    { name: 'Mouse', price: 25 },
+    { name: 'Keyboard', price: 75 },
+  ]
+});
+```
+
+#### Upsert Operations
+
+Insert or update records on conflict:
+
+```typescript
+const product = await query.customOperation('upsert', {
+  model: 'product',
+  data: { name: 'Unique Product', price: 150 },
+  conflictColumns: ['name'],
+  updateColumns: ['price', 'updatedAt']
+});
+```
+
+#### Advanced Aggregations
+
+Perform complex aggregations with grouping:
+
+```typescript
+const stats = await query.customOperation('aggregate', {
+  model: 'product',
+  aggregations: [
+    { field: 'price', operation: 'sum' },
+    { field: 'price', operation: 'avg' },
+    { field: 'id', operation: 'count' }
+  ],
+  where: [{ field: 'status', value: 'active' }],
+  groupBy: ['category']
+});
+```
+
+#### Custom Joins
+
+Perform complex joins with full control:
+
+```typescript
+const results = await query.customOperation('customJoin', {
+  baseModel: 'order',
+  joins: [
+    {
+      model: 'user',
+      type: 'inner',
+      on: { left: 'userId', right: 'id' }
+    },
+    {
+      model: 'product', 
+      type: 'left',
+      on: { left: 'productId', right: 'id' }
+    }
+  ],
+  select: {
+    order: ['id', 'total'],
+    user: ['name', 'email'],
+    product: ['name', 'price']
+  },
+  where: {
+    order: [{ field: 'status', value: 'completed' }]
+  }
+});
+```
+
+### Prisma Adapter Operations  
+
+The `PrismaCrudAdapter` includes these custom operations:
+
+#### Transaction Support
+
+Execute multiple operations atomically:
+
+```typescript
+const results = await query.customOperation('transaction', {
+  operations: [
+    { 
+      model: 'user', 
+      operation: 'create', 
+      data: { name: 'John', email: 'john@example.com' } 
+    },
+    { 
+      model: 'product', 
+      operation: 'update', 
+      data: { where: { id: '1' }, data: { stock: 10 } } 
+    }
+  ]
+});
+```
+
+#### Native Upsert
+
+Use Prisma's native upsert with relations:
+
+```typescript
+const user = await query.customOperation('upsert', {
+  model: 'user',
+  where: { email: 'john@example.com' },
+  update: { lastLogin: new Date() },
+  create: {
+    email: 'john@example.com',
+    name: 'John',
+    profile: {
+      create: { bio: 'New user bio' }
+    }
+  },
+  include: {
+    profile: true,
+    orders: { take: 5 }
+  }
+});
+```
+
+#### Batch Operations
+
+Create multiple records with duplicate handling:
+
+```typescript
+const result = await query.customOperation('createMany', {
+  model: 'product',
+  data: [
+    { name: 'Product 1', price: 100 },
+    { name: 'Product 2', price: 200 }
+  ],
+  skipDuplicates: true
+});
+```
+
+## Creating Custom Operations
+
+### Extending an Adapter
+
+You can extend existing adapters to add your own custom operations:
+
+```typescript
+import { DrizzleCrudAdapter } from "better-query";
+
+class MyDrizzleAdapter extends DrizzleCrudAdapter {
+  constructor(db: any, schema: any) {
+    super(db, schema);
+    
+    // Add your custom operations
+    this.customOperations.myCustomOperation = async (params: { 
+      model: string; 
+      customParam: string 
+    }) => {
+      const { model, customParam } = params;
+      // Your custom logic here
+      const table = this.schema[model];
+      return await this.db
+        .select()
+        .from(table)
+        .where(/* your custom logic */);
+    };
+    
+    // Add analytics operation
+    this.customOperations.getAnalytics = async (params: {
+      model: string;
+      timeRange: string;
+    }) => {
+      // Complex analytics query using your ORM
+      return await this.db
+        .select({
+          date: sql`DATE(created_at)`,
+          count: sql`COUNT(*)`
+        })
+        .from(this.schema[params.model])
+        .groupBy(sql`DATE(created_at)`)
+        .orderBy(sql`DATE(created_at) DESC`);
+    };
+  }
+}
+
+// Use your extended adapter
+const query = betterQuery({
+  resources: [/* ... */],
+  database: {
+    adapter: new MyDrizzleAdapter(db, schema),
+  },
+});
+```
+
+### Resource-Specific Operations
+
+Add operations specific to certain resources through plugins:
+
+```typescript
+import { createPlugin } from "better-query";
+
+const analyticsPlugin = createPlugin({
+  name: "analytics-plugin",
+  init: async (context) => {
+    // Add custom operations specific to your use case
+    if (context.adapter.customOperations) {
+      context.adapter.customOperations.getProductAnalytics = async (params) => {
+        // Product-specific analytics
+        return await context.adapter.findMany({
+          model: 'product',
+          // Apply analytics logic
+        });
+      };
+    }
+  }
+});
+
+const query = betterQuery({
+  resources: [/* ... */],
+  database: { /* ... */ },
+  plugins: [analyticsPlugin],
+});
+```
+
+## Practical Examples
+
+### E-commerce Analytics Dashboard
+
+Here's how you might use custom operations to build an analytics dashboard:
+
+```typescript
+// Get trending products based on views
+const trending = await query.customOperation('getTrendingProducts', {
+  limit: 10,
+  minViews: 5,
+  timeRange: 'week',
+});
+
+// Get sales statistics with grouping
+const salesStats = await query.customOperation('aggregate', {
+  model: 'order',
+  aggregations: [
+    { field: 'total', operation: 'sum' },
+    { field: 'total', operation: 'avg' },
+    { field: 'id', operation: 'count' }
+  ],
+  where: [{ field: 'status', value: 'completed' }],
+  groupBy: ['created_date']
+});
+
+// Bulk update seasonal products
+const bulkUpdate = await query.customOperation('bulkUpdate', {
+  model: 'product',
+  where: [{ field: 'category', value: 'seasonal' }],
+  data: {
+    status: 'discontinued',
+    reason: 'End of season sale',
+  }
+});
+```
+
+### User Management with Relations
+
+Complex user operations with related data:
+
+```typescript
+// Create user with profile in a transaction
+const newUser = await query.customOperation('transaction', {
+  operations: [
+    {
+      model: 'user',
+      operation: 'create',
+      data: { 
+        email: 'user@example.com',
+        name: 'New User' 
+      }
+    },
+    {
+      model: 'profile',
+      operation: 'create',
+      data: {
+        userId: '${previousResult.id}', // Reference previous operation
+        bio: 'Welcome to the platform!',
+        preferences: { theme: 'dark' }
+      }
+    }
+  ]
+});
+
+// Update user with upsert
+const user = await query.customOperation('upsert', {
+  model: 'user',
+  where: { email: 'user@example.com' },
+  create: {
+    email: 'user@example.com',
+    name: 'New User',
+    profile: {
+      create: { 
+        bio: 'Welcome!',
+        preferences: { theme: 'light' }
+      }
+    }
+  },
+  update: { 
+    lastLogin: new Date() 
+  },
+  include: {
+    profile: true,
+    orders: { take: 5, orderBy: { createdAt: 'desc' } }
+  }
+});
+```
+
+### Performance Optimizations
+
+Use custom operations for performance-critical scenarios:
+
+```typescript
+// Batch insert for large datasets
+const products = await query.customOperation('batchInsert', {
+  model: 'product',
+  data: thousandsOfProducts, // Large array
+  batchSize: 1000 // Process in chunks
+});
+
+// Raw SQL for complex reporting
+const complexReport = await query.customOperation('rawQuery', {
+  sql: `
+    SELECT 
+      c.name as category,
+      COUNT(p.id) as product_count,
+      AVG(p.price) as avg_price,
+      SUM(oi.quantity) as total_sold
+    FROM categories c
+    LEFT JOIN products p ON c.id = p.category_id
+    LEFT JOIN order_items oi ON p.id = oi.product_id
+    LEFT JOIN orders o ON oi.order_id = o.id
+    WHERE o.status = 'completed'
+    AND o.created_at >= DATE('now', '-30 days')
+    GROUP BY c.id, c.name
+    ORDER BY total_sold DESC
+  `,
+  values: []
+});
+```
+
+## Best Practices
+
+### Error Handling
+
+Always handle potential errors when using custom operations:
+
+```typescript
+try {
+  const result = await query.customOperation('complexOperation', params);
+} catch (error) {
+  if (error.message.includes('not found')) {
+    console.log('Operation not supported by this adapter');
+  } else {
+    console.error('Operation failed:', error);
+  }
+}
+```
+
+### Parameter Validation
+
+Validate parameters in your custom operations:
+
+```typescript
+// In your custom operation
+myCustomOperation: async (params: { model: string; requiredParam: string }) => {
+  if (!params.model || !params.requiredParam) {
+    throw new Error('Missing required parameters: model, requiredParam');
+  }
+  // ... your logic
+}
+```
+
+### Documentation
+
+Always document your custom operations with JSDoc:
+
+```typescript
+this.customOperations = {
+  /**
+   * Performs a batch insert optimized for large datasets
+   * @param params.model - The target model name
+   * @param params.data - Array of records to insert
+   * @param params.batchSize - Optional batch size (default: 1000)
+   * @returns Promise<Array<InsertedRecord>>
+   */
+  batchInsert: async (params: { 
+    model: string; 
+    data: Record<string, any>[]; 
+    batchSize?: number 
+  }) => {
+    // Implementation...
+  }
+};
+```
+
+## Type Safety
+
+Custom operations maintain full type safety:
+
+```typescript
+// The return type is inferred from your operation
+const result = await query.customOperation('batchInsert', {
+  model: 'product',
+  data: products, // TypeScript validates this matches your schema
+});
+
+// TypeScript knows available operations
+const operations = query.getCustomOperations();
+
+// Boolean checks are type-safe
+if (query.hasCustomOperation('upsert')) {
+  // TypeScript knows this operation exists
+  await query.customOperation('upsert', { 
+    /* properly typed params */ 
+  });
+}
+```
+
+## Migration Guide
+
+### Before (Limited CRUD)
+```typescript
+// You were limited to basic operations
+const products = await crud.api.product.list();
+```
+
+### After (With Custom Operations)
+```typescript
+// You can now use ORM-specific features
+const products = await query.customOperation('complexJoin', {
+  baseModel: 'product',
+  joins: [/* complex joins */],
+  aggregations: [/* custom aggregations */]
+});
+
+// Or use built-in optimized operations
+const bulkInserted = await query.customOperation('batchInsert', {
+  model: 'product',
+  data: largeProductArray
+});
+```
+
+Custom operations unlock the full power of your chosen ORM while maintaining the convenience and consistency of the Better Query system.
+
+## See Also
+
+- [Database Adapters](/docs/concepts/database) - Learn about different database adapters and their capabilities
+- [Drizzle Adapter](/docs/adapters/drizzle) - Specific documentation for Drizzle ORM integration  
+- [Prisma Adapter](/docs/adapters/prisma) - Specific documentation for Prisma ORM integration
+- [Creating Database Adapters](/docs/guides/create-a-db-adapter) - How to create your own custom adapters
+
+For a complete working example with all custom operations, see the [custom operations demo](https://github.com/armelgeek/better-kit/blob/main/packages/better-query/examples/custom-operations-demo.ts) in the Better Query examples.

@@ -75,3 +75,31 @@ export const query = betterQuery({
 ```
 
 If you're looking for performance improvements or tips, take a look at our guide to <Link href="/docs/guides/optimizing-for-performance">performance optimizations</Link>.
+
+## Custom Operations
+
+The Drizzle adapter comes with powerful custom operations that allow you to leverage Drizzle-specific functionality beyond basic CRUD operations. These include batch operations, raw SQL queries, upserts, complex joins, and advanced aggregations.
+
+```typescript
+// Example: Batch insert for better performance
+const products = await query.customOperation('batchInsert', {
+  model: 'product',
+  data: [
+    { name: 'Laptop', price: 1000 },
+    { name: 'Mouse', price: 25 },
+    { name: 'Keyboard', price: 75 },
+  ]
+});
+
+// Example: Complex aggregations
+const stats = await query.customOperation('aggregate', {
+  model: 'product',
+  aggregations: [
+    { field: 'price', operation: 'avg' },
+    { field: 'id', operation: 'count' }
+  ],
+  groupBy: ['categoryId']
+});
+```
+
+Learn more about all available custom operations and how to create your own in the [Custom Operations Guide](/docs/guides/custom-operations).

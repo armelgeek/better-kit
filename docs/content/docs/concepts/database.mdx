@@ -36,3 +36,31 @@ See the [CLI](/docs/concepts/cli) documentation for more information on the CLI.
   required by Better Query is dynamically generated based on your resource definitions, 
   and you can find additional schema required by plugins in the plugin documentation.
 </Callout>
+
+## Custom Operations
+
+Beyond the standard CRUD operations, Better Query adapters support **custom operations** that allow you to leverage ORM-specific functionality. These operations provide access to advanced features like:
+
+- **Batch operations** for improved performance with large datasets
+- **Raw SQL queries** for complex database operations
+- **Transactions** for atomic multi-step operations
+- **Advanced aggregations** and reporting queries
+- **Upsert operations** with conflict resolution
+
+Each adapter comes with its own set of built-in custom operations tailored to that ORM's strengths. You can also create your own custom operations for domain-specific functionality.
+
+```typescript
+// Example: Check available operations
+const operations = query.getCustomOperations();
+console.log(Object.keys(operations)); // ['batchInsert', 'rawQuery', 'upsert', ...]
+
+// Example: Use a custom operation
+if (query.hasCustomOperation('batchInsert')) {
+  const result = await query.customOperation('batchInsert', {
+    model: 'product',
+    data: largeProductArray
+  });
+}
+```
+
+Learn more in the [Custom Operations Guide](/docs/guides/custom-operations).
