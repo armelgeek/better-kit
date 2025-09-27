@@ -38,9 +38,9 @@ export default toNodeHandler(query.handler)
 Create a client instance. You can name the file anything you want. Here we are creating `client.ts` file inside the `lib/` directory.
 
 ```ts title="query-client.ts"
-import { createAuthClient } from "better-query/react" // make sure to import from better-query/react
+import { createQueryClient } from "better-query/react" // make sure to import from better-query/react
 
-export const queryClient =  createAuthClient({
+export const queryClient = createQueryClient({
     //you can pass client configuration here
 })
 ```

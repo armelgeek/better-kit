@@ -12,10 +12,10 @@ Make sure you have PostgreSQL installed and configured.
 Then, you can connect it straight into Better Query.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { Pool } from "pg";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: new Pool({
     connectionString: "postgres://user:password@localhost:5432/database",
   }),

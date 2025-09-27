@@ -15,10 +15,10 @@ Better Query supports multiple SQLite drivers. Choose the one that best fits you
 The most popular and stable SQLite driver for Node.js:
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import Database from "better-sqlite3";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: new Database("database.sqlite"),
 });
 ```
@@ -37,10 +37,10 @@ export const query = betterAuth({
 Starting from Node.js 22.5.0, you can use the built-in [SQLite](https://nodejs.org/api/sqlite.html) module:
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { DatabaseSync } from "node:sqlite";
 
-export const query = betterAuth({
+export const query = betterQuery({
   database: new DatabaseSync("database.sqlite"),
 });
 ```

@@ -1,6 +1,6 @@
 ---
 title: Hooks
-description: Better Query Hooks let you customize BetterAuth's behavior
+description: Better Query Hooks let you customize Better Query's behavior
 ---
 
 Hooks in Better Query let you "hook into" the lifecycle and execute custom logic. They provide a way to customize Better Query's behavior without writing a full plugin. 
@@ -13,23 +13,23 @@ We highly recommend using hooks if you need to make custom adjustments to an end
 
 **Before hooks** run *before* an endpoint is executed. Use them to modify requests, pre validate data, or return early.
 
-### Example: Enforce Email Domain Restriction
+### Example: Enforce Data Validation
 
-This hook ensures that users can only sign up if their email ends with `@example.com`:
+This hook ensures that users can only create resources with valid data:
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
-import { createAuthMiddleware, APIError } from "better-query/api";
+import { betterQuery } from "better-query";
+import { createQueryMiddleware, APIError } from "better-query/api";
 
-export const query = betterAuth({
+export const query = betterQuery({
     hooks: {
-        before: createAuthMiddleware(async (ctx) => {
-            if (ctx.path !== "/sign-up/email") {
+        before: createQueryMiddleware(async (ctx) => {
+            if (ctx.path !== "/api/users") {
                 return;
             }
-            if (!ctx.body?.email.endsWith("@example.com")) {
+            if (!ctx.body?.email?.includes("@")) {
                 throw new APIError("BAD_REQUEST", {
-                    message: "Email must end with @example.com",
+                    message: "Valid email is required",
                 });
             }
         }),
@@ -42,19 +42,19 @@ export const query = betterAuth({
 To adjust the request context before proceeding:
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
-import { createAuthMiddleware } from "better-query/api";
+import { betterQuery } from "better-query";
+import { createQueryMiddleware } from "better-query/api";
 
-export const query = betterAuth({
+export const query = betterQuery({
     hooks: {
-        before: createAuthMiddleware(async (ctx) => {
-            if (ctx.path === "/sign-up/email") {
+        before: createQueryMiddleware(async (ctx) => {
+            if (ctx.path === "/api/users") {
                 return {
                     context: {
                         ...ctx,
                         body: {
                             ...ctx.body,
-                            name: "John Doe",
+                            createdAt: new Date().toISOString(),
                         },
                     }
                 };
@@ -68,22 +68,23 @@ export const query = betterAuth({
 
 **After hooks** run *after* an endpoint is executed. Use them to modify responses.
 
-### Example: Send a notification to your channel when a new user is registered
+### Example: Send a notification when a resource is created
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
-import { createAuthMiddleware } from "better-query/api";
-import { sendMessage } from "@/lib/notification"
+import { betterQuery } from "better-query";
+import { createQueryMiddleware } from "better-query/api";
+import { sendNotification } from "@/lib/notification"
 
-export const query = betterAuth({
+export const query = betterQuery({
     hooks: {
-        after: createAuthMiddleware(async (ctx) => {
-            if(ctx.path.startsWith("/sign-up")){
-                const newSession = ctx.context.newSession;
-                if(newSession){
-                    sendMessage({
-                        type: "user-register",
-                        name: newSession.user.name,
+        after: createQueryMiddleware(async (ctx) => {
+            if(ctx.path.startsWith("/api/") && ctx.method === "POST"){
+                const createdResource = ctx.context.response;
+                if(createdResource){
+                    sendNotification({
+                        type: "resource-created",
+                        resource: createdResource,
+                        path: ctx.path,
                     })
                 }
             }
@@ -94,14 +95,15 @@ export const query = betterAuth({
 
 ## Ctx
 
-When you call `createAuthMiddleware` a `ctx` object is passed that provides a lot of useful properties. Including:
+When you call `createQueryMiddleware` a `ctx` object is passed that provides a lot of useful properties. Including:
 
 - **Path:** `ctx.path` to get the current endpoint path.
-- **Body:** `ctx.body` for parsed request body (available for POST requests).
+- **Method:** `ctx.method` for the HTTP method (GET, POST, PUT, DELETE).
+- **Body:** `ctx.body` for parsed request body (available for POST/PUT requests).
 - **Headers:** `ctx.headers` to access request headers.
 - **Request:** `ctx.request` to access the request object (may not exist in server-only endpoints).
 - **Query Parameters:** `ctx.query` to access query parameters.
-- **Context**: `ctx.context` query related context, useful for accessing new session, query cookies configuration, password hashing, config...
+- **Context**: `ctx.context` query related context, useful for accessing response data, query configuration, database instance...
 
 and more.
 
@@ -114,7 +116,7 @@ This utilities allows you to get request information and to send response from a
 Use `ctx.json` to send JSON responses:
 
 ```ts
-const hook = createAuthMiddleware(async (ctx) => {
+const hook = createQueryMiddleware(async (ctx) => {
     return ctx.json({
         message: "Hello World",
     });
@@ -126,10 +128,10 @@ const hook = createAuthMiddleware(async (ctx) => {
 Use `ctx.redirect` to redirect users:
 
 ```ts
-import { createAuthMiddleware } from "better-query/api";
+import { createQueryMiddleware } from "better-query/api";
 
-const hook = createAuthMiddleware(async (ctx) => {
-    throw ctx.redirect("/sign-up/name");
+const hook = createQueryMiddleware(async (ctx) => {
+    throw ctx.redirect("/api/users");
 });
 ```
 
@@ -141,9 +143,9 @@ const hook = createAuthMiddleware(async (ctx) => {
 Example:
 
 ```ts
-import { createAuthMiddleware } from "better-query/api";
+import { createQueryMiddleware } from "better-query/api";
 
-const hook = createAuthMiddleware(async (ctx) => {
+const hook = createQueryMiddleware(async (ctx) => {
     ctx.setCookies("my-cookie", "value");
     await ctx.setSignedCookie("my-signed-cookie", "value", ctx.context.secret, {
         maxAge: 1000,
@@ -159,28 +161,26 @@ const hook = createAuthMiddleware(async (ctx) => {
 Throw errors with `APIError` for a specific status code and message:
 
 ```ts
-import { createAuthMiddleware, APIError } from "better-query/api";
+import { createQueryMiddleware, APIError } from "better-query/api";
 
-const hook = createAuthMiddleware(async (ctx) => {
+const hook = createQueryMiddleware(async (ctx) => {
     throw new APIError("BAD_REQUEST", {
         message: "Invalid request",
     });
 });
 ```
 
-
-
 ### Context
 
-The `ctx` object contains another `context` object inside that's meant to hold contexts related to query. Including a newly created session on after hook, cookies configuration, password hasher and so on. 
+The `ctx` object contains another `context` object inside that's meant to hold contexts related to query operations. Including response data, database configuration, and so on. 
 
-#### New Session
+#### Response Data
 
-The newly created session after an endpoint is run. This only exist in after hook.
+The response data from a successful operation. This only exists in after hooks.
 
 ```ts title="query.ts"
-createAuthMiddleware(async (ctx) => {
-    const newSession = ctx.context.newSession
+createQueryMiddleware(async (ctx) => {
+    const responseData = ctx.context.response
 });
 ```
 
@@ -189,7 +189,7 @@ createAuthMiddleware(async (ctx) => {
 The returned value from the hook is passed to the next hook in the chain.
 
 ```ts title="query.ts"
-createAuthMiddleware(async (ctx) => {
+createQueryMiddleware(async (ctx) => {
     const returned = ctx.context.returned; //this could be a successful response or an APIError
 });
 ```
@@ -199,18 +199,18 @@ createAuthMiddleware(async (ctx) => {
 The response headers added by endpoints and hooks that run before this hook.
 
 ```ts title="query.ts"
-createAuthMiddleware(async (ctx) => {
+createQueryMiddleware(async (ctx) => {
     const responseHeaders = ctx.context.responseHeaders;
 });
 ```
 
-#### Predefined Auth Cookies
+#### Query Configuration
 
-Access BetterAuth’s predefined cookie properties:
+Access Better Query's configuration:
 
 ```ts title="query.ts"
-createAuthMiddleware(async (ctx) => {
-    const cookieName = ctx.context.queryCookies.sessionToken.name;
+createQueryMiddleware(async (ctx) => {
+    const config = ctx.context.queryConfig;
 });
 ```
 
@@ -218,23 +218,25 @@ createAuthMiddleware(async (ctx) => {
 
 You can access the `secret` for your query instance on `ctx.context.secret`
 
-#### Password
+#### Database Instance
 
-The password object provider `hash` and `verify`
+The database instance used by Better Query:
 
-- `ctx.context.password.hash`: let's you hash a given password.
-- `ctx.context.password.verify`: let's you verify given `password` and a `hash`.
+```ts title="query.ts"
+createQueryMiddleware(async (ctx) => {
+    const db = ctx.context.database;
+});
+```
 
 #### Adapter
 
-Adapter exposes the adapter methods used by Better Query. Including `findOne`, `findMany`, `create`, `delete`, `update` and `updateMany`. You generally should use your actually `db` instance from your orm rather than this adapter.
-
+Adapter exposes the adapter methods used by Better Query. Including `findOne`, `findMany`, `create`, `delete`, `update` and `updateMany`. You generally should use your actual `db` instance from your orm rather than this adapter.
 
 #### Internal Adapter
 
-These are calls to your db that perform specific actions. `createUser`, `createSession`, `updateSession`...
+These are calls to your db that perform specific actions. `createResource`, `updateResource`, `deleteResource`...
 
-This may be useful to use instead of using your db directly to get access to `databaseHooks`, proper `secondaryStorage` support and so on. If you're make a query similar to what exist in this internal adapter actions it's worth a look.
+This may be useful to use instead of using your db directly to get access to `databaseHooks`, proper `secondaryStorage` support and so on. If you're making a query similar to what exists in these internal adapter actions it's worth a look.
 
 #### generateId
 
@@ -243,4 +245,3 @@ You can use `ctx.context.generateId` to generate Id for various reasons.
 ## Reusable Hooks
 
 If you need to reuse a hook across multiple endpoints, consider creating a plugin. Learn more in the [Plugins Documentation](/docs/concepts/plugins).
-
