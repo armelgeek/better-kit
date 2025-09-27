@@ -66,7 +66,7 @@ export const Navbar = () => {
 							logo={
 								<div className="flex items-center gap-2">
 									<Logo />
-									<p className="select-none">BETTER-AUTH.</p>
+									<p className="select-none">BETTER-QUERY.</p>
 								</div>
 							}
 							logoAssets={logoAssets}
@@ -81,7 +81,7 @@ export const Navbar = () => {
 							</NavLink>
 						))}
 						<NavLink
-							href="https://github.com/better-auth/better-auth"
+							href="https://github.com/armelgeek/better-kit"
 							className=" bg-muted/20"
 							external
 						>

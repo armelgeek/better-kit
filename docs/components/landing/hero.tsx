@@ -12,26 +12,24 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { Builder } from "../builder";
 import { Spotlight } from "./spotlight";
 import { GradientBG } from "./gradient-bg";
-const tabs: { name: "auth.ts" | "client.ts"; code: string }[] = [
+const tabs: { name: "query.ts" | "client.ts"; code: string }[] = [
 	{
-		name: "auth.ts",
-		code: `export const auth = betterAuth({
-	database: new Pool({
-		connectionString: DATABASE_URL,
-	}),
-    emailAndPassword: {
-        enabled: true,
-    },
-	plugins: [
-	  organization(),
-      twoFactor(),
-	]
+		name: "query.ts",
+		code: `export const query = betterQuery({
+	database: {
+		provider: "postgresql",
+		url: DATABASE_URL,
+	},
+	resources: {
+		users: userSchema,
+		posts: postSchema,
+	}
 })`,
 	},
 	{
 		name: "client.ts",
-		code: `const client = createAuthClient({
-    plugins: [passkeyClient()]
+		code: `const queryClient = createQueryClient({
+    baseURL: "http://localhost:3000/api"
 });
         `,
 	},
@@ -77,7 +75,7 @@ export default function Hero() {
 							</div>
 
 							<p className="text-zinc-800 dark:text-zinc-300 mt-3 tracking-tight text-2xl md:text-3xl">
-								The most comprehensive authentication framework for TypeScript.
+								The most comprehensive query framework for TypeScript.
 							</p>
 							<div className="relative mt-2 md:flex items-center gap-2 w-10/12 hidden border border-white/5">
 								<GradientBG className="w-full flex items-center justify-between">
@@ -92,14 +90,14 @@ export default function Hero() {
 										<p className=" relative inline tracking-tight opacity-90 md:text-sm text-xs dark:text-white font-mono text-black">
 											npm add{" "}
 											<span className="relative dark:text-fuchsia-100 text-fuchsia-950">
-												better-auth
+												better-query
 												<span className="absolute h-2 bg-gradient-to-tr from-white via-stone-200 to-stone-300 blur-3xl w-full top-0 left-2"></span>
 											</span>
 										</p>
 									</div>
 									<div className="flex gap-2 items-center">
 										<Link
-											href="https://www.npmjs.com/package/better-auth"
+											href="https://www.npmjs.com/package/better-query"
 											target="_blank"
 										>
 											<svg
@@ -119,7 +117,7 @@ export default function Hero() {
 											</svg>
 										</Link>
 										<Link
-											href="https://github.com/better-auth/better-auth"
+											href="https://github.com/armelgeek/better-kit"
 											target="_blank"
 										>
 											<svg
@@ -176,8 +174,8 @@ export default function Hero() {
 }
 
 function CodePreview() {
-	const [currentTab, setCurrentTab] = useState<"auth.ts" | "client.ts">(
-		"auth.ts",
+	const [currentTab, setCurrentTab] = useState<"query.ts" | "client.ts">(
+		"query.ts",
 	);
 
 	const theme = useTheme();

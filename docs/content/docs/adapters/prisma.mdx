@@ -1,6 +1,6 @@
 ---
 title: Prisma
-description: Integrate Better Auth with Prisma.
+description: Integrate Better Query with Prisma.
 ---
 
 Prisma ORM is an open-source database toolkit that simplifies database access and management in applications by providing a type-safe query builder and an intuitive data modeling interface.
@@ -11,14 +11,14 @@ Read more [here](https://www.prisma.io/).
 Make sure you have Prisma installed and configured.
 Then, you can use the Prisma adapter to connect to your database.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
+import { prismaAdapter } from "better-query/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const auth = betterAuth({
+export const query = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "sqlite",
   }),
@@ -31,8 +31,8 @@ export const auth = betterAuth({
 
 ## Schema generation & migration
 
-The [Better Auth CLI](/docs/concepts/cli) allows you to generate or migrate
-your database schema based on your Better Auth configuration and plugins.
+The [Better Query CLI](/docs/concepts/cli) allows you to generate or migrate
+your database schema based on your Better Query configuration and plugins.
 
 <table>
   <thead>
@@ -54,7 +54,7 @@ your database schema based on your Better Auth configuration and plugins.
 </table>
 
 ```bash title="Schema Generation"
-npx @better-auth/cli@latest generate
+npx @better-query/cli@latest generate
 ```
 
 ## Additional Information

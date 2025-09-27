@@ -1,24 +1,24 @@
 ---
 title: Optimizing for Performance
-description: A guide to optimizing your Better Auth application for performance.
+description: A guide to optimizing your Better Query application for performance.
 ---
 
-In this guide, we’ll go over some of the ways you can optimize your application for a more performant Better Auth app.
+In this guide, we’ll go over some of the ways you can optimize your application for a more performant Better Query app.
 
 ## Caching
 
-Caching is a powerful technique that can significantly improve the performance of your Better Auth application by reducing the number of database queries and speeding up response times.
+Caching is a powerful technique that can significantly improve the performance of your Better Query application by reducing the number of database queries and speeding up response times.
 
 ### Cookie Cache
 
 Calling your database every time `useSession` or `getSession` is invoked isn’t ideal, especially if sessions don’t change frequently. Cookie caching handles this by storing session data in a short-lived, signed cookie similar to how JWT access tokens are used with refresh tokens.
 
-To turn on cookie caching, just set `session.cookieCache` in your auth config:
+To turn on cookie caching, just set `session.cookieCache` in your query config:
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
@@ -41,7 +41,7 @@ Here are examples of how you can do caching in different frameworks and environm
     ```ts
     export async function getUsers() {
         'use cache' // [!code highlight]
-        const { users } = await auth.api.listUsers();
+        const { users } = await query.api.listUsers();
         return users
     }
     ```
@@ -56,7 +56,7 @@ Here are examples of how you can do caching in different frameworks and environm
     import { json } from '@remix-run/node';
 
     export const loader = async () => {
-    const { users } = await auth.api.listUsers();
+    const { users } = await query.api.listUsers();
     return json(users, {
         headers: {
         'Cache-Control': 'max-age=3600', // Cache for 1 hour
@@ -75,7 +75,7 @@ Here are examples of how you can do caching in different frameworks and environm
 
     ```tsx
     const getUsers = query(
-        async () => (await auth.api.listUsers()).users,
+        async () => (await query.api.listUsers()).users,
         "getUsers"
     );
     ```
@@ -90,7 +90,7 @@ Here are examples of how you can do caching in different frameworks and environm
     import { useQuery } from '@tanstack/react-query';
 
     const fetchUsers = async () => {
-        const { users } = await auth.api.listUsers();
+        const { users } = await query.api.listUsers();
         return users;
     };
 
@@ -121,7 +121,7 @@ Here are examples of how you can do caching in different frameworks and environm
 If you're using a framework that supports server-side rendering, it's usually best to pre-fetch the user session on the server and use it as a fallback on the client.
 
 ```ts
-const session = await auth.api.getSession({
+const session = await query.api.getSession({
   headers: await headers(),
 });
 //then pass the session to the client
@@ -129,7 +129,7 @@ const session = await auth.api.getSession({
 
 ## Database optimizations
 
-Optimizing database performance is essential to get the best out of Better Auth.
+Optimizing database performance is essential to get the best out of Better Query.
 
 #### Recommended fields to index
 

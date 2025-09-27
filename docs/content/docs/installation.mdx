@@ -105,7 +105,7 @@ You can easily configure Better Query to use SQLite, PostgreSQL, or MySQL, and m
 
 Alternatively, if you prefer to use an ORM, you can use one of the built-in adapters.
 
-<Tabs items={["drizzle", "prisma", "mongodb"]}>
+<Tabs items={["drizzle", "prisma"]}>
 
     <Tab value="drizzle">
     ```ts title="query.ts"
@@ -133,18 +133,6 @@ Alternatively, if you prefer to use an ORM, you can use one of the built-in adap
                 provider: "sqlite", // or "mysql", "postgresql", ...etc
             }),
         });
-    ```
-    </Tab>
-
-    <Tab value="mongodb">
-    ```ts title="query.ts"
-    import { betterQuery } from "better-query";
-    import { mongodbAdapter } from "better-query/adapters/mongodb";
-    import { client } from "@/db"; // your mongodb client
-
-    export const query = betterQuery({
-        database: mongodbAdapter(client),
-    });
     ```
     </Tab>
 
@@ -238,56 +226,19 @@ Create a new file or route in your framework's designated catch-all route handle
   objects and offers helper functions for popular frameworks.
 </Callout>
 
-<Tabs items={["next-js", "nuxt", "svelte-kit", "remix", "solid-start", "hono", "cloudflare-workers", "express", "elysia", "tanstack-start", "expo"]} defaultValue="next-js">
+<Tabs items={["next-js", "hono", "express"]} defaultValue="next-js">
     <Tab value="next-js">
         ```ts title="/app/api/[...query]/route.ts"
-        import { query } from "@/lib/query"; // path to your query file
-        import { toNextJsHandler } from "better-query/next-js";
+        import { query } from "@/lib/query-client";
+        import { NextRequest } from "next/server";
 
-        export const { POST, GET, PATCH, DELETE } = toNextJsHandler(query);
+        const handler = query.handler;
+
+        export const POST = async (req: NextRequest) => handler(req);
+        export const PATCH = async (req: NextRequest) => handler(req);
+        export const DELETE = async (req: NextRequest) => handler(req);
+        export const GET = handler;
         ```
-    </Tab>
-    <Tab value="nuxt">
-    ```ts title="/server/api/[...query].ts"
-    import { query } from "~/utils/query"; // path to your query file
-
-    export default defineEventHandler((event) => {
-        return query.handler(toWebRequest(event));
-    });
-    ```
-    </Tab>
-    <Tab value="svelte-kit">
-    ```ts title="hooks.server.ts"
-    import { query } from "$lib/query"; // path to your query file
-    import { svelteKitHandler } from "better-query/svelte-kit";
-    import { building } from '$app/environment'
-
-    export async function handle({ event, resolve }) {
-        return svelteKitHandler({ event, resolve, query, building });
-    }
-    ```
-    </Tab>
-    <Tab value="remix">
-    ```ts title="/app/routes/api.query.$.ts"
-    import { query } from '~/lib/query.server' // Adjust the path as necessary
-    import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node"
-
-    export async function loader({ request }: LoaderFunctionArgs) {
-        return query.handler(request)
-    }
-
-    export async function action({ request }: ActionFunctionArgs) {
-        return query.handler(request)
-    }
-    ```
-    </Tab>
-    <Tab value="solid-start">
-    ```ts title="/routes/api/query/*all.ts"
-    import { query } from "~/lib/query"; // path to your query file
-    import { toSolidStartHandler } from "better-query/solid-start";
-
-    export const { GET, POST, PATCH, DELETE } = toSolidStartHandler(query);
-    ```
     </Tab>
     <Tab value="hono">
     ```ts title="src/index.ts"
@@ -324,28 +275,6 @@ Create a new file or route in your framework's designated catch-all route handle
     ```
     This will also work for any other node server framework like express, fastify, hapi, etc., but may require some modifications. See [fastify guide](/docs/integrations/fastify). Note that CommonJS (cjs) isn't supported.
     </Tab>
-    <Tab value="astro">
-    ```ts title="/pages/api/[...query].ts"
-    import type { APIRoute } from "astro";
-    import { query } from "@/query"; // path to your query file
-
-    export const GET: APIRoute = async (ctx) => {
-        return query.handler(ctx.request);
-    };
-
-    export const POST: APIRoute = async (ctx) => {
-        return query.handler(ctx.request);
-    };
-
-    export const PATCH: APIRoute = async (ctx) => {
-        return query.handler(ctx.request);
-    };
-
-    export const DELETE: APIRoute = async (ctx) => {
-        return query.handler(ctx.request);
-    };
-    ```
-    </Tab>
 
 </Tabs>
 </Step>
@@ -365,8 +294,7 @@ The client-side library helps you interact with the query server. Better Query c
   `http://localhost:3000/api/query`)
 </Callout>
 
-<Tabs items={["react", "vue", "svelte", "solid",
-  "vanilla"]} defaultValue="react">
+<Tabs items={["react", "vanilla"]} defaultValue="react">
     <Tab value="vanilla">
             ```ts  title="lib/query-client.ts"
             import { createQueryClient } from "better-query/client"
@@ -379,33 +307,6 @@ The client-side library helps you interact with the query server. Better Query c
     <Tab value="react" title="lib/query-client.ts">
             ```ts  title="lib/query-client.ts"
             import { createQueryClient } from "better-query/react"
-            export const queryClient = createQueryClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
-                baseURL: "http://localhost:3000/api" // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="vue" title="lib/query-client.ts">
-            ```ts  title="lib/query-client.ts"
-            import { createQueryClient } from "better-query/vue"
-            export const queryClient = createQueryClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
-                baseURL: "http://localhost:3000/api" // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="svelte" title="lib/query-client.ts">
-            ```ts  title="lib/query-client.ts"
-            import { createQueryClient } from "better-query/svelte"
-            export const queryClient = createQueryClient({
-                /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
-                baseURL: "http://localhost:3000/api" // [!code highlight]
-            })
-            ```
-    </Tab>
-    <Tab value="solid" title="lib/query-client.ts">
-            ```ts title="lib/query-client.ts"
-            import { createQueryClient } from "better-query/solid"
             export const queryClient = createQueryClient({
                 /** The base URL of the server (optional if you're using the same domain) */ // [!code highlight]
                 baseURL: "http://localhost:3000/api" // [!code highlight]

@@ -1,6 +1,6 @@
 ---
 title: MS SQL
-description: Integrate Better Auth with MS SQL.
+description: Integrate Better Query with MS SQL.
 ---
 
 Microsoft SQL Server is a relational database management system developed by Microsoft, designed for enterprise-level data storage, management, and analytics with robust security and scalability features.
@@ -9,10 +9,10 @@ Read more [here](https://en.wikipedia.org/wiki/Microsoft_SQL_Server).
 ## Example Usage
 
 Make sure you have MS SQL installed and configured.
-Then, you can connect it straight into Better Auth.
+Then, you can connect it straight into Better Query.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 import { MssqlDialect } from "kysely";
 import * as Tedious from 'tedious'
 import * as Tarn from 'tarn'
@@ -28,7 +28,7 @@ const dialect = new MssqlDialect({
   tedious: {
     ...Tedious,
     connectionFactory: () => new Tedious.Connection({
-      authentication: {
+      CRUD operations: {
         options: {
           password: 'password',
           userName: 'username',
@@ -45,7 +45,7 @@ const dialect = new MssqlDialect({
   },
 })
 
-export const auth = betterAuth({
+export const query = betterAuth({
   database: {
     dialect,
     type: "mssql"
@@ -60,8 +60,8 @@ export const auth = betterAuth({
 
 ## Schema generation & migration
 
-The [Better Auth CLI](/docs/concepts/cli) allows you to generate or migrate
-your database schema based on your Better Auth configuration and plugins.
+The [Better Query CLI](/docs/concepts/cli) allows you to generate or migrate
+your database schema based on your Better Query configuration and plugins.
 
 <table>
   <thead>
@@ -83,11 +83,11 @@ your database schema based on your Better Auth configuration and plugins.
 </table>
 
 ```bash title="Schema Generation"
-npx @better-auth/cli@latest generate
+npx @better-query/cli@latest generate
 ```
 
 ```bash title="Schema Migration"
-npx @better-auth/cli@latest migrate
+npx @better-query/cli@latest migrate
 ```
 
 ## Additional Information

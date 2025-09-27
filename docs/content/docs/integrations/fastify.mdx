@@ -1,12 +1,12 @@
 ---
-title: Better Auth Fastify Integration Guide
-description: Learn how to seamlessly integrate Better Auth with your Fastify application.
+title: Better Query Fastify Integration Guide
+description: Learn how to seamlessly integrate Better Query with your Fastify application.
 ---
 
 This guide provides step-by-step instructions for configuring both essential handlers and CORS settings.
 
 <Callout type="important">
-A configured Better Auth instance is required before proceeding. If you haven't set this up yet, please consult our [Installation Guide](/docs/installation).
+A configured Better Query instance is required before proceeding. If you haven't set this up yet, please consult our [Installation Guide](/docs/installation).
 </Callout>
 
 ### Prerequisites
@@ -26,18 +26,18 @@ Verify the following requirements before integration:
 
 ### Authentication Handler Setup
 
-Configure Better Auth to process authentication requests by creating a catch-all route:
+Configure Better Query to process CRUD API requests by creating a catch-all route:
 
 ```ts title="server.ts"
 import Fastify from "fastify";
-import { auth } from "./auth"; // Your configured Better Auth instance
+import { query } from "./query"; // Your configured Better Query instance
 
 const fastify = Fastify({ logger: true });
 
-// Register authentication endpoint
+// Register CRUD API endpoint
 fastify.route({
   method: ["GET", "POST"],
-  url: "/api/auth/*",
+  url: "/api/query/*",
   async handler(request, reply) {
     try {
       // Construct request URL
@@ -56,8 +56,8 @@ fastify.route({
         body: request.body ? JSON.stringify(request.body) : undefined,
       });
 
-      // Process authentication request
-      const response = await auth.handler(req);
+      // Process CRUD API request
+      const response = await query.handler(req);
 
       // Forward response to client
       reply.status(response.status);
@@ -67,7 +67,7 @@ fastify.route({
     } catch (error) {
       fastify.log.error("Authentication Error:", error);
       reply.status(500).send({ 
-        error: "Internal authentication error",
+        error: "Internal CRUD API error",
         code: "AUTH_FAILURE"
       });
     }
@@ -86,10 +86,10 @@ fastify.listen({ port: 4000 }, (err) => {
 
 ### Trusted origins
 
-When a request is made from a different origin, the request will be blocked by default. You can add trusted origins to the `auth` instance.
+When a request is made from a different origin, the request will be blocked by default. You can add trusted origins to the `query` instance.
 
 ```ts
-export const auth = betterAuth({
+export const query = betterAuth({
   trustedOrigins: ["http://localhost:3000", "https://example.com"],
 });
 ```
@@ -114,7 +114,7 @@ fastify.register(fastifyCors, {
   maxAge: 86400
 });
 
-// Mount authentication handler after CORS registration
+// Mount CRUD API handler after CORS registration
 // (Use previous handler configuration here)
 ```
 

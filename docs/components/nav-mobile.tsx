@@ -8,7 +8,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import { contents, examples } from "./sidebar-content";
+import { contents } from "./sidebar-content";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -147,7 +147,7 @@ function DocsNavBarContent() {
 	const { toggleNavbar } = useNavbarMobile();
 	if (!pathname.startsWith("/docs")) return null;
 
-	const content = pathname.startsWith("/docs/examples") ? examples : contents;
+	const content = contents;
 
 	return (
 		<>
@@ -219,10 +219,6 @@ export const navMenu: {
 	{
 		name: "docs",
 		path: "/docs",
-	},
-	{
-		name: "examples",
-		path: "/docs/examples/next-js",
 	},
 	{
 		name: "changelogs",

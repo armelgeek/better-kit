@@ -1,34 +1,34 @@
 ---
 title: Remix Integration
-description: Integrate Better Auth with Remix.
+description: Integrate Better Query with Remix.
 ---
 
-Better Auth can be easily integrated with Remix. This guide will show you how to integrate Better Auth with Remix.
+Better Query can be easily integrated with Remix. This guide will show you how to integrate Better Query with Remix.
 
 You can follow the steps from [installation](/docs/installation) to get started or you can follow this guide to make it the Remix-way.
 
 If you have followed the installation steps, you can skip the first step.
 
-## Create auth instance
+## Create query instance
 
 
-Create a file named `auth.server.ts` in one of these locations:
+Create a file named `query.server.ts` in one of these locations:
    - Project root
    - `lib/` folder
    - `utils/` folder
 
-You can also nest any of these folders under `app/` folder. (e.g. `app/lib/auth.server.ts`)
+You can also nest any of these folders under `app/` folder. (e.g. `app/lib/query.server.ts`)
 
-And in this file, import Better Auth and create your instance.
+And in this file, import Better Query and create your instance.
 
 <Callout type="warn">
-Make sure to export the auth instance with the variable name `auth` or as a `default` export.
+Make sure to export the query instance with the variable name `query` or as a `default` export.
 </Callout>
 
-```ts title="app/lib/auth.server.ts"
-import { betterAuth } from "better-auth"
+```ts title="app/lib/query.server.ts"
+import { betterAuth } from "better-query"
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: {
         provider: "postgres", //change this to your database provider
         url: process.env.DATABASE_URL, // path to your database or connection string
@@ -38,33 +38,33 @@ export const auth = betterAuth({
 
 ## Create API Route
 
-We need to mount the handler to a API route. Create a resource route file `api.auth.$.ts` inside `app/routes/` directory. And add the following code:
+We need to mount the handler to a API route. Create a resource route file `api.query.$.ts` inside `app/routes/` directory. And add the following code:
 
-```ts title="app/routes/api.auth.$.ts"
-import { auth } from '~/lib/auth.server' // Adjust the path as necessary
+```ts title="app/routes/api.query.$.ts"
+import { query } from '~/lib/query.server' // Adjust the path as necessary
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node"
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    return auth.handler(request)
+    return query.handler(request)
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-    return auth.handler(request)
+    return query.handler(request)
 }
 ```
 
 <Callout type="info">
- You can change the path on your better-auth configuration but it's recommended to keep it as `routes/api.auth.$.ts`
+ You can change the path on your better-query configuration but it's recommended to keep it as `routes/api.query.$.ts`
 </Callout>
 
 ## Create a client
 
-Create a client instance. Here we are creating `auth-client.ts` file inside the `lib/` directory.
+Create a client instance. Here we are creating `query-client.ts` file inside the `lib/` directory.
 
-```ts title="app/lib/auth-client.ts"
-import { createAuthClient } from "better-auth/react" // make sure to import from better-auth/react
+```ts title="app/lib/query-client.ts"
+import { createAuthClient } from "better-query/react" // make sure to import from better-query/react
 
-export const authClient = createAuthClient({
+export const queryClient = createAuthClient({
     //you can pass client configuration here
 })
 ```
@@ -78,7 +78,7 @@ Once you have created the client, you can use it to sign up, sign in, and perfor
 ```ts title="app/routes/signup.tsx"
 import { Form } from "@remix-run/react"
 import { useState } from "react"
-import { authClient } from "~/lib/auth-client"
+import { queryClient } from "~/lib/query-client"
 
 export default function SignUp() {
   const [email, setEmail] = useState("")
@@ -86,7 +86,7 @@ export default function SignUp() {
   const [password, setPassword] = useState("")
 
   const signUp = async () => {
-    await authClient.signUp.email(
+    await queryClient.signUp.email(
       {
         email,
         password,
@@ -149,14 +149,14 @@ export default function SignUp() {
 ```ts title="app/routes/signin.tsx"
 import { Form } from "@remix-run/react"
 import { useState } from "react"
-import { authClient } from "~/services/auth-client"
+import { queryClient } from "~/services/query-client"
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
   const signIn = async () => {
-    await authClient.signIn.email(
+    await queryClient.signIn.email(
       {
         email,
         password,

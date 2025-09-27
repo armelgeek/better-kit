@@ -22,7 +22,7 @@ All you need to do is provide the database logic, and the `createAdapter` functi
 3. Create the adapter!
 
 ```ts
-import { createAdapter, type AdapterDebugLogs } from "better-auth/adapters";
+import { createAdapter, type AdapterDebugLogs } from "better-query/adapters";
 
 // Your custom adapter config options
 interface CustomAdapterConfig {
@@ -116,8 +116,8 @@ If you haven't already, check out the `options` object in the [config section](#
 
 Before we get into the adapter function, let's go over the parameters that are available to you.
 
-- `options`: The Better Auth options.
-- `schema`: The schema from the user's Better Auth instance.
+- `options`: The Better Query options.
+- `schema`: The schema from the user's Better Query instance.
 - `debugLog`: The debug log function.
 - `getField`: The get field function.
 - `getDefaultModelName`: The get default model name function.
@@ -152,7 +152,7 @@ The `create` method is used to create a new record in the database.
 
 <Callout>
 Note:
-If the user has enabled the `useNumberId` option, or if `generateId` is `false` in the user's Better Auth config,
+If the user has enabled the `useNumberId` option, or if `generateId` is `false` in the user's Better Query config,
 then it's expected that the `id` is provided in the `data` object. Otherwise, the `id` will be automatically generated.
 
 Additionally, it's possible to pass `forceAllowId` as a parameter to the `create` method, which allows `id` to be provided in the `data` object.
@@ -337,7 +337,7 @@ const myAdapter = (config: CustomAdapterConfig) =>
 
 ### `createSchema` (optional)
 
-The `createSchema` method allows the [Better Auth CLI](/docs/concepts/cli) to [generate](/docs/concepts/cli/#generate) a schema for the database.
+The `createSchema` method allows the [Better Query CLI](/docs/concepts/cli) to [generate](/docs/concepts/cli/#generate) a schema for the database.
 
 parameters:
 
@@ -356,7 +356,7 @@ We've provided a test suite that you can use to test your adapter. It requires y
 
 ```ts title="my-adapter.test.ts"
 import { expect, test, describe } from "vitest";
-import { runAdapterTest } from "better-auth/adapters/test";
+import { runAdapterTest } from "better-query/adapters/test";
 import { myAdapter } from "./my-adapter";
 
 describe("My Adapter Tests", async () => {
@@ -384,7 +384,7 @@ If your database supports numeric IDs, then you should run this test as well:
 
 ```ts title="my-adapter.number-id.test.ts"
 import { expect, test, describe } from "vitest";
-import { runNumberIdAdapterTest } from "better-auth/adapters/test";
+import { runNumberIdAdapterTest } from "better-query/adapters/test";
 import { myAdapter } from "./my-adapter";
 
 describe("My Adapter Numeric ID Tests", async () => {
@@ -545,7 +545,7 @@ The `customTransformInput` function receives the following arguments:
 - `select`: The `select` values which the query expects to return.
 - `model`: The model that is being transformed.
 - `schema`: The schema that is being transformed.
-- `options`: Better Auth options.
+- `options`: Better Query options.
 
 The `customTransformInput` function runs at every key in the data object of a given action.
 

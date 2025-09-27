@@ -1,9 +1,9 @@
 ---
-title: Migrating from Auth0 to Better Auth
-description: A step-by-step guide to transitioning from Auth0 to Better Auth.
+title: Migrating from Auth0 to Better Query
+description: A step-by-step guide to transitioning from Auth0 to Better Query.
 ---
 
-In this guide, we'll walk through the steps to migrate a project from Auth0 to Better Auth — including email/password with proper hashing, social/external accounts, two-factor authentication, and more.
+In this guide, we'll walk through the steps to migrate a project from Auth0 to Better Query — including email/password with proper hashing, social/external accounts, two-factor resource management, and more.
 
 <Callout type="warn">
 This migration will invalidate all active sessions. This guide doesn't currently show you how to migrate Organizations but it should be possible with additional steps and the [Organization](/docs/plugins/organization) Plugin.
@@ -11,7 +11,7 @@ This migration will invalidate all active sessions. This guide doesn't currently
 
 ## Before You Begin
 
-Before starting the migration process, set up Better Auth in your project. Follow the [installation guide](/docs/installation) to get started.
+Before starting the migration process, set up Better Query in your project. Follow the [installation guide](/docs/installation) to get started.
 
 <Steps>
 <Step>
@@ -25,10 +25,10 @@ npm install pg
 
 And then you can use the following code to connect to your database.
 
-```ts title="auth.ts"
+```ts title="query.ts"
 import { Pool } from "pg";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -38,12 +38,12 @@ export const auth = betterAuth({
 <Step>
 ### Enable Email and Password (Optional)
 
-Enable the email and password in your auth config and implement your own logic for sending verification emails, reset password emails, etc.
+Enable the email and password in your query config and implement your own logic for sending verification emails, reset password emails, etc.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -58,17 +58,17 @@ export const auth = betterAuth({
 })
 ```
 
-See [Email and Password](/docs/authentication/email-password) for more configuration options.
+See [Email and Password](/docs/resource management/email-password) for more configuration options.
 </Step>
 <Step>
 ### Setup Social Providers (Optional)
 
-Add social providers you have enabled in your Auth0 project in your auth config.
+Add social providers you have enabled in your Auth0 project in your query config.
 
-```ts title="auth.ts"
-import { betterAuth } from "better-auth";
+```ts title="query.ts"
+import { betterAuth } from "better-query";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -91,20 +91,20 @@ export const auth = betterAuth({
 <Step>
 ### Add Plugins (Optional)
 
-You can add the following plugins to your auth config based on your needs.
+You can add the following plugins to your query config based on your needs.
 
 [Admin](/docs/plugins/admin) Plugin will allow you to manage users, user impersonations and app level roles and permissions.
 
-[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor authentication to your application.
+[Two Factor](/docs/plugins/2fa) Plugin will allow you to add two-factor resource management to your application.
 
-[Username](/docs/plugins/username) Plugin will allow you to add username authentication to your application.
+[Username](/docs/plugins/username) Plugin will allow you to add username resource management to your application.
 
-```ts title="auth.ts"
+```ts title="query.ts"
 import { Pool } from "pg";
-import { betterAuth } from "better-auth";
-import { admin, twoFactor, username } from "better-auth/plugins";
+import { betterAuth } from "better-query";
+import { admin, twoFactor, username } from "better-query/plugins";
 
-export const auth = betterAuth({
+export const query = betterAuth({
     database: new Pool({ 
         connectionString: process.env.DATABASE_URL 
     }),
@@ -136,13 +136,13 @@ export const auth = betterAuth({
 If you're using a custom database adapter, generate the schema:
 
 ```sh
-npx @better-auth/cli generate
+npx @better-query/cli generate
 ```
 
 or if you're using the default adapter, you can use the following command:
 
 ```sh
-npx @better-auth/cli migrate
+npx @better-query/cli migrate
 ```
 </Step>
 <Step>
@@ -151,27 +151,27 @@ npx @better-auth/cli migrate
 Install the required dependencies for the migration:
 
 ```bash
-npm install auth0
+npm install query0
 ```
 </Step>
 <Step>
 ### Create the migration script
 
-Create a new file called `migrate-auth0.ts` in the `scripts` folder and add the following code:
+Create a new file called `migrate-query0.ts` in the `scripts` folder and add the following code:
 
 <Callout type="info">
-Instead of using the Management API, you can use Auth0's bulk user export functionality and pass the exported JSON data directly to the `auth0Users` array. This is especially useful if you need to migrate password hashes and complete user data, which are not available through the Management API.
+Instead of using the Management API, you can use Auth0's bulk user export functionality and pass the exported JSON data directly to the `query0Users` array. This is especially useful if you need to migrate password hashes and complete user data, which are not available through the Management API.
 
 **Important Notes:**
 - Password hashes export is only available for Auth0 Enterprise users
 - Free plan users cannot export password hashes and will need to request a support ticket
-- For detailed information about bulk user exports, see the [Auth0 Bulk User Export Documentation](https://auth0.com/docs/manage-users/user-migration/bulk-user-exports)
-- For password hash export details, refer to [Exporting Password Hashes](https://auth0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
+- For detailed information about bulk user exports, see the [Auth0 Bulk User Export Documentation](https://query0.com/docs/manage-users/user-migration/bulk-user-exports)
+- For password hash export details, refer to [Exporting Password Hashes](https://query0.com/docs/troubleshoot/customer-support/manage-subscriptions/export-data#user-passwords)
 
 Example:
 ```ts
 // Replace this with your exported users JSON data
-const auth0Users = [
+const query0Users = [
   {
     "email": "helloworld@gmail.com",
     "email_verified": false,
@@ -184,12 +184,12 @@ const auth0Users = [
 ```
 </Callout>
 
-```ts title="scripts/migrate-auth0.ts"
-import { ManagementClient } from 'auth0';
-import { generateRandomString, symmetricEncrypt } from "better-auth/crypto";
-import { auth } from '@/lib/auth';
+```ts title="scripts/migrate-query0.ts"
+import { ManagementClient } from 'query0';
+import { generateRandomString, symmetricEncrypt } from "better-query/crypto";
+import { query } from '@/lib/query';
 
-const auth0Client = new ManagementClient({
+const query0Client = new ManagementClient({
     domain: process.env.AUTH0_DOMAIN!,
     clientId: process.env.AUTH0_CLIENT_ID!,
     clientSecret: process.env.AUTH0_SECRET!,
@@ -236,20 +236,20 @@ async function generateBackupCodes(secret: string) {
     return encCodes;
 }
 
-function mapAuth0RoleToBetterAuthRole(auth0Roles: string[]) {
-    if (typeof auth0Roles === 'string') return auth0Roles;
-    if (Array.isArray(auth0Roles)) return auth0Roles.join(',');
+function mapAuth0RoleToBetterAuthRole(query0Roles: string[]) {
+    if (typeof query0Roles === 'string') return query0Roles;
+    if (Array.isArray(query0Roles)) return query0Roles.join(',');
 }
-// helper function to migrate password from auth0 to better auth for custom hashes and algs
-async function migratePassword(auth0User: any) {
-    if (auth0User.password_hash) {
-        if (auth0User.password_hash.startsWith('$2a$') || auth0User.password_hash.startsWith('$2b$')) {
-            return auth0User.password_hash;
+// helper function to migrate password from query0 to better query for custom hashes and algs
+async function migratePassword(query0User: any) {
+    if (query0User.password_hash) {
+        if (query0User.password_hash.startsWith('$2a$') || query0User.password_hash.startsWith('$2b$')) {
+            return query0User.password_hash;
         }
     }
 
-    if (auth0User.custom_password_hash) {
-        const customHash = auth0User.custom_password_hash;
+    if (query0User.custom_password_hash) {
+        const customHash = query0User.custom_password_hash;
 
         if (customHash.algorithm === 'bcrypt') {
             const hash = customHash.hash.value;
@@ -295,12 +295,12 @@ async function migratePassword(auth0User: any) {
     return null;
 }
 
-async function migrateMFAFactors(auth0User: any, userId: string | undefined, ctx: any) {
-    if (!userId || !auth0User.mfa_factors || !Array.isArray(auth0User.mfa_factors)) {
+async function migrateMFAFactors(query0User: any, userId: string | undefined, ctx: any) {
+    if (!userId || !query0User.mfa_factors || !Array.isArray(query0User.mfa_factors)) {
         return;
     }
 
-    for (const factor of auth0User.mfa_factors) {
+    for (const factor of query0User.mfa_factors) {
         try {
             if (factor.totp && factor.totp.secret) {
                 await ctx.adapter.create({
@@ -318,33 +318,33 @@ async function migrateMFAFactors(auth0User: any, userId: string | undefined, ctx
     }
 }
 
-async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, ctx: any) {
-    if (!userId || !auth0User.identities || !Array.isArray(auth0User.identities)) {
+async function migrateOAuthAccounts(query0User: any, userId: string | undefined, ctx: any) {
+    if (!userId || !query0User.identities || !Array.isArray(query0User.identities)) {
         return;
     }
 
-    for (const identity of auth0User.identities) {
+    for (const identity of query0User.identities) {
         try {
-            const providerId = identity.provider === 'auth0' ? "credential" : identity.provider.split("-")[0];
+            const providerId = identity.provider === 'query0' ? "credential" : identity.provider.split("-")[0];
             await ctx.adapter.create({
                 model: "account",
                 data: {
-                    id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
+                    id: `${query0User.user_id}|${identity.provider}|${identity.user_id}`,
                     userId: userId,
-                    password: await migratePassword(auth0User),
+                    password: await migratePassword(query0User),
                     providerId: providerId || identity.provider,
                     accountId: identity.user_id,
                     accessToken: identity.access_token,
                     tokenType: identity.token_type,
                     refreshToken: identity.refresh_token,
                     accessTokenExpiresAt: identity.expires_in ? new Date(Date.now() + identity.expires_in * 1000) : undefined,
-                    // if you are enterprise user, you can get the refresh tokens or all the tokensets - auth0Client.users.getAllTokensets 
+                    // if you are enterprise user, you can get the refresh tokens or all the tokensets - query0Client.users.getAllTokensets 
                     refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
 
                     scope: identity.scope,
                     idToken: identity.id_token,
-                    createdAt: safeDateConversion(auth0User.created_at),
-                    updatedAt: safeDateConversion(auth0User.updated_at)
+                    createdAt: safeDateConversion(query0User.created_at),
+                    updatedAt: safeDateConversion(query0User.updated_at)
                 },
                 forceAllowId: true
             }).catch((error: Error) => {
@@ -353,9 +353,9 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
                     // Try creating without optional fields if the first attempt failed
                     model: "account",
                     data: {
-                        id: `${auth0User.user_id}|${identity.provider}|${identity.user_id}`,
+                        id: `${query0User.user_id}|${identity.provider}|${identity.user_id}`,
                         userId: userId,
-                        password: migratePassword(auth0User),
+                        password: migratePassword(query0User),
                         providerId: providerId,
                         accountId: identity.user_id,
                         accessToken: identity.access_token,
@@ -365,8 +365,8 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
                         refreshTokenExpiresAt: identity.refresh_token_expires_in ? new Date(Date.now() + identity.refresh_token_expires_in * 1000) : undefined,
                         scope: identity.scope,
                         idToken: identity.id_token,
-                        createdAt: safeDateConversion(auth0User.created_at),
-                        updatedAt: safeDateConversion(auth0User.updated_at)
+                        createdAt: safeDateConversion(query0User.created_at),
+                        updatedAt: safeDateConversion(query0User.updated_at)
                     },
                     forceAllowId: true
                 });
@@ -381,7 +381,7 @@ async function migrateOAuthAccounts(auth0User: any, userId: string | undefined, 
 
 async function migrateOrganizations(ctx: any) {
     try {
-        const organizations = await auth0Client.organizations.getAll();
+        const organizations = await query0Client.organizations.getAll();
         for (const org of organizations.data || []) {
             try {
                 await ctx.adapter.create({
@@ -396,10 +396,10 @@ async function migrateOrganizations(ctx: any) {
                     },
                     forceAllowId: true
                 });
-                const members = await auth0Client.organizations.getMembers({ id: org.id });
+                const members = await query0Client.organizations.getMembers({ id: org.id });
                 for (const member of members.data || []) {
                     try {
-                        const userRoles = await auth0Client.organizations.getMemberRoles({
+                        const userRoles = await query0Client.organizations.getMemberRoles({
                             id: org.id,
                             user_id: member.user_id
                         });
@@ -435,12 +435,12 @@ async function migrateOrganizations(ctx: any) {
 
 async function migrateFromAuth0() {
     try {
-        const ctx = await auth.$context;
+        const ctx = await query.$context;
         const isAdminEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "admin");
         const isUsernameEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "username");
         const isOrganizationEnabled = ctx.options?.plugins?.find(plugin => plugin.id === "organization");
         const perPage = 100;
-        const auth0Users: any[] = [];
+        const query0Users: any[] = [];
         let pageNumber = 0;
 
         while (true) {
@@ -450,10 +450,10 @@ async function migrateFromAuth0() {
                     page: pageNumber,
                     include_totals: true,
                 };
-                const response = (await auth0Client.users.getAll(params)).data as any;
+                const response = (await query0Client.users.getAll(params)).data as any;
                 const users = response.users || [];
                 if (users.length === 0) break;
-                auth0Users.push(...users);
+                query0Users.push(...users);
                 pageNumber++;
 
                 if (users.length < perPage) break;
@@ -464,28 +464,28 @@ async function migrateFromAuth0() {
         }
 
 
-        console.log(`Found ${auth0Users.length} users to migrate`);
+        console.log(`Found ${query0Users.length} users to migrate`);
 
-        for (const auth0User of auth0Users) {
+        for (const query0User of query0Users) {
             try {
                 // Determine if this is a password-based or OAuth user
-                const isOAuthUser = auth0User.identities?.some((identity: any) => identity.provider !== 'auth0');
+                const isOAuthUser = query0User.identities?.some((identity: any) => identity.provider !== 'query0');
                 // Base user data that's common for both types
                 const baseUserData = {
-                    id: auth0User.user_id,
-                    email: auth0User.email,
-                    emailVerified: auth0User.email_verified || false,
-                    name: auth0User.name || auth0User.nickname,
-                    image: auth0User.picture,
-                    createdAt: safeDateConversion(auth0User.created_at),
-                    updatedAt: safeDateConversion(auth0User.updated_at),
+                    id: query0User.user_id,
+                    email: query0User.email,
+                    emailVerified: query0User.email_verified || false,
+                    name: query0User.name || query0User.nickname,
+                    image: query0User.picture,
+                    createdAt: safeDateConversion(query0User.created_at),
+                    updatedAt: safeDateConversion(query0User.updated_at),
                     ...(isAdminEnabled ? {
-                        banned: auth0User.blocked || false,
-                        role: mapAuth0RoleToBetterAuthRole(auth0User.roles || []),
+                        banned: query0User.blocked || false,
+                        role: mapAuth0RoleToBetterAuthRole(query0User.roles || []),
                     } : {}),
 
                     ...(isUsernameEnabled ? {
-                        username: auth0User.username || auth0User.nickname,
+                        username: query0User.username || query0User.nickname,
                     } : {}),
 
                 };
@@ -503,10 +503,10 @@ async function migrateFromAuth0() {
                 }
 
 
-                await migrateOAuthAccounts(auth0User, createdUser.id, ctx)
-                console.log(`Successfully migrated user: ${auth0User.email}`);
+                await migrateOAuthAccounts(query0User, createdUser.id, ctx)
+                console.log(`Successfully migrated user: ${query0User.email}`);
             } catch (error) {
-                console.error(`Failed to migrate user ${auth0User.email}:`, error);
+                console.error(`Failed to migrate user ${query0User.email}:`, error);
             }
         }
         if (isOrganizationEnabled) {
@@ -543,14 +543,14 @@ Make sure to replace the Auth0 environment variables with your own values:
 Run the migration script:
 
 ```sh
-bun run scripts/migrate-auth0.ts # or use your preferred runtime
+bun run scripts/migrate-query0.ts # or use your preferred runtime
 ```
 
 <Callout type="warning">
 Important considerations:
 1. Test the migration in a development environment first
 2. Monitor the migration process for any errors
-3. Verify the migrated data in Better Auth before proceeding
+3. Verify the migrated data in Better Query before proceeding
 4. Keep Auth0 installed and configured until the migration is complete
 5. The script handles bcrypt password hashes by default. For custom password hashing algorithms, you'll need to modify the `migratePassword` function
 </Callout>
@@ -562,21 +562,21 @@ Important considerations:
 After running the migration, verify that:
 1. All users have been properly migrated
 2. Social connections are working
-3. Password-based authentication is working
-4. Two-factor authentication settings are preserved (if enabled)
+3. Password-based resource management is working
+4. Two-factor resource management settings are preserved (if enabled)
 5. User roles and permissions are correctly mapped
 </Step>
 <Step>
 ### Update your components
 
-Now that the data is migrated, update your components to use Better Auth. Here's an example for the sign-in component:
+Now that the data is migrated, update your components to use Better Query. Here's an example for the sign-in component:
 
-```tsx title="components/auth/sign-in.tsx"
-import { authClient } from "better-auth/client";
+```tsx title="components/query/sign-in.tsx"
+import { queryClient } from "better-query/client";
 
 export const SignIn = () => {
   const handleSignIn = async () => {
-    const { data, error } = await authClient.signIn.email({
+    const { data, error } = await queryClient.signIn.email({
       email: "helloworld@gmail.com",
       password: "helloworld",
     });
@@ -599,11 +599,11 @@ export const SignIn = () => {
 <Step>
 ### Update the middleware
 
-Replace your Auth0 middleware with Better Auth's middleware:
+Replace your Auth0 middleware with Better Query's middleware:
 
 ```ts title="middleware.ts"
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { getSessionCookie } from "better-query/cookies";
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -628,10 +628,10 @@ export const config = {
 <Step>
 ### Remove Auth0 Dependencies
 
-Once you've verified everything is working correctly with Better Auth, remove Auth0:
+Once you've verified everything is working correctly with Better Query, remove Auth0:
 
 ```bash
-npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
+npm remove @query0/query0-react @query0/query0-spa-js @query0/nextjs-query0
 ```
 </Step>
 </Steps>
@@ -642,13 +642,13 @@ npm remove @auth0/auth0-react @auth0/auth0-spa-js @auth0/nextjs-auth0
 The migration script handles bcrypt password hashes by default. If you're using custom password hashing algorithms in Auth0, you'll need to modify the `migratePassword` function in the migration script to handle your specific case.
 
 ### Role Mapping
-The script includes a basic role mapping function (`mapAuth0RoleToBetterAuthRole`). Customize this function based on your Auth0 roles and Better Auth role requirements.
+The script includes a basic role mapping function (`mapAuth0RoleToBetterAuthRole`). Customize this function based on your Auth0 roles and Better Query role requirements.
 
 ### Rate Limiting
 The migration script includes pagination to handle large numbers of users. Adjust the `perPage` value based on your needs and Auth0's rate limits.
 
 ## Wrapping Up
 
-Now! You've successfully migrated from Auth0 to Better Auth.
+Now! You've successfully migrated from Auth0 to Better Query.
 
-Better Auth offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential. 
+Better Query offers greater flexibility and more features—be sure to explore the [documentation](/docs) to unlock its full potential. 

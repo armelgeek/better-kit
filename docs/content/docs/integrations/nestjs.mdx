@@ -1,14 +1,14 @@
 ---
 title: NestJS Integration
-description: Integrate Better Auth with NestJS.
+description: Integrate Better Query with NestJS.
 ---
 
-This guide will show you how to integrate Better Auth with [NestJS](https://nestjs.com/).
+This guide will show you how to integrate Better Query with [NestJS](https://nestjs.com/).
 
-Before you start, make sure you have a Better Auth instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
+Before you start, make sure you have a Better Query instance configured. If you haven't done that yet, check out the [installation](/docs/installation).
 
 <Callout type="info">
-The NestJS integration is **community maintained**. If you encounter any issues, please open them at [nestjs-better-auth](https://github.com/ThallesP/nestjs-better-auth).
+The NestJS integration is **community maintained**. If you encounter any issues, please open them at [nestjs-better-query](https://github.com/ThallesP/nestjs-better-query).
 </Callout>
 
 ## Installation
@@ -16,18 +16,18 @@ The NestJS integration is **community maintained**. If you encounter any issues,
 Install the NestJS integration library:
 
 ```package-install
-@thallesp/nestjs-better-auth
+@thallesp/nestjs-better-query
 ```
 
 ## Basic Setup
 
 <Callout type="warn">
-Currently, Better Auth's NestJS integration **only supports Express** and does not work with Fastify.
+Currently, Better Query's NestJS integration **only supports Express** and does not work with Fastify.
 </Callout>
 
 ### 1. Disable Body Parser
 
-Disable NestJS's built-in body parser to allow Better Auth to handle the raw request body:
+Disable NestJS's built-in body parser to allow Better Query to handle the raw request body:
 
 ```ts title="main.ts"
 import { NestFactory } from "@nestjs/core";
@@ -35,7 +35,7 @@ import { AppModule } from "./app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    bodyParser: false, // Required for Better Auth
+    bodyParser: false, // Required for Better Query
   });
   await app.listen(process.env.PORT ?? 3000);
 }
@@ -48,12 +48,12 @@ Import the `AuthModule` in your root module:
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { AuthModule } from '@thallesp/nestjs-better-auth';
-import { auth } from "./auth"; // Your Better Auth instance
+import { AuthModule } from '@thallesp/nestjs-better-query';
+import { query } from "./query"; // Your Better Query instance
 
 @Module({
   imports: [
-    AuthModule.forRoot(auth),
+    AuthModule.forRoot(query),
   ],
 })
 export class AppModule {}
@@ -65,7 +65,7 @@ Use the `AuthGuard` to protect your routes:
 
 ```ts title="user.controller.ts"
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthGuard, Session, UserSession } from '@thallesp/nestjs-better-auth';
+import { AuthGuard, Session, UserSession } from '@thallesp/nestjs-better-query';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -79,4 +79,4 @@ export class UserController {
 
 ## Full Documentation
 
-For comprehensive documentation including decorators, hooks, global guards, and advanced configuration, visit the [NestJS Better Auth repository](https://github.com/thallesp/nestjs-better-auth).
+For comprehensive documentation including decorators, hooks, global guards, and advanced configuration, visit the [NestJS Better Query repository](https://github.com/thallesp/nestjs-better-query).
