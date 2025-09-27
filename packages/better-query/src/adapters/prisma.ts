@@ -1,4 +1,4 @@
-import { CrudAdapter, CrudWhere, CrudOrderBy } from "../types/adapter";
+import { CrudAdapter, CrudWhere, CrudOrderBy, CustomOperations } from "../types/adapter";
 import { IncludeOptions, FieldAttribute } from "../types";
 
 /**
@@ -19,7 +19,218 @@ import { IncludeOptions, FieldAttribute } from "../types";
  * ```
  */
 export class PrismaCrudAdapter implements CrudAdapter {
-	constructor(private prisma: any) {} // PrismaClient type
+	public customOperations: CustomOperations = {};
+
+	constructor(private prisma: any) { // PrismaClient type
+		this.initializeCustomOperations();
+	}
+
+	private initializeCustomOperations() {
+		// Prisma-specific custom operations
+		this.customOperations = {
+			// Raw SQL queries
+			rawQuery: async (params: { sql: string; values?: any[] }) => {
+				const { sql, values = [] } = params;
+				return await this.prisma.$queryRaw`${sql}`;
+			},
+
+			// Raw query with interpolated values
+			rawQueryUnsafe: async (params: { sql: string; values?: any[] }) => {
+				const { sql, values = [] } = params;
+				return await this.prisma.$queryRawUnsafe(sql, ...values);
+			},
+
+			// Execute raw SQL commands (non-query operations)
+			executeRaw: async (params: { sql: string; values?: any[] }) => {
+				const { sql, values = [] } = params;
+				return await this.prisma.$executeRawUnsafe(sql, ...values);
+			},
+
+			// Transaction with custom logic
+			transaction: async (params: { operations: Array<{ model: string; operation: string; data: any }> }) => {
+				const { operations } = params;
+				
+				return await this.prisma.$transaction(async (tx: any) => {
+					const results = [];
+					
+					for (const op of operations) {
+						const { model, operation, data } = op;
+						
+						switch (operation) {
+							case 'create':
+								results.push(await tx[model].create({ data }));
+								break;
+							case 'update':
+								results.push(await tx[model].update(data));
+								break;
+							case 'delete':
+								results.push(await tx[model].delete(data));
+								break;
+							case 'upsert':
+								results.push(await tx[model].upsert(data));
+								break;
+							default:
+								throw new Error(`Unsupported operation: ${operation}`);
+						}
+					}
+					
+					return results;
+				});
+			},
+
+			// Batch operations
+			createMany: async (params: { model: string; data: Record<string, any>[]; skipDuplicates?: boolean }) => {
+				const { model, data, skipDuplicates = false } = params;
+				
+				// Add timestamps to all records
+				const now = new Date();
+				const dataWithTimestamps = data.map(item => ({
+					...item,
+					createdAt: item.createdAt || now,
+					updatedAt: item.updatedAt || now,
+				}));
+				
+				return await this.prisma[model].createMany({
+					data: dataWithTimestamps,
+					skipDuplicates,
+				});
+			},
+
+			// Update many with conditions
+			updateMany: async (params: { 
+				model: string; 
+				where: Record<string, any>; 
+				data: Record<string, any> 
+			}) => {
+				const { model, where, data } = params;
+				data.updatedAt = new Date();
+				
+				return await this.prisma[model].updateMany({
+					where,
+					data,
+				});
+			},
+
+			// Delete many with conditions
+			deleteMany: async (params: { model: string; where: Record<string, any> }) => {
+				const { model, where } = params;
+				return await this.prisma[model].deleteMany({ where });
+			},
+
+			// Upsert operation
+			upsert: async (params: {
+				model: string;
+				where: Record<string, any>;
+				update: Record<string, any>;
+				create: Record<string, any>;
+				include?: Record<string, any>;
+			}) => {
+				const { model, where, update, create, include } = params;
+				
+				// Add timestamps
+				const now = new Date();
+				update.updatedAt = now;
+				if (!create.createdAt) create.createdAt = now;
+				if (!create.updatedAt) create.updatedAt = now;
+				
+				return await this.prisma[model].upsert({
+					where,
+					update,
+					create,
+					include: include || undefined,
+				});
+			},
+
+			// Advanced aggregations
+			aggregate: async (params: {
+				model: string;
+				where?: Record<string, any>;
+				_count?: boolean | Record<string, boolean>;
+				_sum?: Record<string, boolean>;
+				_avg?: Record<string, boolean>;
+				_min?: Record<string, boolean>;
+				_max?: Record<string, boolean>;
+				orderBy?: Record<string, 'asc' | 'desc'>[];
+				take?: number;
+				skip?: number;
+			}) => {
+				const { model, ...aggregationParams } = params;
+				return await this.prisma[model].aggregate(aggregationParams);
+			},
+
+			// Group by operations
+			groupBy: async (params: {
+				model: string;
+				by: string[];
+				where?: Record<string, any>;
+				having?: Record<string, any>;
+				_count?: boolean | Record<string, boolean>;
+				_sum?: Record<string, boolean>;
+				_avg?: Record<string, boolean>;
+				_min?: Record<string, boolean>;
+				_max?: Record<string, boolean>;
+				orderBy?: Record<string, 'asc' | 'desc'>[];
+				take?: number;
+				skip?: number;
+			}) => {
+				const { model, ...groupByParams } = params;
+				return await this.prisma[model].groupBy(groupByParams);
+			},
+
+			// Find with cursor-based pagination
+			findManyWithCursor: async (params: {
+				model: string;
+				cursor?: Record<string, any>;
+				take?: number;
+				skip?: number;
+				where?: Record<string, any>;
+				orderBy?: Record<string, 'asc' | 'desc'>;
+				include?: Record<string, any>;
+				select?: Record<string, boolean>;
+			}) => {
+				const { model, ...findParams } = params;
+				return await this.prisma[model].findMany(findParams);
+			},
+
+			// Connect or create relations
+			connectOrCreate: async (params: {
+				model: string;
+				data: Record<string, any>;
+				relationField: string;
+				relationData: {
+					where: Record<string, any>;
+					create: Record<string, any>;
+				};
+			}) => {
+				const { model, data, relationField, relationData } = params;
+				
+				const now = new Date();
+				data.updatedAt = now;
+				if (!data.createdAt) data.createdAt = now;
+				
+				// Add timestamps to relation create data
+				if (!relationData.create.createdAt) relationData.create.createdAt = now;
+				if (!relationData.create.updatedAt) relationData.create.updatedAt = now;
+				
+				const createData = {
+					...data,
+					[relationField]: {
+						connectOrCreate: relationData,
+					},
+				};
+				
+				return await this.prisma[model].create({ data: createData });
+			},
+		};
+	}
+
+	async executeCustomOperation(operationName: string, params: any, context?: any): Promise<any> {
+		const operation = this.customOperations[operationName];
+		if (!operation) {
+			throw new Error(`Custom operation '${operationName}' not found in PrismaCrudAdapter`);
+		}
+		return await operation(params, context);
+	}
 
 	async create(params: {
 		model: string;

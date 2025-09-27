@@ -24,6 +24,18 @@ export interface QueryOrderBy {
 export type CrudOrderBy = QueryOrderBy;
 
 /**
+ * Custom operation function signature
+ */
+export type CustomOperation = (params: any, context?: any) => Promise<any>;
+
+/**
+ * Registry for custom operations specific to an adapter
+ */
+export interface CustomOperations {
+	[operationName: string]: CustomOperation;
+}
+
+/**
  * Generic Query Adapter Interface
  * Similar to better-auth's Adapter interface but specialized for database operations
  */
@@ -74,6 +86,12 @@ export interface QueryAdapter {
 		model: string;
 		where?: QueryWhere[];
 	}): Promise<number>;
+
+	/** Custom operations specific to the ORM/adapter */
+	customOperations?: CustomOperations;
+
+	/** Execute a custom operation */
+	executeCustomOperation?(operationName: string, params: any, context?: any): Promise<any>;
 
 	/** Create records with related data atomically */
 	createWithRelations?(params: {

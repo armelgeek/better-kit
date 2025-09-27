@@ -147,6 +147,63 @@ class InMemoryAdapter implements CrudAdapter {
 3. **Migration**: Gradually migrate from one ORM to another
 4. **Extensibility**: Add custom functionality to adapters
 5. **Type Safety**: Full TypeScript support with proper interfaces
+6. **Custom Operations**: Leverage ORM-specific features without bloating the core library
+
+## Custom Operations
+
+The adapter system now supports **custom operations** that allow you to use ORM-specific functionality:
+
+### Using Built-in Custom Operations
+
+```typescript
+// Check if operation exists
+if (query.hasCustomOperation('batchInsert')) {
+  const results = await query.customOperation('batchInsert', {
+    model: 'product',
+    data: [
+      { name: 'Product 1', price: 100 },
+      { name: 'Product 2', price: 200 }
+    ]
+  });
+}
+
+// Get all available operations
+const operations = query.getCustomOperations();
+```
+
+### Built-in Operations by Adapter
+
+**Drizzle Adapter** includes:
+- `rawQuery`: Execute raw SQL
+- `batchInsert`: Efficient bulk inserts
+- `upsert`: Insert or update on conflict  
+- `aggregate`: Advanced aggregations
+- `customJoin`: Complex joins
+
+**Prisma Adapter** includes:
+- `rawQuery`: Raw SQL queries
+- `transaction`: Multi-operation transactions
+- `createMany`: Batch creates with skip duplicates
+- `upsert`: Native Prisma upsert
+- `aggregate` & `groupBy`: Advanced analytics
+
+### Creating Custom Operations
+
+```typescript
+class MyDrizzleAdapter extends DrizzleCrudAdapter {
+  constructor(db: any, schema: any) {
+    super(db, schema);
+    
+    // Add your custom operations
+    this.customOperations.myCustomQuery = async (params) => {
+      // Your ORM-specific logic here
+      return await this.db.execute(/* custom query */);
+    };
+  }
+}
+```
+
+See [CUSTOM_OPERATIONS.md](./CUSTOM_OPERATIONS.md) for complete documentation and examples.
 
 ## Migration from Direct Kysely Usage
 
