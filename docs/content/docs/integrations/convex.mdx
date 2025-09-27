@@ -206,11 +206,10 @@ If you're not using Next.js, please refer to the [installation guide by Convex](
         Create a Better Query client instance for interacting with the Better Query server from your client.
 
         ```ts title="src/lib/query-client.ts"
-        import { createAuthClient } from "better-query/react";
-        import { convexClient } from "@convex-dev/better-query/client/plugins";
+        import { createQueryClient } from "better-query/react";
 
-        export const queryClient = createAuthClient({
-            plugins: [convexClient()],
+        export const queryClient = createQueryClient({
+            baseURL: "http://localhost:3000/api"
         });
         ```
     </Step>

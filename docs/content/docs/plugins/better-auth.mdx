@@ -75,25 +75,19 @@ The Better Auth Integration plugin provides seamless authentication and authoriz
   <Step>
     ### Add the client plugin
 
-    Include the Better Auth client plugin in your query client:
+    The Better Auth plugin works on the server side to handle authentication and permissions. No additional client configuration is required beyond the normal query client setup.
 
-    ```ts title="query-client.ts"
-    import { createQueryClient } from "better-query/client"
-    import { betterAuthClient } from "better-query/client/plugins"
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client"
 
-    export const queryClient = createQueryClient({
-        plugins: [
-            betterAuthClient({
-                // Automatically handles authentication headers
-                autoAuth: true,
-                // Redirect to login if unauthorized
-                loginUrl: "/login",
-                // Handle permission errors
-                onPermissionError: (error) => {
-                    console.warn("Permission denied:", error.message)
-                    // Show toast, redirect, etc.
-                }
-            })
+export const queryClient = createQueryClient({
+    baseURL: "http://localhost:3000/api"
+})
+
+// The server automatically handles authentication for all operations
+// Requests will be authenticated based on session cookies or headers
+const userProducts = await queryClient.product.list();
+```
         ]
     })
     ```

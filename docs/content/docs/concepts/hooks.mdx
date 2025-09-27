@@ -19,11 +19,11 @@ This hook ensures that users can only create resources with valid data:
 
 ```ts title="query.ts"
 import { betterQuery } from "better-query";
-import { createQueryMiddleware, APIError } from "better-query/api";
+import { createMiddleware, APIError } from "better-call";
 
 export const query = betterQuery({
     hooks: {
-        before: createQueryMiddleware(async (ctx) => {
+        before: createMiddleware(async (ctx) => {
             if (ctx.path !== "/api/users") {
                 return;
             }
@@ -43,11 +43,11 @@ To adjust the request context before proceeding:
 
 ```ts title="query.ts"
 import { betterQuery } from "better-query";
-import { createQueryMiddleware } from "better-query/api";
+import { createMiddleware } from "better-call";
 
 export const query = betterQuery({
     hooks: {
-        before: createQueryMiddleware(async (ctx) => {
+        before: createMiddleware(async (ctx) => {
             if (ctx.path === "/api/users") {
                 return {
                     context: {
@@ -72,12 +72,12 @@ export const query = betterQuery({
 
 ```ts title="query.ts"
 import { betterQuery } from "better-query";
-import { createQueryMiddleware } from "better-query/api";
+import { createMiddleware } from "better-call";
 import { sendNotification } from "@/lib/notification"
 
 export const query = betterQuery({
     hooks: {
-        after: createQueryMiddleware(async (ctx) => {
+        after: createMiddleware(async (ctx) => {
             if(ctx.path.startsWith("/api/") && ctx.method === "POST"){
                 const createdResource = ctx.context.response;
                 if(createdResource){
@@ -95,7 +95,7 @@ export const query = betterQuery({
 
 ## Ctx
 
-When you call `createQueryMiddleware` a `ctx` object is passed that provides a lot of useful properties. Including:
+When you call `createMiddleware` a `ctx` object is passed that provides a lot of useful properties. Including:
 
 - **Path:** `ctx.path` to get the current endpoint path.
 - **Method:** `ctx.method` for the HTTP method (GET, POST, PUT, DELETE).
@@ -116,7 +116,7 @@ This utilities allows you to get request information and to send response from a
 Use `ctx.json` to send JSON responses:
 
 ```ts
-const hook = createQueryMiddleware(async (ctx) => {
+const hook = createMiddleware(async (ctx) => {
     return ctx.json({
         message: "Hello World",
     });
@@ -128,9 +128,9 @@ const hook = createQueryMiddleware(async (ctx) => {
 Use `ctx.redirect` to redirect users:
 
 ```ts
-import { createQueryMiddleware } from "better-query/api";
+import { createMiddleware } from "better-call";
 
-const hook = createQueryMiddleware(async (ctx) => {
+const hook = createMiddleware(async (ctx) => {
     throw ctx.redirect("/api/users");
 });
 ```
@@ -143,9 +143,9 @@ const hook = createQueryMiddleware(async (ctx) => {
 Example:
 
 ```ts
-import { createQueryMiddleware } from "better-query/api";
+import { createMiddleware } from "better-call";
 
-const hook = createQueryMiddleware(async (ctx) => {
+const hook = createMiddleware(async (ctx) => {
     ctx.setCookies("my-cookie", "value");
     await ctx.setSignedCookie("my-signed-cookie", "value", ctx.context.secret, {
         maxAge: 1000,
@@ -161,9 +161,9 @@ const hook = createQueryMiddleware(async (ctx) => {
 Throw errors with `APIError` for a specific status code and message:
 
 ```ts
-import { createQueryMiddleware, APIError } from "better-query/api";
+import { createMiddleware, APIError } from "better-call";
 
-const hook = createQueryMiddleware(async (ctx) => {
+const hook = createMiddleware(async (ctx) => {
     throw new APIError("BAD_REQUEST", {
         message: "Invalid request",
     });
@@ -179,7 +179,7 @@ The `ctx` object contains another `context` object inside that's meant to hold c
 The response data from a successful operation. This only exists in after hooks.
 
 ```ts title="query.ts"
-createQueryMiddleware(async (ctx) => {
+createMiddleware(async (ctx) => {
     const responseData = ctx.context.response
 });
 ```
@@ -189,7 +189,7 @@ createQueryMiddleware(async (ctx) => {
 The returned value from the hook is passed to the next hook in the chain.
 
 ```ts title="query.ts"
-createQueryMiddleware(async (ctx) => {
+createMiddleware(async (ctx) => {
     const returned = ctx.context.returned; //this could be a successful response or an APIError
 });
 ```
@@ -199,7 +199,7 @@ createQueryMiddleware(async (ctx) => {
 The response headers added by endpoints and hooks that run before this hook.
 
 ```ts title="query.ts"
-createQueryMiddleware(async (ctx) => {
+createMiddleware(async (ctx) => {
     const responseHeaders = ctx.context.responseHeaders;
 });
 ```
@@ -209,7 +209,7 @@ createQueryMiddleware(async (ctx) => {
 Access Better Query's configuration:
 
 ```ts title="query.ts"
-createQueryMiddleware(async (ctx) => {
+createMiddleware(async (ctx) => {
     const config = ctx.context.queryConfig;
 });
 ```
@@ -223,7 +223,7 @@ You can access the `secret` for your query instance on `ctx.context.secret`
 The database instance used by Better Query:
 
 ```ts title="query.ts"
-createQueryMiddleware(async (ctx) => {
+createMiddleware(async (ctx) => {
     const db = ctx.context.database;
 });
 ```

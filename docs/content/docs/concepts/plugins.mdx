@@ -15,7 +15,7 @@ To add a plugin on the server, include it in the `plugins` array in your query c
 
 ```ts title="server.ts"
 import { betterQuery } from "better-query";
-import { auditPlugin, cachePlugin } from "better-query/plugins";
+import { auditPlugin, cachePlugin } from "better-call";
 
 export const query = betterQuery({
     plugins: [
@@ -31,20 +31,19 @@ export const query = betterQuery({
 });
 ```
 
-Client plugins are added when creating the client. Most plugins require both server and client plugins to work correctly.
-The Better Query client on the frontend uses the `createQueryClient` function provided by `better-query/client`.
+## Client Usage
+
+Better Query plugins work entirely on the server side. The client accesses plugin functionality through the standard API endpoints that plugins create. There are no separate client-side plugins to install.
 
 ```ts title="query-client.ts"
 import { createQueryClient } from "better-query/client";
-import { auditClient, cacheClient } from "better-query/client/plugins";
 
 const queryClient = createQueryClient({
-    plugins: [
-        auditClient(),
-        cacheClient(),
-    ]
+    baseURL: "http://localhost:3000/api"
 });
 ```
+
+Once server plugins are configured, their endpoints become available through the client's `$fetch` method or through generated resource endpoints.
 
 We recommend keeping the query-client and your normal query instance in separate files.
 <Files>
@@ -101,7 +100,7 @@ To create an Auth Endpoint you'll need to import `createAuthEndpoint` from `bett
 Better Query uses wraps around another library called <Link href="https://github.com/bekacru/better-call"> Better Call </Link> to create endpoints. Better call is a simple ts web framework made by the same team behind Better Query.
 
 ```ts title="plugin.ts"
-import { createQueryEndpoint } from "better-query/api";
+import { createQueryEndpoint } from "better-query";
 
 const myPlugin = ()=> {
     return {
@@ -153,7 +152,7 @@ For other properties, you can check the <Link href="https://github.com/bekacru/b
 You can define a database schema for your plugin by passing a `schema` object. The schema object should have the table name as the key and the schema definition as the value.
 
 ```ts title="plugin.ts"
-import { BetterQueryPlugin } from "better-query/plugins";
+import { BetterQueryPlugin } from "better-call";
 
 const myPlugin = ()=> {
     return {
@@ -242,7 +241,7 @@ Don't store sensitive information in `user` or `session` table. Crate a new tabl
 Hooks are used to run code before or after an action is performed, either from a client or directly on the server. You can add hooks to the server by passing a `hooks` object, which should contain `before` and `after` properties.
 
 ```ts title="plugin.ts"
-import { createQueryMiddleware } from "better-query/plugins";
+import { createMiddleware } from "better-call";
 
 const myPlugin = ()=>{
     return {
@@ -252,7 +251,7 @@ const myPlugin = ()=>{
                     matcher: (context)=>{
                         return context.headers.get("x-my-header") === "my-value"
                     },
-                    handler: createQueryMiddleware(async (ctx)=>{
+                    handler: createMiddleware(async (ctx)=>{
                         //do something before the request
                         return  {
                             context: ctx // if you want to modify the context
@@ -263,7 +262,7 @@ const myPlugin = ()=>{
                 matcher: (context)=>{
                     return context.path === "/api/users"
                 },
-                handler: createQueryMiddleware(async (ctx)=>{
+                handler: createMiddleware(async (ctx)=>{
                     return ctx.json({
                         message: "Hello World"
                     }) // if you want to modify the response
@@ -374,7 +373,7 @@ Some additional helper functions for creating server plugins.
 Allows you to get the client's session data by passing the query middleware's `context`.
 
 ```ts title="plugin.ts"
-import { createQueryMiddleware } from "better-query/plugins";
+import { createMiddleware } from "better-call";
 
 const myPlugin = {
     id: "my-plugin",
@@ -383,7 +382,7 @@ const myPlugin = {
                 matcher: (context)=>{
                     return context.headers.get("x-my-header") === "my-value"
                 },
-                handler: createQueryMiddleware(async (ctx) => {
+                handler: createMiddleware(async (ctx) => {
                     const queryData = await getQueryDataFromCtx(ctx);
                     //do something with the client's data.
 
@@ -396,13 +395,13 @@ const myPlugin = {
 } satisfies BetterQueryPlugin
 ```
 
-#### `resourceMiddleware`
+#### `queryContextMiddleware`
 
-A middleware that checks if the client has valid permissions for a resource. If the client has valid access, it'll add the resource data to the context object.
+A middleware that enhances the context object with query-specific functionality. If you need to access Query context in your plugin endpoints, use this middleware.
 
 ```ts title="plugin.ts"
-import { createQueryMiddleware } from "better-query/plugins";
-import { resourceMiddleware } from "better-query/api";
+import { createMiddleware } from "better-call";
+import { queryContextMiddleware } from "better-query";
 
 const myPlugin = ()=>{
     return {
@@ -410,9 +409,9 @@ const myPlugin = ()=>{
         endpoints: {
             getHelloWorld: createQueryEndpoint("/my-plugin/hello-world", {
                 method: "GET",
-                use: [resourceMiddleware], // [!code highlight]
+                use: [queryContextMiddleware], // [!code highlight]
             }, async(ctx) => {
-                const resourceData = ctx.context.resource;
+                const queryContext = ctx.context;
                 return ctx.json({
                     message: "Hello World"
                 })

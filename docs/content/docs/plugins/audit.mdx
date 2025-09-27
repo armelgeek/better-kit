@@ -55,18 +55,27 @@ The Audit plugin provides comprehensive audit logging for all CRUD operations pe
   <Step>
     ### Add the client plugin
 
-    Next, include the audit client plugin in your query client instance.
+    ### Client Usage
 
-    ```ts title="query-client.ts"
-    import { createQueryClient } from "better-query/client"
-    import { auditClient } from "better-query/client/plugins"
+The audit plugin automatically exposes server endpoints that you can access through your regular query client. No additional client configuration is needed.
 
-    export const queryClient = createQueryClient({
-        plugins: [
-            auditClient()
-        ]
-    })
-    ```
+```ts title="query-client.ts"
+import { createQueryClient } from "better-query/client"
+
+export const queryClient = createQueryClient({
+    baseURL: "http://localhost:3000/api"
+})
+
+// Access audit logs via the plugin endpoint
+const auditLogs = await queryClient.$fetch('/audit/logs', {
+    query: {
+        resource: "product",
+        operation: "create",
+        page: 1,
+        limit: 20
+    }
+});
+```
 
   </Step>
 </Steps>

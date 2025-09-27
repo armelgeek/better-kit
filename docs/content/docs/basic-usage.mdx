@@ -382,45 +382,40 @@ If you prefer adding the schema manually, you can check the schema required on t
 
 </Step>
 <Step>
-### Client Configuration
+### Client Usage
 
-Once we're done with the server, we need to add the plugin to the client. To do this, you need to import the plugin and pass it to the `plugins` option of the query client. For example, to add audit functionality, you can use the following code:
+Once the audit plugin is configured on the server, you can access audit functionality through the regular query client API. The audit plugin adds endpoints that can be called from the client:
 
 ```ts title="query-client.ts"  
 import { createQueryClient } from "better-query/client";
-import { auditClient } from "better-query/client/plugins"; // [!code highlight]
 
 const queryClient = createQueryClient({
-    plugins: [ // [!code highlight]
-        auditClient({ // [!code highlight]
-            // Configuration options // [!code highlight]
-        }) // [!code highlight]
-    ] // [!code highlight]
+    baseURL: "http://localhost:3000/api"
 })
 ```
 
-now audit-related methods will be available on the client.
+Now audit-related endpoints are available through the server API:
 
 ```ts title="audit-example.ts"
 import { queryClient } from "./query-client"
 
 const getAuditLogs = async() => {
-    const logs = await queryClient.audit.list({
-        resourceType: "product", // Filter by resource type
-        action: "create", // Filter by action
-        page: 1,
-        limit: 20
-    })
-    return logs;
-}
-
-const getResourceAuditHistory = async(resourceId: string) => {
-    const history = await queryClient.audit.getResourceHistory(resourceId, {
-        resourceType: "product"
-    })
-    return history;
+    // Call the audit endpoint added by the server plugin
+    const response = await queryClient.$fetch('/audit/logs', {
+        query: {
+            resource: "product", // Filter by resource type
+            operation: "create", // Filter by operation
+            page: 1,
+            limit: 20
+        }
+    });
+    return response;
 }
 ```
+
+<Callout type="info">
+Note: Unlike some other frameworks, Better Query doesn't use client-side plugins. All functionality is provided through server endpoints that are accessible via the standard client methods.
+</Callout>
 </Step>
 
 <Step>

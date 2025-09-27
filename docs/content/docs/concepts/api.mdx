@@ -9,16 +9,31 @@ Any endpoint added to Better Query, whether from plugins or the core, will be ac
 
 ## Calling API Endpoints on the Server
 
-To call an API endpoint on the server, import your `query` instance and call the endpoint using the `api` object.
+To call an API endpoint on the server, import your `query` instance and call the endpoint using the `api` object. The available endpoints are generated based on your resource configuration.
 
 ```ts title="server.ts"
-import { betterQuery } from "better-query";
+import { betterQuery, createResource, withId } from "better-query";
+import { z } from "zod";
 import { headers } from "next/headers";
 
+// Define your resources first
+const userSchema = withId({
+    name: z.string(),
+    email: z.string().email(),
+    role: z.string().default("user")
+});
+
 export const query = betterQuery({
-    //...
+    database: /* your database config */,
+    resources: [
+        createResource({
+            name: "user",
+            schema: userSchema,
+        })
+    ]
 })
 
+// Now you can call the generated endpoints
 // calling list resources on the server
 await query.api.listUsers({
     headers: await headers() // some endpoints might require headers
@@ -30,10 +45,12 @@ await query.api.listUsers({
 Unlike the client, the server needs the values to be passed as an object with the key `body` for the body, `headers` for the headers, and `query` for query parameters.
 
 ```ts title="server.ts"
+// List users (GET endpoint)
 await query.api.listUsers({
     headers: await headers()
 })
 
+// Create user (POST endpoint)
 await query.api.createUser({
     body: {
         name: "John Doe",
@@ -43,6 +60,7 @@ await query.api.createUser({
     headers: await headers() // optional but would be useful to get the user IP, user agent, etc.
 })
 
+// Get single user (GET endpoint with ID parameter)
 await query.api.getUser({
     query: {
         id: "user_123"
@@ -101,7 +119,7 @@ const response = await query.api.createUser({
 When you call an API endpoint on the server, it will throw an error if the request fails. You can catch the error and handle it as you see fit. The error instance is an instance of `APIError`.
 
 ```ts title="server.ts"
-import { APIError } from "better-query/api";
+import { APIError } from "better-call";
 
 try {
     await query.api.createUser({
