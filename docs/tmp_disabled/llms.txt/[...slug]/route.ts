@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getLLMText } from "@/app/docs/lib/get-llm-text";
 
 export const revalidate = false;
+export const dynamic = 'force-static';
 
 export async function GET(
 	_req: NextRequest,

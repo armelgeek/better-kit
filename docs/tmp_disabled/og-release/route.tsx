@@ -1,6 +1,8 @@
 import { ImageResponse } from "@vercel/og";
 import { z } from "zod";
 export const runtime = "edge";
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 const ogSchema = z.object({
 	heading: z.string(),

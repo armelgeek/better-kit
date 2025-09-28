@@ -2,6 +2,7 @@ import { source } from "@/lib/source";
 import { getLLMText } from "../docs/lib/get-llm-text";
 
 export const revalidate = false;
+export const dynamic = 'force-static';
 
 export async function GET() {
 	const scan = source
