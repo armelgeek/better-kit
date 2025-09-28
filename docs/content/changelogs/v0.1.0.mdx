@@ -6,16 +6,85 @@ date: 2024-01-15
 
 # Better Query v0.1.0
 
-Initial release of Better Query - a type-safe CRUD API generator.
+Initial release of Better Query - a type-safe CRUD API generator following the architecture patterns of better-auth.
 
-## Features
+## ✨ Features
 
-- **Type-safe schemas** using Zod
-- **Automatic CRUD endpoints** generation
-- **Database adapters** for PostgreSQL, MySQL, SQLite
-- **Plugin system** for extensibility
-- **Client libraries** for React and Vanilla JS
+- **Type-safe schemas** using Zod validation
+- **Automatic CRUD endpoints** generation (Create, Read, Update, Delete, List)
+- **Database adapters** for PostgreSQL, MySQL, SQLite with Kysely query builder
 - **Framework integrations** for Next.js, Hono, and Express
+- **Plugin system** for extensibility and custom business logic
+- **Client libraries** for React and Vanilla JS with type safety
+- **Better Auth integration** for seamless authentication and authorization
+- **Role-based permissions** and organization-level access control
+- **Pagination, filtering, and search** built-in support
+- **Real-time updates** and optimistic updates support
+
+## 🔧 Core Components
+
+### Schema Definition
+```typescript
+import { z } from 'zod';
+import { createResource } from 'better-query';
+
+const userSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+  role: z.enum(['admin', 'user']),
+});
+
+export const userResource = createResource({
+  name: 'user',
+  schema: userSchema,
+});
+```
+
+### Framework Integration
+- **Next.js**: App Router and Pages Router support with universal handlers
+- **Hono**: Native integration with Hono's handler system
+- **Express**: Full compatibility with Express.js middleware
+
+### Client Libraries
+- **React**: Hooks and components for seamless frontend integration
+- **Vanilla JS**: Framework-agnostic client for any JavaScript environment
+- **Type Safety**: Full TypeScript support with inferred types from server
+
+## 🚀 Getting Started
+
+```bash
+npm install better-query
+```
+
+```typescript
+import { betterQuery, createResource } from 'better-query';
+import { z } from 'zod';
+
+const query = betterQuery({
+  basePath: '/api/query',
+  database: { provider: 'sqlite', url: 'data.db' },
+  resources: [
+    createResource({
+      name: 'product',
+      schema: z.object({
+        id: z.string(),
+        name: z.string(),
+        price: z.number(),
+      }),
+    }),
+  ],
+});
+```
+
+## 🔌 Plugin System
+
+Better Query includes a powerful plugin system for extending functionality:
+
+- **Better Auth Plugin**: Native authentication integration
+- **Validation Plugin**: Custom validation rules and middleware  
+- **Logging Plugin**: Request/response logging and monitoring
+- **Cache Plugin**: Response caching and optimization
 
 ## Breaking Changes
 
@@ -24,5 +93,6 @@ This is the initial release, so there are no breaking changes from previous vers
 ## Documentation
 
 - Added comprehensive documentation for all features
-- Added example projects for Next.js integration
+- Added example projects for Next.js, Hono, and Express integration
 - Added guides for database setup and plugin development
+- Added TypeScript integration guides and best practices

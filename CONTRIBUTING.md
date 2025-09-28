@@ -38,10 +38,6 @@ better-kit/
 │   │   │   ├── plugins/     # Plugin system
 │   │   │   └── client/      # Client SDK
 │   │   └── README.md
-│   ├── better-admin/        # Admin UI components
-│   │   ├── components/      # React components
-│   │   ├── lib/             # Utilities
-│   │   └── README.md
 │   └── shared/              # Shared utilities
 ├── dev/                     # Development examples
 │   ├── next-app/           # Next.js demo
@@ -263,19 +259,6 @@ pnpm dev
 
 # Test specific features
 pnpm test crud.test.ts
-```
-
-### Better Admin Development
-```bash
-# Navigate to package  
-cd packages/better-admin
-
-# Start Storybook (if available)
-pnpm storybook
-
-# Build and test
-pnpm build
-pnpm test
 ```
 
 ## 🐛 Bug Report Guidelines

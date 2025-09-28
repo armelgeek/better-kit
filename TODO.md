@@ -6,7 +6,7 @@
 
 ## 🎯 Executive Summary
 
-Better Kit is a powerful TypeScript monorepo containing `better-query` (CRUD generator) and `better-admin` (admin interface). While the core functionality is solid, there are significant opportunities to improve user experience, developer experience, and production readiness.
+Better Kit is a powerful TypeScript monorepo containing `better-query` (CRUD generator). While the core functionality is solid, there are significant opportunities to improve user experience, developer experience, and production readiness.
 
 ---
 

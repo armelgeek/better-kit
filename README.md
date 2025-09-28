@@ -9,7 +9,6 @@ Better Kit is a comprehensive TypeScript monorepo containing production-ready li
 | Package | Description | Version | Status |
 |---------|-------------|---------|--------|
 | [**better-query**](./packages/better-query) | Type-safe CRUD generator with auto-generated REST APIs | `0.0.1` | 🚧 Beta |
-| [**better-admin**](./packages/better-admin) | React admin interface components | `0.0.1` | 🚧 Beta |
 | [**shared**](./packages/shared) | Shared utilities and types | `0.0.1` | 🚧 Beta |
 
 ## ✨ Key Features
@@ -35,31 +34,8 @@ const query = betterQuery({
 // GET    /api/query/user     - List users
 // POST   /api/query/user     - Create user  
 // GET    /api/query/user/:id - Get user
-// PUT    /api/query/user/:id - Update user
+// PUT    /api/query/user/:id - Update user  
 // DELETE /api/query/user/:id - Delete user
-```
-
-### 🎨 **Better Admin** - Admin Interface Components
-```typescript
-import { Admin, Resource, List, DataTable } from 'better-admin';
-
-function App() {
-  return (
-    <Admin dataProvider={dataProvider}>
-      <Resource 
-        name="user" 
-        list={() => (
-          <List>
-            <DataTable>
-              <TextField source="name" />
-              <TextField source="email" />
-            </DataTable>
-          </List>
-        )} 
-      />
-    </Admin>
-  );
-}
 ```
 
 ## 🚀 Quick Start
@@ -92,7 +68,6 @@ pnpm dev
 ## 📚 Documentation
 
 - 📖 **[Better Query Docs](./packages/better-query/README.md)** - CRUD operations and API generation
-- 🎨 **[Better Admin Docs](./packages/better-admin/README.md)** - Admin interface components
 - 📋 **[Complete Documentation](./documentation/README.md)** - Comprehensive guides
 - 💡 **[Examples](./examples/)** - Working code examples
 - 🎯 **[TODO List](./TODO.md)** - Planned improvements and features
@@ -104,7 +79,6 @@ pnpm dev
 better-kit/
 ├── packages/
 │   ├── better-query/     # CRUD generator core
-│   ├── better-admin/     # Admin UI components  
 │   └── shared/           # Shared utilities
 ├── dev/                  # Development apps
 │   ├── next-app/         # Next.js example
