@@ -23,6 +23,24 @@ const todoResource = createResource({
     list: () => true,   // Anyone can list todos
   },
   hooks: {
+    beforeCreate: async (context) => {
+      console.log("Creating todo:", context);
+      // Convert date string to Date object if present
+      if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+        context.data.dueDate = new Date(context.data.dueDate);
+      }
+      // Auto-generate timestamps
+      context.data.createdAt = new Date();
+      context.data.updatedAt = new Date();
+    },
+    beforeUpdate: async (context) => {
+      console.log("Updating todo:", context);
+      // Convert date string to Date object if present
+      if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+        context.data.dueDate = new Date(context.data.dueDate);
+      }
+      context.data.updatedAt = new Date();
+    },
     afterCreate: async (context) => {
       console.log(`✅ Todo created: "${context.result.title}"`);
     },
