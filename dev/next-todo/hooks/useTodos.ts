@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/client";
-import { todoSchema } from "@/lib/query";
+import type { Todo } from "@/lib/query";
 
-type Todo = typeof todoSchema;
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);

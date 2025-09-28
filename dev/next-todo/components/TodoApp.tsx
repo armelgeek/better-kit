@@ -10,8 +10,9 @@ export default function TodoApp() {
     description: "",
     priority: "medium" as const,
     category: "",
-    dueDate: null,
-    tags: "",
+    // date inputs expect a string in YYYY-MM-DD or empty string
+    dueDate: "",
+    tags: [] as string[],
   });
   const [editingTodo, setEditingTodo] = useState<any>(null);
   const [editForm, setEditForm] = useState({
@@ -19,8 +20,9 @@ export default function TodoApp() {
     description: "",
     priority: "medium" as const,
     category: "",
-    dueDate: null,
-    tags: '',
+    dueDate: "",
+    tags: [] as string[],
+    createdAt: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,9 +30,12 @@ export default function TodoApp() {
     if (!newTodo.title.trim()) return;
 
     try {
+      const normalizedDueDate = newTodo.dueDate ? new Date(newTodo.dueDate) : undefined;
       const todoData = {
         ...newTodo,
         completed: false,
+        dueDate: normalizedDueDate,
+        tags: Array.isArray(newTodo.tags) ? newTodo.tags : [],
       };
       console.log('todo data', todoData);
       await createTodo(todoData);
@@ -41,8 +46,8 @@ export default function TodoApp() {
         description: "",
         priority: "medium",
         category: "",
-        dueDate: null,
-        tags: '',
+        dueDate: "",
+        tags: [],
       });
     } catch (err) {
       console.error("Failed to create todo:", err);
@@ -69,13 +74,17 @@ export default function TodoApp() {
 
   const handleEditStart = (todo: any) => {
     setEditingTodo(todo);
+    console.log('data', todo);
+    // Convert stored Date (or ISO string) to YYYY-MM-DD for the input
+    const dueDateStr = todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : "";
     setEditForm({
       title: todo.title,
       description: todo.description || "",
       priority: todo.priority,
       category: todo.category || "",
-      dueDate: todo.dueDate,
+      dueDate: dueDateStr,
       tags: todo.tags || [],
+      createdAt: todo.createdAt,
     });
   };
 
@@ -86,8 +95,9 @@ export default function TodoApp() {
       description: "",
       priority: "medium",
       category: "",
-      dueDate: null,
+      dueDate: "",
       tags: [],
+      createdAt: "",
     });
   };
 
@@ -99,9 +109,12 @@ export default function TodoApp() {
       const updatedTodo = {
         ...editingTodo,
         ...editForm,
+        createdAt: editingTodo.createdAt,
+        dueDate: editForm.dueDate ? new Date(editForm.dueDate) : undefined,
       };
       
-      await updateTodo(editingTodo.id, updatedTodo);
+      const { completed, createdAt, updatedAt, ...rest } = updatedTodo;
+      await updateTodo(editingTodo.id, rest);
       setEditingTodo(null);
       
       // Reset form
@@ -110,8 +123,9 @@ export default function TodoApp() {
         description: "",
         priority: "medium",
         category: "",
-        dueDate: null,
+        dueDate: "",
         tags: [],
+        createdAt: "",
       });
     } catch (err) {
       console.error("Failed to update todo:", err);

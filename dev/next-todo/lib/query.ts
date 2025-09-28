@@ -8,7 +8,10 @@ export const todoSchema = withId({
   completed: z.boolean().default(false),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   category: z.string().optional(),
-  dueDate: z.string().optional(),
+  dueDate: z.preprocess((val) => {
+    if (val == null || val === "") return undefined;
+    return val instanceof Date ? val : new Date(String(val));
+  }, z.date().optional()),
   tags: z.array(z.string()).default([]),
 });
 
@@ -24,11 +27,8 @@ const todoResource = createResource({
     list: () => true,
   },
   hooks: {
-
     beforeCreate: async (context) => {
-      console.log("Creating todo:", context);
-      context.data.dueDate = context.data.dueDate ? new Date(context.data.dueDate) : undefined;
-      context.data.tags = JSON.stringify(context.data.tags) || '[]';
+      // dueDate is preprocessed by Zod already; ensure timestamps
       context.data.createdAt = new Date();
       context.data.updatedAt = new Date();
     },
@@ -43,7 +43,9 @@ const todoResource = createResource({
   },
 });
 
-// Initialize Better Query
+// Exported Todo type inferred from schema
+export type Todo = z.infer<typeof todoSchema>;
+
 export const query = betterQuery({
   basePath: "/api/query",
   database: {
