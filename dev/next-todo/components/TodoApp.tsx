@@ -2,53 +2,64 @@
 
 import { useTodos } from "@/hooks/useTodos";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+// Validation schema for todo forms (aligned with backend schema)
+const todoSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  description: z.string().max(500, "Description must be less than 500 characters").transform(val => val || undefined).optional(),
+  priority: z.enum(["low", "medium", "high"]),
+  category: z.string().max(100, "Category must be less than 100 characters").transform(val => val || undefined).optional(),
+  dueDate: z.string().transform(val => val || undefined).optional(), // Will be converted to Date later
+});
+
+type TodoFormData = z.infer<typeof todoSchema>;
 
 export default function TodoApp() {
   const { todos, loading, error, createTodo, toggleTodo, deleteTodo, updateTodo } = useTodos();
-  const [newTodo, setNewTodo] = useState({
-    title: "",
-    description: "",
-    priority: "medium" as const,
-    category: "",
-    // date inputs expect a string in YYYY-MM-DD or empty string
-    dueDate: "",
-    tags: [] as string[],
+  
+  // React Hook Form for adding new todos
+  const addTodoForm = useForm<TodoFormData>({
+    resolver: zodResolver(todoSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium",
+      category: "",
+      dueDate: "",
+    },
   });
+
+  // React Hook Form for editing todos
+  const editTodoForm = useForm<TodoFormData>({
+    resolver: zodResolver(todoSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium",
+      category: "",
+      dueDate: "",
+    },
+  });
+
   const [editingTodo, setEditingTodo] = useState<any>(null);
-  const [editForm, setEditForm] = useState({
-    title: "",
-    description: "",
-    priority: "medium" as const,
-    category: "",
-    dueDate: "",
-    tags: [] as string[],
-    createdAt: "",
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTodo.title.trim()) return;
-
+  const handleSubmit = async (data: TodoFormData) => {
     try {
-      const normalizedDueDate = newTodo.dueDate ? new Date(newTodo.dueDate) : undefined;
+      const normalizedDueDate = data.dueDate ? new Date(data.dueDate) : undefined;
       const todoData = {
-        ...newTodo,
+        ...data,
         completed: false,
         dueDate: normalizedDueDate,
-        tags: Array.isArray(newTodo.tags) ? newTodo.tags : [],
+        tags: [] as string[],
       };
       console.log('todo data', todoData);
       await createTodo(todoData);
       
       // Reset form
-      setNewTodo({
-        title: "",
-        description: "",
-        priority: "medium",
-        category: "",
-        dueDate: "",
-        tags: [],
-      });
+      addTodoForm.reset();
     } catch (err) {
       console.error("Failed to create todo:", err);
     }
@@ -77,40 +88,29 @@ export default function TodoApp() {
     console.log('data', todo);
     // Convert stored Date (or ISO string) to YYYY-MM-DD for the input
     const dueDateStr = todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : "";
-    setEditForm({
+    editTodoForm.reset({
       title: todo.title,
       description: todo.description || "",
       priority: todo.priority,
       category: todo.category || "",
       dueDate: dueDateStr,
-      tags: todo.tags || [],
-      createdAt: todo.createdAt,
     });
   };
 
   const handleEditCancel = () => {
     setEditingTodo(null);
-    setEditForm({
-      title: "",
-      description: "",
-      priority: "medium",
-      category: "",
-      dueDate: "",
-      tags: [],
-      createdAt: "",
-    });
+    editTodoForm.reset();
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editForm.title.trim() || !editingTodo?.id) return;
+  const handleEditSubmit = async (data: TodoFormData) => {
+    if (!editingTodo?.id) return;
 
     try {
       const updatedTodo = {
         ...editingTodo,
-        ...editForm,
+        ...data,
         createdAt: editingTodo.createdAt,
-        dueDate: editForm.dueDate ? new Date(editForm.dueDate) : undefined,
+        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       };
       
       const { completed, createdAt, updatedAt, ...rest } = updatedTodo;
@@ -118,15 +118,7 @@ export default function TodoApp() {
       setEditingTodo(null);
       
       // Reset form
-      setEditForm({
-        title: "",
-        description: "",
-        priority: "medium",
-        category: "",
-        dueDate: "",
-        tags: [],
-        createdAt: "",
-      });
+      editTodoForm.reset();
     } catch (err) {
       console.error("Failed to update todo:", err);
     }
@@ -176,56 +168,84 @@ export default function TodoApp() {
           {/* Add Todo Form */}
           <div className="mb-8 p-6 bg-gray-50 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Add New Todo</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={addTodoForm.handleSubmit(handleSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Todo title..."
-                  value={newTodo.title}
-                  onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
-                  required
-                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <select
-                  value={newTodo.priority}
-                  onChange={(e) => setNewTodo({ ...newTodo, priority: e.target.value as any })}
-                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="low">Low Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="high">High Priority</option>
-                </select>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Todo title..."
+                    {...addTodoForm.register("title")}
+                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full ${
+                      addTodoForm.formState.errors.title ? "border-red-500" : ""
+                    }`}
+                  />
+                  {addTodoForm.formState.errors.title && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {addTodoForm.formState.errors.title.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <select
+                    {...addTodoForm.register("priority")}
+                    className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                  </select>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Category (optional)"
-                  value={newTodo.category}
-                  onChange={(e) => setNewTodo({ ...newTodo, category: e.target.value })}
-                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Category (optional)"
+                    {...addTodoForm.register("category")}
+                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full ${
+                      addTodoForm.formState.errors.category ? "border-red-500" : ""
+                    }`}
+                  />
+                  {addTodoForm.formState.errors.category && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {addTodoForm.formState.errors.category.message}
+                    </p>
+                  )}
+                </div>
                 <input
                   type="date"
-                  value={newTodo.dueDate}
-                  onChange={(e) => setNewTodo({ ...newTodo, dueDate: e.target.value })}
+                  {...addTodoForm.register("dueDate")}
                   className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
-              <textarea
-                placeholder="Description (optional)"
-                value={newTodo.description}
-                onChange={(e) => setNewTodo({ ...newTodo, description: e.target.value })}
-                className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
-              />
+              <div>
+                <textarea
+                  placeholder="Description (optional)"
+                  {...addTodoForm.register("description")}
+                  className={`border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    addTodoForm.formState.errors.description ? "border-red-500" : ""
+                  }`}
+                  rows={3}
+                />
+                {addTodoForm.formState.errors.description && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {addTodoForm.formState.errors.description.message}
+                  </p>
+                )}
+              </div>
 
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                disabled={addTodoForm.formState.isSubmitting}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  addTodoForm.formState.isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                }`}
               >
-                Add Todo
+                {addTodoForm.formState.isSubmitting ? "Adding..." : "Add Todo"}
               </button>
             </form>
           </div>
@@ -235,19 +255,25 @@ export default function TodoApp() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
                 <h2 className="text-xl font-semibold mb-4">Edit Todo</h2>
-                <form onSubmit={handleEditSubmit} className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Todo title..."
-                    value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                    required
-                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                <form onSubmit={editTodoForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Todo title..."
+                      {...editTodoForm.register("title")}
+                      className={`border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        editTodoForm.formState.errors.title ? "border-red-500" : ""
+                      }`}
+                    />
+                    {editTodoForm.formState.errors.title && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {editTodoForm.formState.errors.title.message}
+                      </p>
+                    )}
+                  </div>
                   
                   <select
-                    value={editForm.priority}
-                    onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as any })}
+                    {...editTodoForm.register("priority")}
                     className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="low">Low Priority</option>
@@ -255,35 +281,55 @@ export default function TodoApp() {
                     <option value="high">High Priority</option>
                   </select>
                   
-                  <input
-                    type="text"
-                    placeholder="Category (optional)"
-                    value={editForm.category}
-                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Category (optional)"
+                      {...editTodoForm.register("category")}
+                      className={`border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        editTodoForm.formState.errors.category ? "border-red-500" : ""
+                      }`}
+                    />
+                    {editTodoForm.formState.errors.category && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {editTodoForm.formState.errors.category.message}
+                      </p>
+                    )}
+                  </div>
                   
                   <input
                     type="date"
-                    value={editForm.dueDate}
-                    onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                    {...editTodoForm.register("dueDate")}
                     className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
 
-                  <textarea
-                    placeholder="Description (optional)"
-                    value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                  />
+                  <div>
+                    <textarea
+                      placeholder="Description (optional)"
+                      {...editTodoForm.register("description")}
+                      className={`border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        editTodoForm.formState.errors.description ? "border-red-500" : ""
+                      }`}
+                      rows={3}
+                    />
+                    {editTodoForm.formState.errors.description && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {editTodoForm.formState.errors.description.message}
+                      </p>
+                    )}
+                  </div>
 
                   <div className="flex space-x-3 pt-4">
                     <button
                       type="submit"
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors"
+                      disabled={editTodoForm.formState.isSubmitting}
+                      className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                        editTodoForm.formState.isSubmitting
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-500 hover:bg-blue-600 text-white"
+                      }`}
                     >
-                      Save Changes
+                      {editTodoForm.formState.isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
                     <button
                       type="button"
