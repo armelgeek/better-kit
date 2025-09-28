@@ -1,0 +1,22 @@
+{
+  "name": "todo-express-better-query",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Simple and elegant todo app using Better Query with Express.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-query": "workspace:*",
+    "better-sqlite3": "^11.10.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "zod": "^3.22.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21"
+  }
+}

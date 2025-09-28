@@ -1,3 +1,4 @@
+"use client";
 import { createFetch } from "@better-fetch/fetch";
 import { createQueryProxy } from "./proxy";
 import type { BetterQuery } from "../../query";
@@ -75,7 +76,7 @@ export const createReactCrudClient = createReactQueryClient;
 export type ReactCrudClient<T extends BetterQuery = BetterQuery> = ReactQueryClient<T>;
 
 // Export types
-export type * from "./types";
+export * from "./types";
 
 // Export hooks
 export { useQuery, useResource } from "./hooks";

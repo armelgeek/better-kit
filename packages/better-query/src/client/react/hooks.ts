@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import type { ReactQueryClient } from "./index";
 import type { BetterQuery } from "../../query";
