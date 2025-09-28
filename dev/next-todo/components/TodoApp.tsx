@@ -6,13 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-// Validation schema for todo forms
+// Validation schema for todo forms (aligned with backend schema)
 const todoSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  description: z.string().max(500, "Description must be less than 500 characters").optional(),
+  description: z.string().max(500, "Description must be less than 500 characters").transform(val => val || undefined).optional(),
   priority: z.enum(["low", "medium", "high"]),
-  category: z.string().max(100, "Category must be less than 100 characters").optional(),
-  dueDate: z.string().optional(),
+  category: z.string().max(100, "Category must be less than 100 characters").transform(val => val || undefined).optional(),
+  dueDate: z.string().transform(val => val || undefined).optional(), // Will be converted to Date later
 });
 
 type TodoFormData = z.infer<typeof todoSchema>;
