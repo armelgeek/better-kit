@@ -7,7 +7,7 @@
     "build": "echo 'No build needed'"
   },
   "dependencies": {
-    "better-crud": "workspace:*",
+    "better-query": "workspace:*",
     "better-sqlite3": "^11.1.2",
     "zod": "^3.22.5"
   }

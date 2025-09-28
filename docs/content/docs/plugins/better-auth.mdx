@@ -77,19 +77,16 @@ The Better Auth Integration plugin provides seamless authentication and authoriz
 
     The Better Auth plugin works on the server side to handle authentication and permissions. No additional client configuration is required beyond the normal query client setup.
 
-```ts title="query-client.ts"
-import { createQueryClient } from "better-query/client"
+    ```ts title="query-client.ts"
+    import { createQueryClient } from "better-query/client"
 
-export const queryClient = createQueryClient({
-    baseURL: "http://localhost:3000/api"
-})
-
-// The server automatically handles authentication for all operations
-// Requests will be authenticated based on session cookies or headers
-const userProducts = await queryClient.product.list();
-```
-        ]
+    export const queryClient = createQueryClient({
+        baseURL: "http://localhost:3000/api"
     })
+
+    // The server automatically handles authentication for all operations
+    // Requests will be authenticated based on session cookies or headers
+    const userProducts = await queryClient.product.list();
     ```
 
   </Step>

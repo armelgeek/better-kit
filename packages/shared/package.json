@@ -1,5 +1,5 @@
 {
-    "name": "@better-auth/shared",
+    "name": "@better-query/shared",
     "types": "./src/index.ts",
     "main": "./src/index.ts",
     "type": "module",

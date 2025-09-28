@@ -527,7 +527,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 							.where(relation.sourceKey, "=", record.id);
 						
 						const junctionResults = await junctionQuery.execute();
-						const targetIds = junctionResults.map((row: any) => row[relation.targetForeignKey]);
+						const targetIds = junctionResults.map((row: any) => row[relation.targetForeignKey!]);
 						
 						if (targetIds.length > 0) {
 							// Query target records
@@ -681,12 +681,9 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		targetTable: string;
 	}): Promise<void> {
 		const provider = this.config?.provider || "sqlite";
-		const sql = generateJunctionTableSQL(params, provider);
+		const createTableSQL = generateJunctionTableSQL(params, provider);
 		
-		await this.db.executeQuery({
-			sql,
-			parameters: [],
-		});
+		await sql`${sql.raw(createTableSQL)}`.execute(this.db);
 	}
 }
 

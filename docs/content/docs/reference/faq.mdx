@@ -1,85 +1,65 @@
 ---
 title: FAQ
-description: Frequently asked questions about Better Auth.
+description: Frequently asked questions about Better Query.
 ---
 
-This page contains frequently asked questions, common issues, and other helpful information about Better Auth.
+This page contains frequently asked questions, common issues, and other helpful information about Better Query.
 
 <Accordions>
-  <Accordion title="Auth client not working">
-  When encountering `createAuthClient` related errors, make sure to have the correct import path as it varies based on environment.
+  <Accordion title="Query client not working">
+  When encountering `createQueryClient` related errors, make sure to have the correct import path as it varies based on environment.
 
-If you're using the auth client on react front-end, you'll need to import it from `/react`:
+If you're using the query client on a React front-end, import it from the react entrypoint:
 
 ```ts title="component.ts"
-import { createAuthClient } from "better-auth/react";
+import { createQueryClient } from "better-query/react";
 ```
 
-Where as if you're using the auth client in Next.js middleware, server-actions, server-components or anything server-related, you'll likely need to import it from `/client`:
+If you're using the query client in Next.js middleware, server-actions, server-components or anything server-related, import it from the client entrypoint and pass server headers where needed:
 
 ```ts title="server.ts"
-import { createAuthClient } from "better-auth/client";
+import { createQueryClient } from "better-query/client";
 ```
 
-</Accordion>
+  </Accordion>
 
-<Accordion title="getSession not working">
-If you try to call `authClient.getSession` on a server environment (e.g, a Next.js server component), it doesn't work since it can't access the cookies. You can use the `auth.api.getSession` instead and pass the request headers to it. 
+  <Accordion title="Server-side requests and headers">
+If you need to perform requests from a server environment (e.g. a Next.js server component) and you must forward incoming request headers, create the query client with fetchOptions that include those headers.
 
 ```tsx title="server.tsx"
-import { auth } from "./auth";
+import { createQueryClient } from "better-query/client";
 import { headers } from "next/headers";
 
-const session = await auth.api.getSession({
+const client = createQueryClient({
+  baseURL: "http://localhost:3000/api",
+  fetchOptions: {
     headers: await headers()
-})
+  }
+});
+
+const products = await client.product.list();
 ```
 
-if you need to use the auth client on the server for different purposes, you still can pass the request headers to it:
-
-```tsx title="server.tsx"
-import { authClient } from "./auth-client";
-import { headers } from "next/headers";
-
-const session = await authClient.getSession({
-    fetchOptions:{
-      headers: await headers()
-    }
-})
-```
-</Accordion>
-
-<Accordion title="Adding custom fields to the users table">
-
-Better Auth provides a type-safe way to extend the user and session schemas, take a look at our docs on <Link href="/docs/concepts/database#extending-core-schema">extending core schema</Link>.
+This pattern ensures server-side requests include the same cookies and headers as the incoming request.
 
 </Accordion>
 
-<Accordion title="Difference between getSession and useSession">
-Both `useSession` and `getSession` instances are used fundamentally different based on the situation.
+<Accordion title="Extending resource schemas">
+Better Query provides a type-safe way to extend resource schemas. See the docs on <Link href="/docs/concepts/database#extending-core-schema">extending core schema</Link> for details.
 
-`useSession` is a hook, meaning it can trigger re-renders whenever session data changes.
+</Accordion>
 
-If you have UI you need to change based on user or session data, you can use this hook.
+<Accordion title="Difference between client hooks and server calls">
+Hooks like `useQuery` (client-side) are designed to trigger re-renders and handle caching in the browser. For server-side rendering or one-off server calls, use the query client on the server and pass request headers explicitly.
 
 <Callout type="warn">
-  For performance reasons, do not use this hook on your `layout.tsx` file. We
-  recommend using RSC and use your server auth instance to get the session data
-  via `auth.api.getSession`.
+  For performance reasons, avoid running client hooks in universal layout files; prefer server-side rendering and server helpers where possible.
 </Callout>
 
-`getSession` returns a promise containing data and error.
-
-For all other situations where you shouldn't use `useSession`, is when you should be using `getSession`.
-
-<Callout type="info">
-   `getSession` is available on both server and client auth instances.
-   Not just the latter.
-</Callout>
 </Accordion>
 
 <Accordion title="Common TypeScript Errors">
-If you're facing typescript errors, make sure your tsconfig has `strict` set to `true`:
+If you're facing TypeScript errors, make sure your tsconfig has `strict` set to `true`:
 ```json title="tsconfig.json"
 {
   "compilerOptions": {
@@ -99,9 +79,7 @@ if you can't set strict to true, you can enable strictNullChecks:
 
 You can learn more in our <Link href="/docs/concepts/typescript#typescript-config">TypeScript docs</Link>.
 </Accordion>
-<Accordion title="Can I remove `name`, `image`, or `email` fields from the user table?">
-At this time, you can't remove the `name`, `image`, or `email` fields from the user table.
-
-We do plan to have more customizability in the future in this regard, but for now, you can't remove these fields.
+<Accordion title="Can I remove core fields from resource schemas?">
+At this time, certain core fields required for correctness (such as unique identifiers and audit timestamps) cannot be removed from resource schemas. We plan to improve schema customizability in the future, but for now keep the core fields in place.
 </Accordion>
 </Accordions>
