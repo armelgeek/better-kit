@@ -9,7 +9,7 @@ const todoSchema = withId({
   priority: z.enum(["low", "medium", "high"]).default("medium"),
   category: z.string().optional(),
   dueDate: z.date().optional(),
-  tags: z.array(z.string()).default([]),
+  tags: z.string().default(''),
 });
 
 // Create todo resource with full CRUD operations
@@ -27,7 +27,6 @@ const todoResource = createResource({
 
     beforeCreate: async (context) => {
       console.log("Creating todo:", context);
-      // Auto-generate timestamps
       context.data.dueDate = context.data.dueDate ? new Date(context.data.dueDate) : undefined;
       context.data.createdAt = new Date();
       context.data.updatedAt = new Date();

@@ -6,7 +6,7 @@ export interface Todo {
   priority: 'low' | 'medium' | 'high';
   category?: string;
   dueDate?: Date;
-  tags?: string[];
+  tags?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

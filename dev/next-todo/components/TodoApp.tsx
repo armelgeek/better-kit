@@ -11,7 +11,7 @@ export default function TodoApp() {
     priority: "medium" as const,
     category: "",
     dueDate: "",
-    tags: [] as string[],
+    tags: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,13 +23,9 @@ export default function TodoApp() {
         ...newTodo,
         completed: false,
         dueDate: newTodo.dueDate ? new Date(newTodo.dueDate) : undefined,
+        tags: newTodo.tags ? JSON.stringify(newTodo.tags) : "[]",
       };
-
-      // Clean empty fields
-      if (!todoData.description) delete todoData.description;
-      if (!todoData.category) delete todoData.category;
-      if (!todoData.dueDate) delete todoData.dueDate;
-
+      console.log('todo data:', todoData);
       await createTodo(todoData);
       
       // Reset form
@@ -39,7 +35,7 @@ export default function TodoApp() {
         priority: "medium",
         category: "",
         dueDate: "",
-        tags: [],
+        tags: "",
       });
     } catch (err) {
       console.error("Failed to create todo:", err);

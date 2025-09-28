@@ -1,3 +1,4 @@
+"use client";
 import type { BetterFetch, BetterFetchOption } from "@better-fetch/fetch";
 import { QUERY_ERROR_CODES } from "../index";
 import type { ReactQueryClientOptions } from "./types";
