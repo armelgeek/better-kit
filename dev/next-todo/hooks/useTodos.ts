@@ -2,20 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/client";
+import { todoSchema } from "@/lib/query";
 
-interface Todo {
-  id?: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  priority: "low" | "medium" | "high";
-  category?: string;
-  dueDate?: Date;
-  tags: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
+type Todo = typeof todoSchema;
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +41,7 @@ export function useTodos() {
     try {
       const result = await queryClient.todo.update(id, updates);
       if (result.data) {
-        setTodos(prev => prev.map(todo => 
+        setTodos(prev => prev.map((todo) => 
           todo.id === id ? result.data : todo
         ));
         return result.data;
@@ -65,7 +54,7 @@ export function useTodos() {
   const deleteTodo = async (id: string) => {
     try {
       await queryClient.todo.delete(id);
-      setTodos(prev => prev.filter(todo => todo.id !== id));
+      setTodos(prev => prev.filter((todo: Todo) => todo.id !== id));
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : "Failed to delete todo");
     }

@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import { useTodos } from "@/hooks/useTodos";
+import { useState } from "react";
 
 export default function TodoApp() {
-  const { todos, loading, error, createTodo, toggleTodo, deleteTodo } = useTodos();
+  const { todos, loading, error, createTodo, toggleTodo, deleteTodo, updateTodo } = useTodos();
   const [newTodo, setNewTodo] = useState({
     title: "",
     description: "",
     priority: "medium" as const,
     category: "",
-    dueDate: "",
+    dueDate: null,
     tags: "",
+  });
+  const [editingTodo, setEditingTodo] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    priority: "medium" as const,
+    category: "",
+    dueDate: null,
+    tags: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,10 +31,8 @@ export default function TodoApp() {
       const todoData = {
         ...newTodo,
         completed: false,
-        dueDate: newTodo.dueDate ? new Date(newTodo.dueDate) : undefined,
-        tags: newTodo.tags ? JSON.stringify(newTodo.tags) : "[]",
       };
-      console.log('todo data:', todoData);
+      console.log('todo data', todoData);
       await createTodo(todoData);
       
       // Reset form
@@ -34,11 +41,19 @@ export default function TodoApp() {
         description: "",
         priority: "medium",
         category: "",
-        dueDate: "",
-        tags: "",
+        dueDate: null,
+        tags: '',
       });
     } catch (err) {
       console.error("Failed to create todo:", err);
+    }
+  };
+
+  const handleToggle = async (todoId: string) => {
+    try {
+      await toggleTodo(todoId);
+    } catch (err) {
+      console.error("Failed to toggle todo:", err);
     }
   };
 
@@ -49,6 +64,57 @@ export default function TodoApp() {
       } catch (err) {
         console.error("Failed to delete todo:", err);
       }
+    }
+  };
+
+  const handleEditStart = (todo: any) => {
+    setEditingTodo(todo);
+    setEditForm({
+      title: todo.title,
+      description: todo.description || "",
+      priority: todo.priority,
+      category: todo.category || "",
+      dueDate: todo.dueDate,
+      tags: todo.tags || [],
+    });
+  };
+
+  const handleEditCancel = () => {
+    setEditingTodo(null);
+    setEditForm({
+      title: "",
+      description: "",
+      priority: "medium",
+      category: "",
+      dueDate: null,
+      tags: [],
+    });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm.title.trim() || !editingTodo?.id) return;
+
+    try {
+      const updatedTodo = {
+        ...editingTodo,
+        ...editForm,
+      };
+      
+      await updateTodo(editingTodo.id, updatedTodo);
+      setEditingTodo(null);
+      
+      // Reset form
+      setEditForm({
+        title: "",
+        description: "",
+        priority: "medium",
+        category: "",
+        dueDate: null,
+        tags: [],
+      });
+    } catch (err) {
+      console.error("Failed to update todo:", err);
     }
   };
 
@@ -150,6 +216,74 @@ export default function TodoApp() {
             </form>
           </div>
 
+          {/* Edit Todo Modal/Form */}
+          {editingTodo && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                <h2 className="text-xl font-semibold mb-4">Edit Todo</h2>
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Todo title..."
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    required
+                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  
+                  <select
+                    value={editForm.priority}
+                    onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as any })}
+                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                  </select>
+                  
+                  <input
+                    type="text"
+                    placeholder="Category (optional)"
+                    value={editForm.category}
+                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  
+                  <input
+                    type="date"
+                    value={editForm.dueDate}
+                    onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                  />
+
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEditCancel}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* Todos List */}
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -175,7 +309,13 @@ export default function TodoApp() {
                         <input
                           type="checkbox"
                           checked={todo.completed}
-                          onChange={() => todo.id && toggleTodo(todo.id)}
+                          onChange={() => {
+                            if (todo.id) {
+                              handleToggle(todo.id);
+                            } else {
+                              console.warn('Todo ID is missing');
+                            }
+                          }}
                           className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <div className="flex-1">
@@ -212,19 +352,36 @@ export default function TodoApp() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => todo.id && handleDelete(todo.id)}
-                        className="text-red-500 hover:text-red-700 ml-2 p-1 rounded transition-colors"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditStart(todo)}
+                          className="text-blue-500 hover:text-blue-700 p-1 rounded transition-colors"
+                          title="Edit todo"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => todo.id && handleDelete(todo.id)}
+                          className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                          title="Delete todo"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
