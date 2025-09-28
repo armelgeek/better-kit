@@ -345,7 +345,6 @@ app.get("/", (req, res) => {
                         if (!todoData.description) delete todoData.description;
                         if (!todoData.category) delete todoData.category;
                         if (!todoData.dueDate) delete todoData.dueDate;
-                        else todoData.dueDate = new Date(todoData.dueDate);
 
                         const response = await fetch('/api/query/todo/create', {
                             method: 'POST',
