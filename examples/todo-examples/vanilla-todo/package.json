@@ -1,0 +1,12 @@
+{
+  "name": "todo-vanilla-better-query",
+  "version": "1.0.0",
+  "description": "Simple and elegant todo app using Better Query with Vanilla JavaScript",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

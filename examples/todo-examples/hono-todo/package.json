@@ -1,0 +1,20 @@
+{
+  "name": "todo-hono-better-query",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Simple and elegant todo app using Better Query with Hono.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-query": "workspace:*",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.8.0",
+    "zod": "^3.22.5",
+    "better-sqlite3": "^11.1.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11"
+  }
+}

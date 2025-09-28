@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Vanilla JS + Better Query</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                    <span class="text-purple-600">📝</span> Vanilla Todo
+                </h1>
+                <p class="text-gray-600">Pure JavaScript + Better Query - No Framework Required</p>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold" id="totalCount">0</div>
+                    <div class="text-sm opacity-90">Total</div>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold" id="completedCount">0</div>
+                    <div class="text-sm opacity-90">Done</div>
+                </div>
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold" id="pendingCount">0</div>
+                    <div class="text-sm opacity-90">Pending</div>
+                </div>
+                <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold" id="highPriorityCount">0</div>
+                    <div class="text-sm opacity-90">High Priority</div>
+                </div>
+            </div>
+
+            <!-- Add Todo Form -->
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-8 border-2 border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                    ✨ Create New Todo
+                </h2>
+                <form id="todoForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input 
+                            type="text" 
+                            id="title"
+                            placeholder="What needs to be done?" 
+                            required
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                        />
+                        <select id="priority" class="border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            <option value="low">🟢 Low Priority</option>
+                            <option value="medium" selected>🟡 Medium Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input 
+                            type="text" 
+                            id="category"
+                            placeholder="Category (optional)"
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        />
+                        <input 
+                            type="date"
+                            id="dueDate"
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        />
+                    </div>
+                    <textarea 
+                        id="description"
+                        placeholder="Description (optional)" 
+                        rows="3"
+                        class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    ></textarea>
+                    <button 
+                        type="submit"
+                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                        ➕ Add Todo
+                    </button>
+                </form>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-3 mb-6">
+                <button onclick="setFilter('all')" id="filterAll" class="filter-btn bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
+                    All Todos
+                </button>
+                <button onclick="setFilter('pending')" id="filterPending" class="filter-btn bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                    Pending
+                </button>
+                <button onclick="setFilter('completed')" id="filterCompleted" class="filter-btn bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                    Completed
+                </button>
+                <button onclick="setFilter('high')" id="filterHigh" class="filter-btn bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium">
+                    High Priority
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-8 hidden">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+                <p class="mt-4 text-gray-600">Loading todos...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="hidden bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded">
+                <div class="flex">
+                    <div class="text-red-400">⚠️</div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700" id="errorMessage"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Todos List -->
+            <div id="todosList" class="space-y-4">
+                <!-- Todos will be dynamically inserted here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-12 text-gray-500 hidden">
+                <div class="text-6xl mb-4">📝</div>
+                <p class="text-xl mb-2">No todos found!</p>
+                <p>Add your first todo above to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Better Query Client Implementation
+        class BetterQueryClient {
+            constructor(baseUrl) {
+                this.baseUrl = baseUrl;
+            }
+
+            async request(endpoint, options = {}) {
+                try {
+                    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers,
+                        },
+                        ...options,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('API request failed:', error);
+                    throw error;
+                }
+            }
+
+            // Todo CRUD operations
+            todo = {
+                list: () => this.request('/todo/list'),
+                create: (data) => this.request('/todo/create', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }),
+                update: (id, data) => this.request(`/todo/update/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }),
+                delete: (id) => this.request(`/todo/delete/${id}`, {
+                    method: 'DELETE',
+                }),
+            };
+        }
+
+        // Initialize client - try multiple possible endpoints
+        const possibleEndpoints = [
+            'http://localhost:3000/api/query',  // Express/Hono
+            '/api/query',                       // Same origin
+            'http://localhost:3001/api/query',  // Alternative port
+        ];
+
+        let queryClient;
+        let currentEndpoint = possibleEndpoints[0];
+
+        // App state
+        let todos = [];
+        let currentFilter = 'all';
+
+        // Initialize the app
+        async function init() {
+            // Try to find working endpoint
+            for (const endpoint of possibleEndpoints) {
+                try {
+                    const testClient = new BetterQueryClient(endpoint);
+                    await testClient.todo.list();
+                    queryClient = testClient;
+                    currentEndpoint = endpoint;
+                    console.log(`✅ Connected to Better Query API at: ${endpoint}`);
+                    break;
+                } catch (error) {
+                    console.log(`❌ Failed to connect to ${endpoint}:`, error.message);
+                }
+            }
+
+            if (!queryClient) {
+                showError('Could not connect to Better Query API. Please start one of the backend servers (Hono, Express, or Next.js).');
+                return;
+            }
+
+            // Load initial data
+            await loadTodos();
+
+            // Set up form handler
+            document.getElementById('todoForm').addEventListener('submit', handleAddTodo);
+        }
+
+        // Load todos from API
+        async function loadTodos() {
+            showLoading(true);
+            hideError();
+
+            try {
+                const result = await queryClient.todo.list();
+                todos = result.data || [];
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                showError(`Failed to load todos: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Add new todo
+        async function handleAddTodo(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const todoData = {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim() || undefined,
+                priority: document.getElementById('priority').value,
+                category: document.getElementById('category').value.trim() || undefined,
+                dueDate: document.getElementById('dueDate').value ? new Date(document.getElementById('dueDate').value) : undefined,
+                completed: false,
+            };
+
+            if (!todoData.title) return;
+
+            try {
+                const result = await queryClient.todo.create(todoData);
+                if (result.data) {
+                    todos.unshift(result.data);
+                    form.reset();
+                    renderTodos();
+                    updateStats();
+                }
+            } catch (error) {
+                showError(`Failed to add todo: ${error.message}`);
+            }
+        }
+
+        // Toggle todo completion
+        async function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+
+            try {
+                const result = await queryClient.todo.update(id, {
+                    ...todo,
+                    completed: !todo.completed,
+                });
+
+                if (result.data) {
+                    const index = todos.findIndex(t => t.id === id);
+                    if (index !== -1) {
+                        todos[index] = result.data;
+                        renderTodos();
+                        updateStats();
+                    }
+                }
+            } catch (error) {
+                showError(`Failed to update todo: ${error.message}`);
+            }
+        }
+
+        // Delete todo
+        async function deleteTodo(id) {
+            if (!confirm('Are you sure you want to delete this todo?')) return;
+
+            try {
+                await queryClient.todo.delete(id);
+                todos = todos.filter(t => t.id !== id);
+                renderTodos();
+                updateStats();
+            } catch (error) {
+                showError(`Failed to delete todo: ${error.message}`);
+            }
+        }
+
+        // Filter todos
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors';
+            });
+            
+            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.className = 'filter-btn bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors';
+            }
+            
+            renderTodos();
+        }
+
+        // Render todos
+        function renderTodos() {
+            const container = document.getElementById('todosList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredTodos = todos;
+            
+            // Apply filters
+            switch (currentFilter) {
+                case 'pending':
+                    filteredTodos = todos.filter(t => !t.completed);
+                    break;
+                case 'completed':
+                    filteredTodos = todos.filter(t => t.completed);
+                    break;
+                case 'high':
+                    filteredTodos = todos.filter(t => t.priority === 'high');
+                    break;
+            }
+
+            if (filteredTodos.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = filteredTodos.map(todo => `
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all hover:border-purple-300">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-4 flex-1">
+                            <input 
+                                type="checkbox" 
+                                ${todo.completed ? 'checked' : ''}
+                                onchange="toggleTodo('${todo.id}')"
+                                class="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                            />
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold mb-1 ${todo.completed ? 'text-gray-500 line-through' : 'text-gray-800'}">
+                                    ${escapeHtml(todo.title)}
+                                </h3>
+                                ${todo.description ? `
+                                    <p class="text-gray-600 text-sm mb-3">
+                                        ${escapeHtml(todo.description)}
+                                    </p>
+                                ` : ''}
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${getPriorityClass(todo.priority)}">
+                                        ${getPriorityIcon(todo.priority)} ${todo.priority.toUpperCase()}
+                                    </span>
+                                    ${todo.category ? `
+                                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                                            #${escapeHtml(todo.category)}
+                                        </span>
+                                    ` : ''}
+                                    ${todo.dueDate ? `
+                                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium">
+                                            📅 ${new Date(todo.dueDate).toLocaleDateString()}
+                                        </span>
+                                    ` : ''}
+                                    ${todo.completed ? `
+                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+                                            ✅ COMPLETED
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            onclick="deleteTodo('${todo.id}')"
+                            class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors ml-2"
+                            title="Delete todo"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const completed = todos.filter(t => t.completed).length;
+            const pending = todos.filter(t => !t.completed).length;
+            const highPriority = todos.filter(t => t.priority === 'high' && !t.completed).length;
+
+            document.getElementById('totalCount').textContent = todos.length;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('highPriorityCount').textContent = highPriority;
+        }
+
+        // Utility functions
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getPriorityClass(priority) {
+            switch (priority) {
+                case 'low':
+                    return 'bg-green-100 text-green-800';
+                case 'medium':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'high':
+                    return 'bg-red-100 text-red-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getPriorityIcon(priority) {
+            switch (priority) {
+                case 'low': return '🟢';
+                case 'medium': return '🟡';
+                case 'high': return '🔴';
+                default: return '⚪';
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
