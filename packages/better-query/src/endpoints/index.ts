@@ -1,5 +1,5 @@
 import { createEndpointCreator, createMiddleware } from "better-call";
-import { ZodObject, ZodRawShape, z } from "zod";
+import { ZodObject, z } from "zod";
 import {
 	QueryContext,
 	QueryPermissionContext,
@@ -7,17 +7,13 @@ import {
 	PaginationResult,
 	IncludeOptions,
 	QueryHookContext,
-	SecurityContext,
-	AuditEvent,
 	QueryParams,
 } from "../types";
 import { convertToQueryWhere, convertToQueryOrderBy } from "../adapters/utils";
-import { capitalize, generateId, validateData } from "../utils/schema";
+import { capitalize, generateId } from "../utils/schema";
 import { 
-	sanitizeData, 
 	sanitizeFields, 
 	hasRequiredScopes, 
-	checkOwnership, 
 	extractSecurityContext, 
 	checkEnhancedPermissions,
 	rateLimiter,
@@ -164,6 +160,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				}).optional(),
 			},
 			async (ctx) => {
+				console.log('ici');
 				const { body, context, query } = ctx;
 				const { adapter } = context;
 				
@@ -171,6 +168,31 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
 				const securityContext = extractSecurityContext(ctx.request || ctx);
+
+				// Execute before hooks FIRST - they can modify data and context
+				const hookContext: QueryHookContext = {
+					user,
+					resource: name,
+					operation: "create",
+					data: body, // Original body data
+					request: ctx,
+					adapter: {
+						...adapter,
+						context: context, // Pass the full CRUD context
+					},
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
+
+				// Use potentially modified data from hooks
+				let data = hookContext.data;
 
 				// Rate limiting check
 				if (context.security?.rateLimit) {
@@ -188,7 +210,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 				// Enhanced validation and sanitization
 				const sanitizationRules = resourceConfig.sanitization?.global || [];
-				const validation = validateAndSanitizeInput(schema, body, sanitizationRules);
+				const validation = validateAndSanitizeInput(schema, data, sanitizationRules);
 				
 				if (!validation.success) {
 					return ctx.json(
@@ -197,7 +219,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					);
 				}
 
-				let data = validation.data;
+				data = validation.data;
 
 				// Apply field-specific sanitization
 				if (resourceConfig.sanitization?.fields) {
@@ -224,27 +246,8 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					data.id = generateId();
 				}
 
-				// Execute before hooks
-				const hookContext: QueryHookContext = {
-					user,
-					resource: name,
-					operation: "create",
-					data,
-					request: ctx,
-					adapter: {
-						...adapter,
-						context: context, // Pass the full CRUD context
-					},
-				};
-
-				try {
-					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
-				} catch (error) {
-					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
-						{ status: 500 },
-					);
-				}
+				// Update hook context with final data
+				hookContext.data = data;
 
 				// Parse include options
 				const include = parseIncludeOptions(query);
@@ -303,6 +306,28 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
 
+				// Execute before hooks FIRST for read operations
+				const hookContext: QueryHookContext = {
+					user,
+					resource: name,
+					operation: "read",
+					id,
+					request: ctx,
+					adapter: {
+						...adapter,
+						context: context,
+					},
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
+
 				// Parse include options
 				const include = parseIncludeOptions(query);
 
@@ -316,6 +341,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					if (!result) {
 						return ctx.json({ error: "Resource not found" }, { status: 404 });
 					}
+
+					// Update hook context with found data
+					hookContext.existingData = result;
 
 					// Check permissions with enhanced context including existing data
 					const permissionContext: QueryPermissionContext = {
@@ -332,6 +360,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					if (!hasPermission) {
 						return ctx.json({ error: "Forbidden" }, { status: 403 });
 					}
+
+					// Execute after hooks
+					hookContext.result = result;
+					await HookExecutor.executeAfter(resourceConfig.hooks, hookContext);
 
 					return ctx.json(result);
 				} catch (error) {
@@ -368,7 +400,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
 
-				// Check if resource exists first (needed for ownership checks)
+				// Check if resource exists first (needed for hooks and ownership checks)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
 					where: convertToQueryWhere([{ field: "id", value: id }]),
@@ -378,11 +410,38 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					return ctx.json({ error: "Resource not found" }, { status: 404 });
 				}
 
+				// Execute before hooks FIRST - they can modify data
+				const hookContext: QueryHookContext = {
+					user,
+					resource: name,
+					operation: "update",
+					id,
+					data: body, // Original body data
+					existingData: existing,
+					request: ctx,
+					adapter: {
+						...adapter,
+						context: context,
+					},
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
+
+				// Use potentially modified data from hooks
+				let data = hookContext.data;
+
 				// Enhanced validation and sanitization
 				const sanitizationRules = resourceConfig.sanitization?.global || [];
 				const validation = validateAndSanitizeInput(
 					(schema as ZodObject<any>).partial(), 
-					body, 
+					data, 
 					sanitizationRules
 				);
 				
@@ -393,7 +452,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					);
 				}
 
-				let data = validation.data;
+				data = validation.data;
 
 				// Apply field-specific sanitization
 				if (resourceConfig.sanitization?.fields) {
@@ -417,29 +476,8 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
 
-				// Execute before hooks
-				const hookContext: QueryHookContext = {
-					user,
-					resource: name,
-					operation: "update",
-					id,
-					data,
-					existingData: existing,
-					request: ctx,
-					adapter: {
-						...adapter,
-						context: context, // Pass the full CRUD context
-					},
-				};
-
-				try {
-					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
-				} catch (error) {
-					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
-						{ status: 500 },
-					);
-				}
+				// Update hook context with final data
+				hookContext.data = data;
 
 				try {
 					const result = await adapter.update({
@@ -491,7 +529,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
 
-				// Check if resource exists first (needed for ownership and audit)
+				// Check if resource exists first (needed for hooks, ownership and audit)
 				const existing = await adapter.findFirst({
 					model: actualTableName,
 					where: convertToQueryWhere([{ field: "id", value: id }]),
@@ -499,6 +537,29 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 				if (!existing) {
 					return ctx.json({ error: "Resource not found" }, { status: 404 });
+				}
+
+				// Execute before hooks FIRST
+				const hookContext: QueryHookContext = {
+					user,
+					resource: name,
+					operation: "delete",
+					id,
+					existingData: existing,
+					request: ctx,
+					adapter: {
+						...adapter,
+						context: context,
+					},
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
 				}
 
 				// Check permissions with enhanced context including existing data
@@ -515,29 +576,6 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const hasPermission = await checkPermission("delete", permissionContext, resourceConfig);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
-				}
-
-				// Execute before hooks
-				const hookContext: QueryHookContext = {
-					user,
-					resource: name,
-					operation: "delete",
-					id,
-					existingData: existing,
-					request: ctx,
-					adapter: {
-						...adapter,
-						context: context, // Pass the full CRUD context
-					},
-				};
-
-				try {
-					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
-				} catch (error) {
-					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
-						{ status: 500 },
-					);
 				}
 
 				try {
@@ -603,6 +641,27 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				// Extract user and security context
 				const user = extractUser(ctx);
 				const userScopes = extractUserScopes(user);
+
+				// Execute before hooks FIRST for list operations
+				const hookContext: QueryHookContext = {
+					user,
+					resource: name,
+					operation: "list",
+					request: ctx,
+					adapter: {
+						...adapter,
+						context: context,
+					},
+				};
+
+				try {
+					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
+				} catch (error) {
+					return ctx.json(
+						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{ status: 500 },
+					);
+				}
 
 				// Build enhanced query parameters with proper typing
 				const enhancedQuery: QueryParams = {
@@ -701,6 +760,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 							hasPrev: page > 1,
 						},
 					};
+
+					// Execute after hooks
+					hookContext.result = result;
+					await HookExecutor.executeAfter(resourceConfig.hooks, hookContext);
 
 					return ctx.json(result);
 				} catch (error) {
