@@ -116,7 +116,7 @@ export const navMenu = [
 	{
 		name: "docs",
 
-		path: "/docs",
+		path: "/docs/installation",
 	},
 	{
 		name: "changelogs",

@@ -13,10 +13,10 @@ import { CustomSearchDialog } from "@/components/search-dialog";
 
 export const metadata = createMetadata({
 	title: {
-		template: "%s | Better Auth",
-		default: "Better Auth",
+		template: "%s | Better Query",
+		default: "Better Query",
 	},
-	description: "The most comprehensive authentication library for TypeScript.",
+	description: "The most comprehensive query and CRUD framework for TypeScript.",
 	metadataBase: baseUrl,
 });
 
