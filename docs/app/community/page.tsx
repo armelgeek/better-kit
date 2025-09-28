@@ -8,20 +8,31 @@ type NpmPackageResp = {
 	package: string;
 };
 async function getNPMPackageDownloads() {
-	const res = await fetch(
-		`https://api.npmjs.org/downloads/point/last-year/better-auth`,
-		{
-			next: { revalidate: 60 },
-		},
-	);
+	try {
+		const res = await fetch(
+			`https://api.npmjs.org/downloads/point/last-year/better-auth`,
+			{
+				next: { revalidate: 60 },
+			},
+		);
 
-	const npmStat: NpmPackageResp = await res.json();
-	return npmStat;
+		const npmStat: NpmPackageResp = await res.json();
+		return npmStat;
+	} catch (error) {
+		console.log('Failed to fetch npm downloads:', error);
+		// Return mock data for static build
+		return {
+			downloads: 10000,
+			start: '',
+			end: '',
+			package: 'better-auth'
+		};
+	}
 }
 async function getGitHubStars() {
 	try {
 		const response = await fetch(
-			"https://api.github.com/repos/better-auth/better-auth",
+			"https://api.github.com/repos/armelgeek/better-kit",
 			{
 				next: {
 					revalidate: 60,
@@ -31,8 +42,9 @@ async function getGitHubStars() {
 		const json = await response.json();
 		const stars = Number(json.stargazers_count);
 		return stars;
-	} catch {
-		return 0;
+	} catch (error) {
+		console.log('Failed to fetch GitHub stars:', error);
+		return 100; // Default value for static build
 	}
 }
 export default async function CommunityPage() {

@@ -348,7 +348,6 @@ export const query = betterQuery({
 
 The audit plugin creates the following database table:
 
-<DatabaseSchema>
 ```sql
 CREATE TABLE audit_logs (
     id TEXT PRIMARY KEY,
@@ -369,7 +368,6 @@ CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
 CREATE INDEX idx_audit_logs_operation ON audit_logs(operation);
 ```
-</DatabaseSchema>
 
 ## React Hook Example
 

@@ -4,28 +4,19 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
-	async rewrites() {
-		return [
-			{
-				source: "/docs/:path*.mdx",
-				destination: "/llms.txt/:path*",
-			},
-		];
+	// Enable static export for GitHub Pages
+	output: 'export',
+	basePath: process.env.NODE_ENV === 'production' ? '/better-kit' : '',
+	trailingSlash: true,
+	
+	// Set output file tracing root for monorepo
+	outputFileTracingRoot: '..',
+	
+	// Skip dynamic routes that won't work with static export
+	generateBuildId: async () => {
+		return 'gh-pages-build'
 	},
-	redirects: async () => {
-		return [
-			{
-				source: "/docs",
-				destination: "/docs/introduction",
-				permanent: true,
-			},
-			{
-				source: "/docs/examples",
-				destination: "/docs/examples/next-js",
-				permanent: true,
-			},
-		];
-	},
+	
 	serverExternalPackages: [
 		"ts-morph",
 		"typescript",
@@ -33,6 +24,7 @@ const config = {
 		"@shikijs/twoslash",
 	],
 	images: {
+		unoptimized: true, // Required for static export
 		remotePatterns: [
 			{
 				hostname: "images.unsplash.com",
