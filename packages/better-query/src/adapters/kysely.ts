@@ -13,9 +13,19 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
 	for (const key in transformed) {
 		const value = transformed[key];
 
+		// Remove undefined values
+		if (value === undefined) {
+			delete transformed[key];
+			continue;
+		}
+
 		// Convert Date objects to ISO strings
 		if (value instanceof Date) {
 			transformed[key] = value.toISOString();
+		}
+		// Convert booleans to integers (0 or 1) for SQLite compatibility
+		else if (typeof value === "boolean") {
+			transformed[key] = value ? 1 : 0;
 		}
 		// Convert arrays to JSON strings
 		else if (Array.isArray(value)) {
