@@ -851,8 +851,8 @@ createResource({
 Hooks are executed in the following order:
 
 1. **Global before hooks**
-2. **Plugin before hooks**
-3. **Resource before hooks**
+2. **Resource before hooks** (for data transformation)
+3. **Plugin before hooks** (for validation after transformation)
 4. **Database operation**
 5. **Resource after hooks**
 6. **Plugin after hooks**

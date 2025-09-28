@@ -23,7 +23,30 @@ export class HookExecutor {
 		hooks: Record<string, any> | undefined,
 		context: CrudHookContext
 	): Promise<void> {
-		// Execute plugin hooks first
+		// Execute resource-specific hooks first to allow data transformation
+		if (hooks) {
+			const { operation } = context;
+			let hookFn: any;
+
+			switch (operation) {
+				case "create":
+					// Support both onCreate and beforeCreate naming conventions
+					hookFn = hooks.onCreate || hooks.beforeCreate;
+					break;
+				case "update":
+					// Support both onUpdate and beforeUpdate naming conventions
+					hookFn = hooks.onUpdate || hooks.beforeUpdate;
+					break;
+				case "delete":
+					// Support both onDelete and beforeDelete naming conventions
+					hookFn = hooks.onDelete || hooks.beforeDelete;
+					break;
+			}
+
+			await this.executeHook(hookFn, context);
+		}
+
+		// Execute plugin hooks after resource hooks (e.g., validation after transformation)
 		if (context.adapter?.context?.pluginManager) {
 			const pluginManager = context.adapter.context.pluginManager;
 			const { operation } = context;
@@ -51,29 +74,6 @@ export class HookExecutor {
 			
 			await pluginManager.executeHook(hookName, context);
 		}
-
-		// Execute resource-specific hooks
-		if (!hooks) return;
-
-		const { operation } = context;
-		let hookFn: any;
-
-		switch (operation) {
-			case "create":
-				// Support both onCreate and beforeCreate naming conventions
-				hookFn = hooks.onCreate || hooks.beforeCreate;
-				break;
-			case "update":
-				// Support both onUpdate and beforeUpdate naming conventions
-				hookFn = hooks.onUpdate || hooks.beforeUpdate;
-				break;
-			case "delete":
-				// Support both onDelete and beforeDelete naming conventions
-				hookFn = hooks.onDelete || hooks.beforeDelete;
-				break;
-		}
-
-		await this.executeHook(hookFn, context);
 	}
 
 	/**
