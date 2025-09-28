@@ -57,6 +57,45 @@ your database schema based on your Better Query configuration and plugins.
 npx @better-query/cli@latest generate
 ```
 
+## Custom Operations
+
+The Prisma adapter includes native custom operations that leverage Prisma's advanced features like transactions, native upserts, and aggregations.
+
+```typescript
+// Example: Transaction with multiple operations
+const result = await query.customOperation('transaction', {
+  operations: [
+    { 
+      model: 'user', 
+      operation: 'create', 
+      data: { name: 'John', email: 'john@example.com' } 
+    },
+    { 
+      model: 'product', 
+      operation: 'update', 
+      data: { where: { id: '1' }, data: { stock: 10 } } 
+    }
+  ]
+});
+
+// Example: Upsert with relations
+const user = await query.customOperation('upsert', {
+  model: 'user',
+  where: { email: 'john@example.com' },
+  update: { lastLogin: new Date() },
+  create: {
+    email: 'john@example.com',
+    name: 'John',
+    profile: {
+      create: { bio: 'Welcome!' }
+    }
+  },
+  include: { profile: true }
+});
+```
+
+Learn more about all available custom operations in the [Custom Operations Guide](/docs/guides/custom-operations).
+
 ## Additional Information
 
 If you're looking for performance improvements or tips, take a look at our guide to <Link href="/docs/guides/optimizing-for-performance">performance optimizations</Link>.
