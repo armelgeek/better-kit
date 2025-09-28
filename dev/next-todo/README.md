@@ -42,19 +42,56 @@ A modern, full-stack todo application demonstrating the power of **Better Query*
    npm install
    ```
 
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open Application**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Demo vs. Production Setup
+
+### Current Demo Status
+This example currently runs in **demo mode** to showcase Better Query's core functionality without requiring external dependencies. The authentication components are included to demonstrate the integration patterns.
+
+### What Works in Demo Mode
+- ✅ Full CRUD operations for todos
+- ✅ Type-safe Better Query integration
+- ✅ Form validation with React Hook Form
+- ✅ Responsive UI with Tailwind CSS
+- ✅ SQLite database with auto-migration
+- ✅ Authentication UI components (for demonstration)
+
+### What Requires Full Better Auth Setup
+- 🔐 Actual user authentication and sessions
+- 🔐 Role-based access control
+- 🔐 User-scoped data filtering
+- 🔐 Protected API endpoints
+- 🔐 Session management
+
+### Full Better Auth Integration
+To enable complete authentication functionality:
+
+1. **Install Better Auth**
+   ```bash
+   npm install better-auth@latest
+   ```
+
+2. **Uncomment Integration Code**
+   - In `lib/auth.ts`: Replace mock implementation with real Better Auth
+   - In `lib/auth-client.ts`: Use real Better Auth React client
+   - In `lib/query.ts`: Enable the Better Auth plugin
+   - In `components/TodoApp.tsx`: Enable authentication checks
+
 3. **Environment Setup**
    ```bash
    cp .env.example .env.local
    ```
    Update the `BETTER_AUTH_SECRET` with a secure key.
 
-4. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open Application**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+4. **Database Migration**
+   Better Auth will automatically create its tables on first run.
 
 ## Authentication Demo
 

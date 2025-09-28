@@ -145,10 +145,11 @@ export default function TodoApp() {
     );
   }
 
-  // Show auth form if not authenticated
-  if (!isAuthenticated) {
-    return <AuthForm />;
-  }
+  // For demo purposes, show the TodoApp directly
+  // In a real Better Auth integration, this would check isAuthenticated
+  // if (!isAuthenticated) {
+  //   return <AuthForm />;
+  // }
 
   if (loading) {
     return (
@@ -177,25 +178,40 @@ export default function TodoApp() {
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="bg-white rounded-lg shadow-lg p-6">
-          {/* Header with user info and sign out */}
+          {/* Header with demo notice */}
           <div className="flex justify-between items-center mb-8">
             <div className="text-center flex-1">
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Todo App</h1>
               <p className="text-gray-600">
-                Welcome, {user?.name || user?.email}!
+                Better Query Integration Demo
               </p>
+              <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>💡 Demo Mode:</strong> This shows Better Query's core functionality.
+                  <br />
+                  <span className="text-blue-600">
+                    Authentication integration available with Better Auth plugin installation.
+                  </span>
+                </p>
+              </div>
+            </div>
+            {/* Commented out for demo - would be enabled with real Better Auth */}
+            {/* 
+            <div>
+              <p className="text-gray-600">Welcome, {user?.name || user?.email}!</p>
               {user?.role === "admin" && (
                 <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full ml-2">
                   Admin
                 </span>
               )}
+              <button
+                onClick={signOut}
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
-            <button
-              onClick={signOut}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
-              Sign Out
-            </button>
+            */}
           </div>
 
           {/* Add Todo Form */}

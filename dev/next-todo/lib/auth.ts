@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+// Mock Better Auth implementation for demonstration
+// In a real project, you would install better-auth: npm install better-auth
 import { z } from "zod";
 
 // Extended user schema with role
@@ -15,15 +16,40 @@ const userSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 
-export const auth = betterAuth({
+// Mock Better Auth configuration
+// In a real project, this would use the actual better-auth package
+export const auth = {
+  // Mock handler for Next.js API routes
+  handler: {
+    GET: async (request: Request) => {
+      return new Response(JSON.stringify({ message: "Better Auth mock endpoint" }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    POST: async (request: Request) => {
+      return new Response(JSON.stringify({ message: "Better Auth mock endpoint" }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  },
+  
+  // Mock API methods
+  api: {
+    getCurrentSession: async (context: any) => {
+      // In a real implementation, this would validate sessions
+      return null;
+    },
+  },
+  
+  // Mock configuration for demonstration
   database: {
-    provider: "sqlite",
-    url: "todos.db", // Same database as the todos
+    provider: "sqlite" as const,
+    url: "todos.db",
   },
   secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-in-production",
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Simplified for demo
+    requireEmailVerification: false,
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -32,19 +58,19 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: "string",
+        type: "string" as const,
         required: false,
         defaultValue: "user",
       }
     }
   },
-  socialProviders: {
-    // You can add social providers here if needed
-    // github: {
-    //   clientId: process.env.GITHUB_CLIENT_ID || "",
-    //   clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-    // }
-  },
-});
+};
 
-export type AuthSession = typeof auth.$Infer.Session;
+export type AuthSession = {
+  user: User;
+  session: {
+    id: string;
+    expiresAt: Date;
+    token: string;
+  };
+};

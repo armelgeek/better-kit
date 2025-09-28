@@ -1,7 +1,20 @@
 import { betterQuery, createResource, withId } from "better-query";
-import { betterAuth as betterAuthPlugin } from "better-query/plugins";
+// Note: In a real project, you would import from "better-query/plugins"
+// import { betterAuth as betterAuthPlugin } from "better-query/plugins";
 import { auth } from "./auth";
 import { z } from "zod";
+
+// Mock Better Auth plugin implementation for demonstration
+// In a real project, this would be imported from better-query/plugins
+const mockBetterAuthPlugin = (options: any) => ({
+  id: 'better-auth',
+  // Mock plugin implementation
+  init: async (context: any) => {
+    console.log("Mock Better Auth plugin initialized");
+  },
+  middleware: [],
+  hooks: {},
+});
 
 // Todo Schema - Enhanced with user ownership
 export const todoSchema = withId({
@@ -15,69 +28,69 @@ export const todoSchema = withId({
     return val instanceof Date ? val : new Date(String(val));
   }, z.date().optional()),
   tags: z.array(z.string()).default([]),
-  // User ownership fields
-  userId: z.string(), // Links to the authenticated user
-  createdBy: z.string().optional(), // Name of user who created it
+  // User ownership fields (for when Better Auth is fully integrated)
+  // userId: z.string().optional(), 
+  // createdBy: z.string().optional(),
 });
 
-// Create todo resource with authentication-based permissions
+// Create todo resource with basic permissions for now
+// In a real Better Auth integration, these would be authentication-based
 const todoResource = createResource({
   name: "todo",
   schema: todoSchema,
   permissions: {
     create: async (context) => {
-      // Only authenticated users can create todos
-      return !!context.user;
+      // For demo: allow all operations
+      // In real Better Auth integration: return !!context.user;
+      return true;
     },
     read: async (context) => {
-      // Users can only read their own todos, admins can read all
-      if (!context.user) return false;
-      if (context.user.role === "admin") return true;
-      return context.existingData?.userId === context.user.id;
+      // For demo: allow all operations
+      // In real Better Auth integration: check user ownership
+      return true;
     },
     update: async (context) => {
-      // Users can only update their own todos, admins can update all
-      if (!context.user) return false;
-      if (context.user.role === "admin") return true;
-      return context.existingData?.userId === context.user.id;
+      // For demo: allow all operations
+      // In real Better Auth integration: check user ownership or admin role
+      return true;
     },
     delete: async (context) => {
-      // Users can only delete their own todos, admins can delete all
-      if (!context.user) return false;
-      if (context.user.role === "admin") return true;
-      return context.existingData?.userId === context.user.id;
+      // For demo: allow all operations
+      // In real Better Auth integration: check user ownership or admin role
+      return true;
     },
     list: async (context) => {
-      // Only authenticated users can list todos
-      return !!context.user;
+      // For demo: allow all operations
+      // In real Better Auth integration: return !!context.user;
+      return true;
     },
   },
   hooks: {
     beforeCreate: async (context) => {
-      // Auto-assign user ID and creator info
-      if (context.user) {
-        context.data.userId = context.user.id;
-        context.data.createdBy = context.user.name || context.user.email;
-      }
+      // For demo: basic timestamps
+      // In real Better Auth integration: auto-assign user ID
+      // if (context.user) {
+      //   context.data.userId = context.user.id;
+      //   context.data.createdBy = context.user.name || context.user.email;
+      // }
       context.data.createdAt = new Date();
       context.data.updatedAt = new Date();
     },
     beforeUpdate: async (context) => {
-      // Update timestamp
       context.data.updatedAt = new Date();
     },
-    beforeList: async (context) => {
-      // Filter list results by user (non-admins see only their todos)
-      if (context.user && context.user.role !== "admin") {
-        context.query = context.query || {};
-        context.query.where = {
-          ...context.query.where,
-          userId: context.user.id,
-        };
-      }
-    },
+    // In real Better Auth integration: filter by user
+    // beforeList: async (context) => {
+    //   if (context.user && context.user.role !== "admin") {
+    //     context.query = context.query || {};
+    //     context.query.where = {
+    //       ...context.query.where,
+    //       userId: context.user.id,
+    //     };
+    //   }
+    // },
     afterCreate: async (context) => {
-      console.log(`Todo created by ${context.user?.name || 'Unknown'}:`, context.result.title);
+      console.log(`Todo created:`, context.result.title);
     }
   },
 });
@@ -92,23 +105,25 @@ export const query = betterQuery({
     url: "todos.db",
     autoMigrate: true,
   },
-  plugins: [
-    betterAuthPlugin({
-      auth, // Pass the Better Auth instance
-      rolePermissions: {
-        admin: {
-          resources: ["*"],
-          operations: ["create", "read", "update", "delete", "list"],
-          scopes: ["admin", "write", "read"]
-        },
-        user: {
-          resources: ["todo"],
-          operations: ["create", "read", "update", "delete", "list"],
-          scopes: ["read", "write"]
-        }
-      },
-      defaultRole: "user",
-    })
-  ],
+  // For demo: commented out Better Auth plugin
+  // In a real project with better-auth installed:
+  // plugins: [
+  //   betterAuthPlugin({
+  //     auth, // Pass the Better Auth instance
+  //     rolePermissions: {
+  //       admin: {
+  //         resources: ["*"],
+  //         operations: ["create", "read", "update", "delete", "list"],
+  //         scopes: ["admin", "write", "read"]
+  //       },
+  //       user: {
+  //         resources: ["todo"],
+  //         operations: ["create", "read", "update", "delete", "list"],
+  //         scopes: ["read", "write"]
+  //       }
+  //     },
+  //     defaultRole: "user",
+  //   })
+  // ],
   resources: [todoResource],
 });
