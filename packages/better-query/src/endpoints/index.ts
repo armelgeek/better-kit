@@ -1,5 +1,5 @@
 import { createEndpointCreator, createMiddleware } from "better-call";
-import { ZodObject, z } from "zod";
+import { ZodObject, z, ZodSchema, ZodTypeAny } from "zod";
 import {
 	QueryContext,
 	QueryPermissionContext,
@@ -21,6 +21,44 @@ import {
 } from "../utils/security";
 import { HookExecutor, AuditLogger } from "../utils/hooks";
 import { SearchBuilder, FilterBuilder } from "../utils/search";
+
+/**
+ * Create a flexible version of a Zod schema that allows string input for date fields
+ * This enables hooks to transform date strings before final validation
+ */
+function createFlexibleSchema(schema: ZodSchema, isPartial = false): ZodSchema {
+	// If it's a ZodObject, we can inspect and modify its shape
+	if (schema instanceof ZodObject) {
+		const shape = schema.shape;
+		const flexibleShape: Record<string, ZodTypeAny> = {};
+		
+		for (const [key, fieldSchema] of Object.entries(shape)) {
+			const fieldSchemaAny = fieldSchema as any;
+			
+			// Check if this field is a date or optional date
+			if (fieldSchemaAny._def?.typeName === 'ZodDate') {
+				// Replace date with union of string or date
+				flexibleShape[key] = z.union([z.string(), z.date()]);
+			} else if (fieldSchemaAny._def?.typeName === 'ZodOptional' && 
+					   fieldSchemaAny._def?.innerType?._def?.typeName === 'ZodDate') {
+				// Replace optional date with optional union of string or date
+				flexibleShape[key] = z.union([z.string(), z.date()]).optional();
+			} else {
+				// Keep the original field schema
+				flexibleShape[key] = fieldSchemaAny;
+			}
+		}
+		
+		const flexibleSchema = z.object(flexibleShape);
+		return isPartial ? flexibleSchema.partial() : flexibleSchema;
+	}
+	
+	// For non-object schemas, return as-is (with partial if requested)
+	if (isPartial && 'partial' in schema) {
+		return (schema as any).partial();
+	}
+	return schema;
+}
 
 /**
  * Create Query-specific middleware that provides context
@@ -153,7 +191,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 			`/${name}`,
 			{
 				method: "POST",
-				body: schema,
+				body: createFlexibleSchema(schema),
 				query: z.object({
 					include: z.string().optional(),
 					select: z.string().optional(),
@@ -389,7 +427,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				params: z.object({
 					id: z.string(),
 				}),
-				body: (schema as ZodObject<any>).partial(),
+				body: createFlexibleSchema(schema, true),
 			},
 			async (ctx) => {
 				const { params, body, context } = ctx;
