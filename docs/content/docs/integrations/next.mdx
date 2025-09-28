@@ -81,7 +81,7 @@ export async function ServerComponent() {
         headers: await headers()
     })
     if(!session) {
-        return <div>Not queryenticated</div>
+        return <div>Not authenticated</div>
     }
     return (
         <div>
@@ -100,10 +100,10 @@ When you call a function that needs to set cookies, like `signInEmail` or `signU
 To simplify this, you can use the `nextCookies` plugin, which will automatically set cookies for you whenever a `Set-Cookie` header is present in the response.
 
 ```ts title="query.ts"
-import { betterAuth } from "better-query";
+import { betterQuery } from "better-query";
 import { nextCookies } from "better-query/next-js";
 
-export const query = betterAuth({
+export const query = betterQuery({
     //...your config
     plugins: [nextCookies()] // make sure this is the last plugin in the array // [!code highlight]
 })
@@ -144,7 +144,7 @@ export async function middleware(request: NextRequest) {
 
     // THIS IS NOT SECURE!
     // This is the recommended approach to optimistically redirect users
-    // We recommend handling query checks in each page/route
+    // We recommend handling session and permission checks in each page/route
 	if (!sessionCookie) {
 		return NextResponse.redirect(new URL("/", request.url));
 	}

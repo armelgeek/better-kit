@@ -116,7 +116,7 @@ app.get("/session", (c) => {
 By default, all Better Query cookies are set with `SameSite=Lax`. If you need to use cookies across different domains, you’ll need to set `SameSite=None` and `Secure=true`. However, we recommend using subdomains whenever possible, as this allows you to keep `SameSite=Lax`. To enable cross-subdomain cookies, simply turn on `crossSubDomainCookies` in your query config.
 
 ```ts title="query.ts"
-export const query = createAuth({
+export const query = betterQuery({
   advanced: {
     crossSubDomainCookies: {
       enabled: true
@@ -128,7 +128,7 @@ export const query = createAuth({
 If you still need to set `SameSite=None` and `Secure=true`, you can adjust these attributes globally through `cookieOptions` in the `createAuth` configuration.
 
 ```ts title="query.ts"
-export const query = createAuth({
+export const query = betterQuery({
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
@@ -142,7 +142,7 @@ export const query = createAuth({
 You can also customize cookie attributes individually by setting them within `cookies` in your query config.
 
 ```ts title="query.ts"
-export const query = createAuth({
+export const query = betterQuery({
   advanced: {
     cookies: {
       sessionToken: {
@@ -178,7 +178,7 @@ const response = await client.someProtectedEndpoint.$get();
 This configuration is necessary when:
 - Your client and server are on different domains/ports during development
 - You're making cross-origin requests in production
-- You need to send CRUD API cookies with your requests
+- You need to send Better Query cookies with your requests
 
 The `credentials: "include"` option tells the fetch client to send cookies even for cross-origin requests. This works in conjunction with the CORS configuration on your server that has `credentials: true`.
 

@@ -22,49 +22,47 @@ const features = [
 		label: "Framework Agnostic",
 		title: "Support for popular <strong>frameworks</strong>.",
 		description:
-			"Supports popular frameworks, including React, Vue, Next.js, Nuxt, Tanstack Start, Hono, and more.",
+			"Supports popular frameworks, including Next.js, Hono, Express, React, and more with universal handlers.",
 		icon: PlugZap2Icon,
 	},
 	{
 		id: 2,
-		label: "Authentication",
-		title: "Email & Password <strong>Authentication</strong>.",
+		label: "Type-Safe CRUD",
+		title: "Automatic <strong>CRUD generation</strong>.",
 		description:
-			"Built-in support for email and password authentication, with session and account management features.",
+			"Generate fully type-safe Create, Read, Update, Delete, and List operations from Zod schemas automatically.",
 		icon: LockClosedIcon,
 	},
 	{
 		id: 3,
-		label: "Social Sign-on",
-		title: "Support multiple <strong>OAuth providers</strong>.",
+		label: "Database Support",
+		title: "Multiple <strong>database adapters</strong>.",
 		description:
-			"Allow users to sign in with their accounts, including GitHub, Google, Discord, Twitter, and more.",
+			"Built-in support for PostgreSQL, MySQL, SQLite with Kysely query builder for type-safe database operations.",
 		icon: Webhook,
 	},
 	{
 		id: 4,
-		label: "Two Factor",
-		title: "Multi Factor <strong>Authentication</strong>.",
+		label: "Better Auth Integration",
+		title: "Seamless <strong>authentication</strong> integration.",
 		description:
-			"Secure your users accounts with two factor authentication with a few lines of code.",
+			"Native integration with Better Auth for user permissions, role-based access control, and session management.",
 		icon: ShieldCheckIcon,
 	},
 	{
 		id: 5,
-		label: "Multi Tenant",
-		title: "<strong>Organization</strong> Members and Invitation.",
+		label: "Client Libraries",
+		title: "<strong>Client libraries</strong> for React and Vanilla JS.",
 		description:
-			"Multi tenant support with members, organization, teams and invitation with access control.",
-
+			"Type-safe client libraries with hooks for React and vanilla JavaScript for seamless frontend integration.",
 		icon: RabbitIcon,
 	},
-
 	{
 		id: 6,
 		label: "Plugin Ecosystem",
-		title: "A lot more features with <strong>plugins</strong>.",
+		title: "Extensible with <strong>plugins</strong>.",
 		description:
-			"Improve your application experience with our official plugins and those created by the community.",
+			"Extend functionality with plugins for authentication, validation, middleware, and custom business logic.",
 		icon: PlugIcon,
 	},
 ];
@@ -122,11 +120,11 @@ export default function Features({ stars }: { stars: string | null }) {
 							<div className="flex items-center gap-2">
 								<Globe2Icon className="w-4 h-4" />
 								<p className="text-gray-600 dark:text-gray-400">
-									Own your auth
+									Type-safe CRUD APIs
 								</p>
 							</div>
 							<p className="max-w-md mx-auto mt-4 text-4xl font-normal tracking-tighter text-center md:text-4xl">
-								<strong>Roll your own auth with confidence in minutes!</strong>
+								<strong>Build powerful APIs with type safety in minutes!</strong>
 							</p>
 							<div className="flex mt-[10px] z-20 justify-center items-start">
 								<TechStackDisplay
