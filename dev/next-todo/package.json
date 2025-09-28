@@ -2,7 +2,7 @@
   "name": "todo-next-better-query",
   "version": "1.0.0",
   "private": true,
-  "description": "Simple and elegant todo app using Better Query with Next.js",
+  "description": "Simple and elegant todo app using Better Query with Next.js and Better Auth",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "better-query": "workspace:*",
+    "better-auth": "^0.9.0",
     "next": "^14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -18,7 +19,9 @@
     "better-sqlite3": "^11.1.2",
     "@types/better-sqlite3": "^7.6.11",
     "react-hook-form": "^7.48.0",
-    "@hookform/resolvers": "^3.3.0"
+    "@hookform/resolvers": "^3.3.0",
+    "bcryptjs": "^2.4.3",
+    "@types/bcryptjs": "^2.4.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

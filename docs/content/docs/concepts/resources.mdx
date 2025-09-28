@@ -1,0 +1,489 @@
+---
+title: Resources
+description: Learn how to define and configure resources with Better Query.
+---
+
+Resources are the core building blocks of Better Query. They define your data models, API endpoints, permissions, and business logic all in one place. Each resource represents a collection of data with automatic CRUD operations and extensive customization options.
+
+## Basic Resource Definition
+
+Use `createResource()` to define a resource with a Zod schema:
+
+```ts title="lib/resources.ts"
+import { betterQuery, createResource } from "better-query";
+import { z } from "zod";
+
+const userSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  role: z.enum(["admin", "user"]).default("user"),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+const userResource = createResource({
+  name: "user",
+  schema: userSchema,
+});
+
+export const query = betterQuery({
+  basePath: "/api/query",
+  database: {
+    provider: "sqlite",
+    url: "app.db",
+    autoMigrate: true,
+  },
+  resources: [userResource],
+});
+```
+
+## Resource Configuration Options
+
+### Schema and Table Name
+
+```ts
+createResource({
+  name: "user",
+  schema: userSchema,
+  tableName: "users", // Optional: defaults to plural of name
+})
+```
+
+### Endpoint Control
+
+Control which CRUD endpoints are generated:
+
+```ts
+createResource({
+  name: "user",
+  schema: userSchema,
+  endpoints: {
+    create: true,
+    read: true,
+    update: true,
+    delete: false, // Disable delete endpoint
+    list: true,
+  },
+})
+```
+
+### Custom Endpoints
+
+Add custom endpoints beyond basic CRUD:
+
+```ts
+createResource({
+  name: "user",
+  schema: userSchema,
+  customEndpoints: {
+    activate: {
+      method: "POST",
+      path: "/users/:id/activate",
+      handler: async ({ params, context }) => {
+        const { id } = params;
+        return await context.adapter.update("user", id, { 
+          status: "active",
+          activatedAt: new Date()
+        });
+      },
+    },
+    stats: {
+      method: "GET", 
+      path: "/users/stats",
+      handler: async ({ context }) => {
+        const total = await context.adapter.count("user");
+        const active = await context.adapter.count("user", {
+          where: { status: "active" }
+        });
+        return { total, active };
+      },
+    },
+  },
+})
+```
+
+## Permissions System
+
+### Function-Based Permissions
+
+Define dynamic permissions using functions:
+
+```ts
+createResource({
+  name: "post",
+  schema: postSchema,
+  permissions: {
+    create: async (context) => {
+      // Only authenticated users can create
+      return !!context.user;
+    },
+    read: async () => {
+      // Anyone can read
+      return true;
+    },
+    update: async (context) => {
+      // Users can update their own posts, admins can update any
+      const user = context.user;
+      if (!user) return false;
+      
+      if (user.role === "admin") return true;
+      
+      return context.existingData?.userId === user.id;
+    },
+    delete: async (context) => {
+      // Only admins can delete
+      return context.user?.role === "admin";
+    },
+    list: async (context) => {
+      // Authenticated users see all, guests see published only
+      return !!context.user;
+    },
+  },
+})
+```
+
+### Permission Context
+
+The permission context provides access to:
+
+- `user`: Current user (null if not authenticated)
+- `data`: Data being created/updated
+- `existingData`: Existing record (for updates/deletes)
+- `params`: Route parameters
+- `query`: Query parameters
+- `request`: Full request object
+- `resource`: Resource name
+- `operation`: Current operation type
+
+```ts
+permissions: {
+  update: async (context) => {
+    const { user, data, existingData, params } = context;
+    
+    // Check ownership
+    if (existingData?.userId !== user?.id) {
+      return false;
+    }
+    
+    // Prevent users from changing their own role
+    if (data.role && data.role !== existingData.role) {
+      return user?.role === "admin";
+    }
+    
+    return true;
+  },
+}
+```
+
+## Lifecycle Hooks
+
+Hooks allow you to execute code at specific points in the CRUD lifecycle:
+
+### Before Hooks
+
+Execute before operations:
+
+```ts
+createResource({
+  name: "user",
+  schema: userSchema,
+  hooks: {
+    beforeCreate: async (context) => {
+      // Hash password before saving
+      if (context.data.password) {
+        context.data.password = await hashPassword(context.data.password);
+      }
+      
+      // Set timestamps
+      context.data.createdAt = new Date();
+      context.data.updatedAt = new Date();
+    },
+    beforeUpdate: async (context) => {
+      // Update timestamp
+      context.data.updatedAt = new Date();
+      
+      // Validate email change
+      if (context.data.email && context.data.email !== context.existingData?.email) {
+        context.data.emailVerified = false;
+        // Trigger email verification
+        await sendVerificationEmail(context.data.email);
+      }
+    },
+    beforeDelete: async (context) => {
+      // Soft delete instead of hard delete
+      await context.adapter.update("user", context.params.id, {
+        deletedAt: new Date(),
+        status: "deleted",
+      });
+      // Prevent the actual delete
+      throw new Error("SOFT_DELETE_PERFORMED");
+    },
+  },
+})
+```
+
+### After Hooks
+
+Execute after successful operations:
+
+```ts
+hooks: {
+  afterCreate: async (context) => {
+    // Send welcome email
+    await sendWelcomeEmail(context.result.email);
+    
+    // Create default user settings
+    await context.adapter.create("userSettings", {
+      userId: context.result.id,
+      notifications: true,
+      theme: "light",
+    });
+  },
+  afterUpdate: async (context) => {
+    // Log the change
+    await context.adapter.create("auditLog", {
+      action: "user.update",
+      userId: context.user?.id,
+      targetId: context.result.id,
+      changes: context.data,
+      timestamp: new Date(),
+    });
+  },
+  afterDelete: async (context) => {
+    // Clean up related data
+    await context.adapter.delete("userSettings", {
+      where: { userId: context.params.id }
+    });
+  },
+}
+```
+
+### Hook Context
+
+Hook contexts provide access to:
+
+- `data`: The data being operated on
+- `result`: The operation result (in after hooks)
+- `existingData`: Current record (for updates/deletes)
+- `user`: Current authenticated user
+- `params`: Route parameters
+- `query`: Query parameters
+- `request`: Full request object
+- `adapter`: Database adapter for additional queries
+- `resource`: Resource name
+- `operation`: Operation type
+
+## Relationships
+
+Define relationships between resources:
+
+```ts
+const userResource = createResource({
+  name: "user",
+  schema: userSchema,
+  relationships: {
+    posts: {
+      type: "hasMany",
+      target: "post",
+      foreignKey: "userId",
+      select: ["id", "title", "publishedAt"],
+    },
+    profile: {
+      type: "hasOne", 
+      target: "userProfile",
+      foreignKey: "userId",
+    },
+    roles: {
+      type: "belongsToMany",
+      target: "role",
+      through: "userRoles",
+      foreignKey: "userId",
+      targetKey: "roleId",
+    },
+  },
+});
+
+// Query with relationships
+await queryClient.user.list({
+  include: ["posts", "profile"],
+  where: { status: "active" },
+});
+```
+
+## Advanced Patterns
+
+### Resource-Specific Middleware
+
+Add middleware that runs only for specific resources:
+
+```ts
+createResource({
+  name: "sensitiveData",
+  schema: sensitiveSchema,
+  middleware: [
+    {
+      path: "/sensitive-data/*",
+      handler: async (context) => {
+        // Enhanced security for sensitive resources
+        if (!context.user?.role === "admin") {
+          throw new Error("Admin access required");
+        }
+        
+        // Log all access attempts
+        await logAccess({
+          userId: context.user.id,
+          resource: "sensitiveData",
+          action: context.operation,
+          ip: context.request.ip,
+          userAgent: context.request.headers.get("user-agent"),
+        });
+      },
+    },
+  ],
+})
+```
+
+### Dynamic Schema Validation
+
+Use hooks for complex validation:
+
+```ts
+hooks: {
+  beforeCreate: async (context) => {
+    // Dynamic validation based on user role
+    if (context.user?.role === "basic") {
+      const userPostCount = await context.adapter.count("post", {
+        where: { userId: context.user.id }
+      });
+      
+      if (userPostCount >= 5) {
+        throw new Error("Basic users are limited to 5 posts");
+      }
+    }
+  },
+}
+```
+
+### Computed Fields
+
+Add computed fields using after hooks:
+
+```ts
+hooks: {
+  afterRead: async (context) => {
+    if (context.result) {
+      // Add computed field
+      context.result.fullName = `${context.result.firstName} ${context.result.lastName}`;
+      
+      // Add relationship count
+      context.result.postCount = await context.adapter.count("post", {
+        where: { userId: context.result.id }
+      });
+    }
+  },
+  afterList: async (context) => {
+    // Add computed fields to list results
+    for (const item of context.result.data || []) {
+      item.fullName = `${item.firstName} ${item.lastName}`;
+    }
+  },
+}
+```
+
+## Type Safety
+
+Resources provide full TypeScript type safety:
+
+```ts
+// Infer types from schema
+type User = z.infer<typeof userSchema>;
+
+// Generated client is fully typed
+const user = await queryClient.user.create({
+  name: "John Doe",
+  email: "john@example.com",
+  // TypeScript will enforce the schema
+});
+
+// Return types are inferred
+const users: User[] = await queryClient.user.list();
+```
+
+## Best Practices
+
+### 1. Resource Organization
+
+```ts
+// Keep resources in separate files
+// resources/user.ts
+export const userResource = createResource({ ... });
+
+// resources/post.ts  
+export const postResource = createResource({ ... });
+
+// lib/query.ts
+import { userResource } from "../resources/user";
+import { postResource } from "../resources/post";
+
+export const query = betterQuery({
+  resources: [userResource, postResource],
+});
+```
+
+### 2. Permission Helpers
+
+```ts
+// Create reusable permission functions
+const requireAuth = (context: any) => !!context.user;
+
+const requireRole = (role: string) => (context: any) => 
+  context.user?.role === role;
+
+const requireOwnership = (field = "userId") => (context: any) =>
+  context.existingData?.[field] === context.user?.id;
+
+// Use in resources
+permissions: {
+  create: requireAuth,
+  update: requireOwnership("userId"),
+  delete: requireRole("admin"),
+}
+```
+
+### 3. Hook Composition
+
+```ts
+// Create reusable hooks
+const addTimestamps = {
+  beforeCreate: (context: any) => {
+    context.data.createdAt = new Date();
+    context.data.updatedAt = new Date();
+  },
+  beforeUpdate: (context: any) => {
+    context.data.updatedAt = new Date();
+  },
+};
+
+const auditChanges = {
+  afterCreate: (context: any) => auditLog("create", context),
+  afterUpdate: (context: any) => auditLog("update", context),
+  afterDelete: (context: any) => auditLog("delete", context),
+};
+
+// Combine hooks
+createResource({
+  name: "user",
+  schema: userSchema,
+  hooks: {
+    ...addTimestamps,
+    ...auditChanges,
+    // Resource-specific hooks
+    afterCreate: async (context) => {
+      await sendWelcomeEmail(context.result.email);
+    },
+  },
+});
+```
+
+Resources are the foundation of Better Query applications. They provide a declarative way to define your data models with automatic API generation, while giving you full control over permissions, validation, and business logic through hooks and custom endpoints.
