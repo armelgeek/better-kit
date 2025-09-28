@@ -34,6 +34,7 @@ const todoResource = createResource({
     },
     beforeUpdate: async (context) => {
       // Update timestamp
+      console.log("Updating todo:", context);
       context.data.updatedAt = new Date();
     },
   },
