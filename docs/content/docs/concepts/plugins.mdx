@@ -5,7 +5,15 @@ description: Learn how to use plugins with Better Query.
 
 Plugins are a key part of Better Query, they let you extend the base CRUD functionalities. You can use them to add new features like audit logging, caching, resource management integration, or customize resource behaviors.
 
-Better Query comes with built-in plugins ready to use. Check the plugins section for details. You can also create your own plugins.
+Better Query comes with several built-in plugins ready to use:
+
+- **Better Auth Plugin**: Seamless integration with Better Auth for authentication and role-based permissions
+- **Audit Plugin**: Comprehensive audit logging for all CRUD operations
+- **Cache Plugin**: High-performance caching with configurable TTL
+- **Validation Plugin**: Enhanced data validation beyond Zod schemas
+- **OpenAPI Plugin**: Automatic OpenAPI documentation generation
+
+Check the plugins section for details on each plugin. You can also create your own plugins.
 
 ## Using a Plugin
 
@@ -52,6 +60,285 @@ We recommend keeping the query-client and your normal query instance in separate
     <File name="query-client.ts" />
   </Folder>
 </Files>
+
+## Built-in Plugins
+
+Better Query provides several powerful built-in plugins to enhance your application with common functionality.
+
+### Better Auth Plugin
+
+The Better Auth plugin provides seamless integration with Better Auth, offering authentication, user context, and role-based permissions.
+
+```ts title="lib/query.ts"
+import { betterQuery } from "better-query";
+import { betterAuth } from "better-query/plugins";
+import { auth } from "./auth"; // Your Better Auth instance
+
+export const query = betterQuery({
+  basePath: "/api/query",
+  database: {
+    provider: "sqlite",
+    url: "app.db",
+    autoMigrate: true,
+  },
+  plugins: [
+    betterAuth({
+      auth, // Pass your Better Auth instance
+      rolePermissions: {
+        admin: {
+          resources: ["*"], // Access to all resources
+          operations: ["create", "read", "update", "delete", "list"],
+          scopes: ["admin", "write", "read"]
+        },
+        moderator: {
+          resources: ["post", "comment", "user"],
+          operations: ["read", "update", "list"],
+          scopes: ["moderate", "read"]
+        },
+        user: {
+          resources: ["post", "comment"],
+          operations: ["read", "create"],
+          scopes: ["read"]
+        }
+      },
+      defaultRole: "user",
+      session: {
+        autoValidate: true,
+      }
+    })
+  ],
+  resources: [
+    createResource({
+      name: "post",
+      schema: postSchema,
+      permissions: {
+        create: async (context) => !!context.user,
+        update: async (context) => {
+          const user = context.user;
+          if (!user) return false;
+          
+          // Admins can update any post
+          if (user.role === "admin") return true;
+          
+          // Users can update their own posts
+          return context.existingData?.userId === user.id;
+        },
+        delete: async (context) => context.user?.role === "admin",
+        read: async () => true,
+        list: async () => true,
+      }
+    })
+  ]
+});
+```
+
+**Features:**
+- Automatic user context extraction from Better Auth sessions
+- Role-based permissions with resource and operation filtering
+- Type-safe user context in permission functions
+- Support for custom user extraction functions
+- Session validation and management
+
+**Helper Functions:**
+
+Use the `createBetterAuthContext` helper for type-safe user operations:
+
+```ts
+import { createBetterAuthContext } from "better-query/plugins";
+
+interface CustomUser {
+  id: string;
+  email: string;
+  role: "admin" | "user" | "moderator";
+  orgId?: string;
+}
+
+const authContext = createBetterAuthContext<CustomUser>();
+
+// In your resource permissions
+permissions: {
+  delete: async (context) => {
+    const user = authContext.getUser(context);
+    
+    // Check role
+    if (authContext.hasRole(context, "admin")) {
+      return true;
+    }
+    
+    // Check multiple roles
+    if (authContext.hasAnyRole(context, ["admin", "moderator"])) {
+      return true;
+    }
+    
+    // Check organization membership
+    if (authContext.belongsToOrg(context, "my-org-123")) {
+      return true;
+    }
+    
+    return false;
+  }
+}
+```
+
+### Audit Plugin
+
+The audit plugin provides comprehensive logging of all CRUD operations with customizable event tracking.
+
+```ts title="lib/query.ts"
+import { auditPlugin } from "better-query/plugins";
+
+export const query = betterQuery({
+  plugins: [
+    auditPlugin({
+      enabled: true,
+      operations: ["create", "update", "delete"], // Which operations to audit
+      excludeFields: ["password", "secret"], // Fields to exclude from logs
+      includeRequestInfo: true, // Include IP, user agent, etc.
+      customLogger: async (event) => {
+        // Custom logging logic
+        console.log("Audit Event:", event);
+        
+        // Send to external logging service
+        await sendToLogService(event);
+      }
+    })
+  ]
+});
+```
+
+**Features:**
+- Automatic CRUD operation tracking
+- Request metadata capture (IP, user agent, timestamp)
+- Field-level filtering for sensitive data
+- Custom logging backend integration
+- Query audit trail with full change history
+
+### Cache Plugin
+
+The cache plugin provides high-performance caching with Redis or memory backends.
+
+```ts title="lib/query.ts"
+import { cachePlugin } from "better-query/plugins";
+
+export const query = betterQuery({
+  plugins: [
+    cachePlugin({
+      enabled: true,
+      backend: "redis", // or "memory"
+      connection: {
+        host: "localhost",
+        port: 6379,
+      },
+      defaultTTL: 300, // 5 minutes
+      keyPrefix: "myapp:",
+      operations: {
+        read: { ttl: 600 }, // 10 minutes for reads
+        list: { ttl: 120 }, // 2 minutes for lists
+      },
+      invalidationRules: {
+        // Invalidate user cache when user is updated
+        user: ["user:*"],
+        // Invalidate post lists when new post is created
+        post: ["post:list:*"]
+      }
+    })
+  ]
+});
+```
+
+**Features:**
+- Multiple backend support (Redis, in-memory)
+- Operation-specific TTL configuration
+- Smart cache invalidation rules
+- Cache key customization
+- Performance metrics and monitoring
+
+### Validation Plugin
+
+Enhanced validation beyond Zod schemas with business logic validation.
+
+```ts title="lib/query.ts"
+import { validationPlugin } from "better-query/plugins";
+
+export const query = betterQuery({
+  plugins: [
+    validationPlugin({
+      rules: {
+        user: {
+          email: [
+            {
+              validator: async (email, context) => {
+                const exists = await context.adapter.findFirst("user", {
+                  where: { email }
+                });
+                return !exists || "Email already exists";
+              }
+            }
+          ],
+          username: [
+            {
+              validator: (username) => {
+                return /^[a-zA-Z0-9_]+$/.test(username) || "Username can only contain letters, numbers, and underscores";
+              }
+            }
+          ]
+        }
+      },
+      // Custom error formatting
+      formatError: (field, message) => ({
+        field,
+        message,
+        code: "VALIDATION_ERROR"
+      })
+    })
+  ]
+});
+```
+
+**Features:**
+- Async validation with database access
+- Field-specific validation rules
+- Custom error formatting
+- Integration with existing Zod schemas
+- Cross-field validation support
+
+### OpenAPI Plugin
+
+Automatic OpenAPI/Swagger documentation generation for all your endpoints.
+
+```ts title="lib/query.ts"
+import { openApiPlugin } from "better-query/plugins";
+
+export const query = betterQuery({
+  plugins: [
+    openApiPlugin({
+      info: {
+        title: "My API",
+        version: "1.0.0",
+        description: "Better Query API Documentation"
+      },
+      servers: [
+        { url: "http://localhost:3000/api/query", description: "Development" },
+        { url: "https://api.myapp.com/query", description: "Production" }
+      ],
+      includeAuth: true,
+      outputPath: "./openapi.json", // Generate spec file
+      uiPath: "/docs", // Swagger UI endpoint
+      customTags: {
+        user: { description: "User management operations" },
+        post: { description: "Blog post operations" }
+      }
+    })
+  ]
+});
+```
+
+**Features:**
+- Automatic schema generation from Zod schemas
+- Authentication documentation
+- Interactive Swagger UI
+- Custom tags and descriptions
+- Export OpenAPI specifications
 
 ## Creating a Plugin
 

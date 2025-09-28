@@ -1,186 +1,285 @@
-# Todo App - Next.js + Better Query
+# Todo App with Better Query & Better Auth
 
-A modern, full-featured todo application showcasing Better Query integration with Next.js App Router.
+A modern, full-stack todo application demonstrating the power of **Better Query** with **Better Auth** integration. This example showcases authentication, role-based permissions, and secure CRUD operations.
 
 ## Features
 
-- ✅ **Full CRUD Operations**: Create, Read, Update, Delete todos
-- ⚡ **Server Actions**: Next.js App Router with Better Query integration
-- 🎯 **Priority System**: Low, Medium, High priority levels
-- 🏷️ **Categories**: Organize todos with custom categories
-- 📅 **Due Dates**: Set optional due dates for todos
-- 🏷️ **Tags**: Add multiple tags to organize todos
-- ✨ **Modern UI**: Clean, responsive interface with Tailwind CSS
-- 🔄 **Real-time Updates**: Instant UI updates with React hooks
-- 🗃️ **SQLite Database**: Persistent storage with auto-migration
-- 📱 **Responsive Design**: Works perfectly on mobile and desktop
+### 🔐 Authentication & Authorization
+- **User Registration & Login** with email/password
+- **Role-based Access Control** (Admin/User roles)  
+- **Session Management** with Better Auth
+- **Protected Routes** and API endpoints
 
-## Quick Start
+### 📝 Todo Management
+- **User-Scoped Todos** - Users only see their own todos
+- **Admin Privileges** - Admins can manage all todos
+- **Full CRUD Operations** (Create, Read, Update, Delete)
+- **Rich Todo Properties**: Priority, Category, Due Dates, Tags
 
-1. **Install dependencies:**
+### 🏗️ Architecture Highlights
+- **Better Query** for type-safe CRUD operations
+- **Better Auth Plugin** for seamless auth integration
+- **Zod Validation** with React Hook Form
+- **Permission-based Filtering** at the database level
+- **Auto-generated API Endpoints** with authentication middleware
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm/yarn/pnpm
+
+### Installation
+
+1. **Clone and Navigate**
    ```bash
-   cd examples/todo-examples/next-todo
-   npm install  # or pnpm install
+   git clone <repo-url>
+   cd dev/next-todo
    ```
 
-2. **Start the development server:**
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-3. **Open your browser:**
+4. **Open Application**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Demo vs. Production Setup
+
+### Current Demo Status
+This example currently runs in **demo mode** to showcase Better Query's core functionality without requiring external dependencies. The authentication components are included to demonstrate the integration patterns.
+
+### What Works in Demo Mode
+- ✅ Full CRUD operations for todos
+- ✅ Type-safe Better Query integration
+- ✅ Form validation with React Hook Form
+- ✅ Responsive UI with Tailwind CSS
+- ✅ SQLite database with auto-migration
+- ✅ Authentication UI components (for demonstration)
+
+### What Requires Full Better Auth Setup
+- 🔐 Actual user authentication and sessions
+- 🔐 Role-based access control
+- 🔐 User-scoped data filtering
+- 🔐 Protected API endpoints
+- 🔐 Session management
+
+### Full Better Auth Integration
+To enable complete authentication functionality:
+
+1. **Install Better Auth**
+   ```bash
+   npm install better-auth@latest
    ```
-   http://localhost:3000
+
+2. **Uncomment Integration Code**
+   - In `lib/auth.ts`: Replace mock implementation with real Better Auth
+   - In `lib/auth-client.ts`: Use real Better Auth React client
+   - In `lib/query.ts`: Enable the Better Auth plugin
+   - In `components/TodoApp.tsx`: Enable authentication checks
+
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
    ```
+   Update the `BETTER_AUTH_SECRET` with a secure key.
 
-## API Endpoints
+4. **Database Migration**
+   Better Auth will automatically create its tables on first run.
 
-The Better Query integration automatically provides these REST endpoints:
+## Authentication Demo
 
-- `GET /api/query/todo/list` - List all todos with optional pagination
-- `POST /api/query/todo/create` - Create a new todo
-- `GET /api/query/todo/read/:id` - Get a specific todo
-- `PUT /api/query/todo/update/:id` - Update a todo
-- `DELETE /api/query/todo/delete/:id` - Delete a todo
+### Demo Accounts
+For testing, you can create these accounts or use the sign-up form:
+
+- **Admin User**: 
+  - Email: `admin@example.com`
+  - Password: `password123`
+  - Can manage all todos across all users
+
+- **Regular User**: 
+  - Email: `user@example.com` 
+  - Password: `password123`
+  - Can only manage their own todos
+
+### Creating New Accounts
+Use the sign-up form to create new accounts. All new users get the "user" role by default.
+
+## Architecture Deep Dive
+
+### Better Auth Integration
+
+The app uses the **Better Auth plugin** for Better Query to provide seamless authentication:
+
+```typescript
+// lib/query.ts
+import { betterAuth as betterAuthPlugin } from "better-query/plugins";
+import { auth } from "./auth";
+
+export const query = betterQuery({
+  plugins: [
+    betterAuthPlugin({
+      auth, // Better Auth instance
+      rolePermissions: {
+        admin: {
+          resources: ["*"],
+          operations: ["create", "read", "update", "delete", "list"],
+        },
+        user: {
+          resources: ["todo"],
+          operations: ["create", "read", "update", "delete", "list"],
+        }
+      },
+    })
+  ],
+  resources: [todoResource],
+});
+```
+
+### Permission System
+
+The todo resource uses **function-based permissions** that check user authentication and ownership:
+
+```typescript
+const todoResource = createResource({
+  name: "todo",
+  schema: todoSchema,
+  permissions: {
+    create: async (context) => !!context.user,
+    read: async (context) => {
+      if (!context.user) return false;
+      if (context.user.role === "admin") return true;
+      return context.existingData?.userId === context.user.id;
+    },
+    update: async (context) => {
+      if (!context.user) return false;
+      if (context.user.role === "admin") return true;
+      return context.existingData?.userId === context.user.id;
+    },
+    delete: async (context) => {
+      if (!context.user) return false;
+      if (context.user.role === "admin") return true;
+      return context.existingData?.userId === context.user.id;
+    },
+    list: async (context) => !!context.user,
+  },
+});
+```
+
+### Data Scoping with Hooks
+
+The `beforeList` hook automatically filters todos by user ownership:
+
+```typescript
+hooks: {
+  beforeList: async (context) => {
+    // Non-admins only see their own todos
+    if (context.user && context.user.role !== "admin") {
+      context.query = context.query || {};
+      context.query.where = {
+        ...context.query.where,
+        userId: context.user.id,
+      };
+    }
+  },
+  beforeCreate: async (context) => {
+    // Auto-assign user ID to new todos
+    if (context.user) {
+      context.data.userId = context.user.id;
+      context.data.createdBy = context.user.name || context.user.email;
+    }
+  },
+}
+```
+
+### Client-Side Authentication
+
+The client uses a custom `useAuth` hook for authentication state management:
+
+```typescript
+// hooks/useAuth.ts
+export function useAuth() {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    session: null,
+    isLoading: true,
+    error: null,
+  });
+
+  // Sign in, sign up, sign out methods
+  // Automatic session checking
+  // Error handling
+}
+```
 
 ## Project Structure
 
 ```
-next-todo/
+src/
 ├── app/
-│   ├── api/query/[...any]/route.ts    # Better Query API routes
-│   ├── globals.css                    # Tailwind CSS
-│   ├── layout.tsx                     # Root layout
-│   └── page.tsx                       # Home page
+│   ├── api/
+│   │   ├── auth/[...all]/     # Better Auth API routes
+│   │   └── query/[...any]/    # Better Query API routes
+│   ├── layout.tsx
+│   └── page.tsx
 ├── components/
-│   └── TodoApp.tsx                    # Main todo component
+│   ├── AuthForm.tsx          # Login/Register form
+│   └── TodoApp.tsx           # Main todo interface
 ├── hooks/
-│   └── useTodos.ts                    # Custom React hooks for todo operations
-├── lib/
-│   ├── query.ts                       # Better Query configuration
-│   └── client.ts                      # Better Query client setup
-├── package.json
-├── tailwind.config.js
-├── tsconfig.json
-└── README.md
+│   ├── useAuth.ts            # Authentication hook
+│   └── useTodos.ts           # Todo management hook
+└── lib/
+    ├── auth.ts               # Better Auth configuration
+    ├── auth-client.ts        # Client-side auth setup
+    ├── client.ts             # Better Query client
+    └── query.ts              # Server-side query setup
 ```
 
-## Todo Schema
+## Key Learning Points
 
-```typescript
-const todoSchema = withId({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  completed: z.boolean().default(false),
-  priority: z.enum(["low", "medium", "high"]).default("medium"),
-  category: z.string().optional(),
-  dueDate: z.date().optional(),
-  tags: z.array(z.string()).default([]),
-});
-```
+### 1. **Seamless Integration**
+Better Auth integrates naturally with Better Query through plugins, providing automatic user context in permissions and hooks.
 
-## Custom Hooks Usage
+### 2. **Type-Safe Authentication**
+Full TypeScript support for user objects, sessions, and authentication state throughout the application.
 
-```typescript
-import { useTodos } from "@/hooks/useTodos";
+### 3. **Permission-Driven Architecture**  
+Permissions are evaluated at the resource level, ensuring consistent security across all endpoints.
 
-export default function TodoComponent() {
-  const { 
-    todos, 
-    loading, 
-    error, 
-    createTodo, 
-    updateTodo, 
-    deleteTodo, 
-    toggleTodo 
-  } = useTodos();
+### 4. **Database-Level Security**
+User scoping happens in hooks and permissions, ensuring data isolation at the database query level.
 
-  // Component implementation...
-}
-```
+### 5. **Developer Experience**
+Minimal configuration required - just add the plugin and define permissions. Everything else is handled automatically.
 
-## Key Better Query Features Demonstrated
+## Security Features
 
-1. **Resource Creation**: Schema-driven resource definition with hooks
-2. **Auto-generated Endpoints**: Full CRUD API generated automatically
-3. **Type Safety**: Full TypeScript support with Zod validation
-4. **Client Integration**: Type-safe client with React hooks
-5. **Database Integration**: SQLite with auto-migration
-6. **Server Integration**: Next.js App Router compatibility
-7. **Advanced Hooks**: beforeCreate and beforeUpdate lifecycle hooks
-
-## Advanced Features
-
-### Custom Hooks
-
-The todo resource includes lifecycle hooks:
-
-```typescript
-hooks: {
-  beforeCreate: async (context) => {
-    context.data.createdAt = new Date();
-    context.data.updatedAt = new Date();
-  },
-  beforeUpdate: async (context) => {
-    context.data.updatedAt = new Date();
-  },
-}
-```
-
-### Type-Safe Client
-
-The client provides full type safety:
-
-```typescript
-import { createQueryClient } from "better-query/client";
-
-const queryClient = createQueryClient({
-  baseUrl: "/api/query",
-});
-
-// Fully typed operations
-const todo = await queryClient.todo.create({
-  title: "My Todo",
-  priority: "high", // TypeScript will enforce valid values
-});
-```
-
-## Customization
-
-### Adding New Fields
-
-Extend the todo schema in `lib/query.ts`:
-
-```typescript
-const todoSchema = withId({
-  // ... existing fields
-  assignedTo: z.string().optional(),
-  estimatedHours: z.number().optional(),
-  status: z.enum(["pending", "in-progress", "completed"]).default("pending"),
-});
-```
-
-### Adding Search
-
-Implement search functionality:
-
-```typescript
-const searchTodos = async (query: string) => {
-  const result = await queryClient.todo.list({
-    search: query,
-    searchFields: ["title", "description", "category"]
-  });
-  return result.data;
-};
-```
+- **Automatic Session Validation** on every API request
+- **Role-Based Access Control** with granular permissions
+- **Data Isolation** between users (non-admins can't access others' data)
+- **Password Hashing** with bcrypt  
+- **CSRF Protection** built into Better Auth
+- **Secure Cookie Handling** with HTTP-only flags
 
 ## Next Steps
 
-- Add user authentication with Better Auth
-- Implement real-time updates with WebSocket
-- Add todo sharing and collaboration features
-- Create mobile app using the same API
-- Add file attachments to todos
-- Implement todo templates and recurring tasks
+This example demonstrates core authentication concepts. You can extend it with:
 
-This example showcases the power of Better Query for building production-ready applications with minimal boilerplate and maximum type safety.
+- **Email Verification** workflow
+- **Password Reset** functionality  
+- **Social Authentication** (GitHub, Google, etc.)
+- **Multi-tenant** organization support
+- **Advanced Role Management** with custom permissions
+- **Audit Logging** of user actions
+
+## Learn More
+
+- [Better Query Documentation](https://armelgeek.github.io/better-kit)
+- [Better Auth Documentation](https://better-auth.com)
+- [Better Auth Plugin Guide](https://armelgeek.github.io/better-kit/docs/plugins/better-auth)

@@ -168,6 +168,28 @@ export const contents: Content[] = [
 				),
 			},
 			{
+				href: "/docs/concepts/resources",
+				title: "Resources",
+				icon: () => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22L12 18.56L5.82 22L7 14.14L2 9.27l6.91-1.01z"
+						/>
+						<path
+							fill="currentColor"
+							opacity="0.3"
+							d="M12 15.4l4.47 2.77l-.79-5.04l3.41-3.3l-4.84-.7L12 4.4L9.75 9.13l-4.84.7l3.41 3.3l-.79 5.04z"
+						/>
+					</svg>
+				),
+			},
+			{
 				title: "CLI",
 				icon: () => (
 					<svg

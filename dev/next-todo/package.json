@@ -2,7 +2,7 @@
   "name": "todo-next-better-query",
   "version": "1.0.0",
   "private": true,
-  "description": "Simple and elegant todo app using Better Query with Next.js",
+  "description": "Simple and elegant todo app using Better Query with Next.js and Better Auth",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
