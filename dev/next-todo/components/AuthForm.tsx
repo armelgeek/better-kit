@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { signIn, signUp } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -25,8 +26,9 @@ type SignInData = z.infer<typeof signInSchema>;
 type SignUpData = z.infer<typeof signUpSchema>;
 
 export default function AuthForm() {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp, isLoading, error } = useAuth();
+  const [ isLoading, setIsLoading ] = useState(false);
 
   const signInForm = useForm<SignInData>({
     resolver: zodResolver(signInSchema),
@@ -37,19 +39,28 @@ export default function AuthForm() {
   });
 
   const handleSignIn = async (data: SignInData) => {
-    const result = await signIn(data.email, data.password);
-    if (!result.success) {
+    setIsLoading(true);
+    const result = await signIn.email({
+      email: data.email, password: data.password
+    });
+    setIsLoading(false);
+   
+    if (!result.data) {
       // Error is already handled in useAuth hook
       console.error("Sign in failed:", result.error);
     }
+    router.push('/todo');
   };
 
   const handleSignUp = async (data: SignUpData) => {
-    const result = await signUp(data.email, data.password, data.name);
-    if (!result.success) {
+    const result = await signUp.email({
+      email: data.email, password: data.password, name: data.name
+    });
+    if (!result.data) {
       // Error is already handled in useAuth hook
       console.error("Sign up failed:", result.error);
     }
+      router.push('/todo');
   };
 
   return (
@@ -67,12 +78,6 @@ export default function AuthForm() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
-            </div>
-          )}
-
           {isSignUp ? (
             <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-6">
               <div>
@@ -206,18 +211,6 @@ export default function AuthForm() {
                   : "Don't have an account? Sign up"
                 }
               </button>
-            </div>
-          </div>
-
-          {/* Demo accounts info */}
-          <div className="mt-6 bg-gray-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Accounts:</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div><strong>Admin:</strong> admin@example.com / password123</div>
-              <div><strong>User:</strong> user@example.com / password123</div>
-              <p className="text-gray-500 mt-2">
-                Or create your own account to get started!
-              </p>
             </div>
           </div>
         </div>

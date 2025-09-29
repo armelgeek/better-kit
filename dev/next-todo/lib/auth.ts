@@ -1,8 +1,7 @@
-// Mock Better Auth implementation for demonstration
-// In a real project, you would install better-auth: npm install better-auth
-import { z } from "zod";
 
-// Extended user schema with role
+import { z } from "zod";
+import { betterAuth } from "better-auth";
+import Database from "better-sqlite3";
 const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -15,56 +14,15 @@ const userSchema = z.object({
 });
 
 export type User = z.infer<typeof userSchema>;
-
-// Mock Better Auth configuration
-// In a real project, this would use the actual better-auth package
-export const auth = {
-  // Mock handler for Next.js API routes
-  handler: {
-    GET: async (request: Request) => {
-      return new Response(JSON.stringify({ message: "Better Auth mock endpoint" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    },
-    POST: async (request: Request) => {
-      return new Response(JSON.stringify({ message: "Better Auth mock endpoint" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    },
+export const auth = betterAuth({
+  database: new Database("./sqlite.db"),
+   emailAndPassword: { 
+    enabled: true, 
   },
-  
-  // Mock API methods
-  api: {
-    getCurrentSession: async (context: any) => {
-      // In a real implementation, this would validate sessions
-      return null;
-    },
-  },
-  
-  // Mock configuration for demonstration
-  database: {
-    provider: "sqlite" as const,
-    url: "todos.db",
-  },
-  secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-in-production",
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: false,
-  },
-  session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
-  },
-  user: {
-    additionalFields: {
-      role: {
-        type: "string" as const,
-        required: false,
-        defaultValue: "user",
-      }
-    }
-  },
-};
+  advanced:{
+    cookiePrefix: 'next-todo',
+  }
+})
 
 export type AuthSession = {
   user: User;
