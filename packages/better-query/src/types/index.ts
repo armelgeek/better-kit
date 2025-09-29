@@ -52,6 +52,8 @@ export interface QueryResourceConfig {
 	};
 	/** Custom endpoints for the resource */
 	customEndpoints?: Record<string, Endpoint>;
+	/** Middleware functions that run before permission checks */
+	middleware?: QueryMiddleware[];
 	/** Permission functions */
 	permissions?: {
 		create?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
@@ -245,10 +247,29 @@ export type CrudDatabaseConfig = QueryDatabaseConfig;
 export type CrudDatabaseOptions = QueryDatabaseOptions;
 
 export interface QueryMiddleware {
-	/** Path pattern to match */
-	path: string;
-	/** Middleware function */
-	handler: (context: any) => Promise<void> | void;
+	/** Path pattern to match (optional for resource-level middleware) */
+	path?: string;
+	/** Middleware function that can modify the permission context */
+	handler: (context: QueryMiddlewareContext) => Promise<void> | void;
+}
+
+export interface QueryMiddlewareContext {
+	/** User data (can be modified by middleware) */
+	user?: any;
+	/** Resource being accessed */
+	resource: string;
+	/** Operation being performed */
+	operation: QueryOperation;
+	/** Data being created/updated (for create/update operations) */
+	data?: any;
+	/** ID being accessed (for read/update/delete operations) */
+	id?: string;
+	/** Full request context */
+	request?: any;
+	/** User scopes/roles (can be modified by middleware) */
+	scopes?: string[];
+	/** Existing data (for update/delete operations) */
+	existingData?: any;
 }
 
 // Legacy alias

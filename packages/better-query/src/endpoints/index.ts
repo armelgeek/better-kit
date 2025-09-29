@@ -8,6 +8,7 @@ import {
 	IncludeOptions,
 	QueryHookContext,
 	QueryParams,
+	QueryMiddlewareContext,
 } from "../types";
 import { convertToQueryWhere, convertToQueryOrderBy } from "../adapters/utils";
 import { capitalize, generateId } from "../utils/schema";
@@ -203,16 +204,43 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { adapter } = context;
 				
 				// Extract user and security context
-				const user = extractUser(ctx);
-				const userScopes = extractUserScopes(user);
+				let user = extractUser(ctx);
+				let userScopes = extractUserScopes(user);
 				const securityContext = extractSecurityContext(ctx.request || ctx);
 
-				// Execute before hooks FIRST - they can modify data and context
+				// Execute middleware BEFORE permission checks - they can modify user and context
+				const middlewareContext: QueryMiddlewareContext = {
+					user,
+					resource: name,
+					operation: "create",
+					data: body,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				// Execute resource-level middleware
+				if (resourceConfig.middleware) {
+					try {
+						for (const middleware of resourceConfig.middleware) {
+							await middleware.handler(middlewareContext);
+						}
+						// Update user and scopes from middleware modifications
+						user = middlewareContext.user;
+						userScopes = middlewareContext.scopes || [];
+					} catch (error) {
+						return ctx.json(
+							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{ status: 500 },
+						);
+					}
+				}
+
+				// Execute before hooks AFTER middleware but before permission checks
 				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
 					operation: "create",
-					data: body, // Original body data
+					data: middlewareContext.data, // Use data potentially modified by middleware
 					request: ctx,
 					adapter: {
 						...adapter,
@@ -341,10 +369,37 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { id } = params;
 				
 				// Extract user and security context
-				const user = extractUser(ctx);
-				const userScopes = extractUserScopes(user);
+				let user = extractUser(ctx);
+				let userScopes = extractUserScopes(user);
 
-				// Execute before hooks FIRST for read operations
+				// Execute middleware BEFORE permission checks - they can modify user and context
+				const middlewareContext: QueryMiddlewareContext = {
+					user,
+					resource: name,
+					operation: "read",
+					id,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				// Execute resource-level middleware
+				if (resourceConfig.middleware) {
+					try {
+						for (const middleware of resourceConfig.middleware) {
+							await middleware.handler(middlewareContext);
+						}
+						// Update user and scopes from middleware modifications
+						user = middlewareContext.user;
+						userScopes = middlewareContext.scopes || [];
+					} catch (error) {
+						return ctx.json(
+							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{ status: 500 },
+						);
+					}
+				}
+
+				// Execute before hooks AFTER middleware for read operations
 				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
@@ -435,8 +490,8 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { id } = params;
 				
 				// Extract user and security context
-				const user = extractUser(ctx);
-				const userScopes = extractUserScopes(user);
+				let user = extractUser(ctx);
+				let userScopes = extractUserScopes(user);
 
 				// Check if resource exists first (needed for hooks and ownership checks)
 				const existing = await adapter.findFirst({
@@ -448,13 +503,42 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					return ctx.json({ error: "Resource not found" }, { status: 404 });
 				}
 
-				// Execute before hooks FIRST - they can modify data
+				// Execute middleware BEFORE permission checks - they can modify user and context
+				const middlewareContext: QueryMiddlewareContext = {
+					user,
+					resource: name,
+					operation: "update",
+					id,
+					data: body,
+					existingData: existing,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				// Execute resource-level middleware
+				if (resourceConfig.middleware) {
+					try {
+						for (const middleware of resourceConfig.middleware) {
+							await middleware.handler(middlewareContext);
+						}
+						// Update user and scopes from middleware modifications
+						user = middlewareContext.user;
+						userScopes = middlewareContext.scopes || [];
+					} catch (error) {
+						return ctx.json(
+							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{ status: 500 },
+						);
+					}
+				}
+
+				// Execute before hooks AFTER middleware - they can modify data
 				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
 					operation: "update",
 					id,
-					data: body, // Original body data
+					data: middlewareContext.data, // Use data potentially modified by middleware
 					existingData: existing,
 					request: ctx,
 					adapter: {
@@ -564,8 +648,8 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { id } = params;
 				
 				// Extract user and security context
-				const user = extractUser(ctx);
-				const userScopes = extractUserScopes(user);
+				let user = extractUser(ctx);
+				let userScopes = extractUserScopes(user);
 
 				// Check if resource exists first (needed for hooks, ownership and audit)
 				const existing = await adapter.findFirst({
@@ -577,7 +661,35 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					return ctx.json({ error: "Resource not found" }, { status: 404 });
 				}
 
-				// Execute before hooks FIRST
+				// Execute middleware BEFORE permission checks - they can modify user and context
+				const middlewareContext: QueryMiddlewareContext = {
+					user,
+					resource: name,
+					operation: "delete",
+					id,
+					existingData: existing,
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				// Execute resource-level middleware
+				if (resourceConfig.middleware) {
+					try {
+						for (const middleware of resourceConfig.middleware) {
+							await middleware.handler(middlewareContext);
+						}
+						// Update user and scopes from middleware modifications
+						user = middlewareContext.user;
+						userScopes = middlewareContext.scopes || [];
+					} catch (error) {
+						return ctx.json(
+							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{ status: 500 },
+						);
+					}
+				}
+
+				// Execute before hooks AFTER middleware
 				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
@@ -677,10 +789,36 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { adapter } = context;
 				
 				// Extract user and security context
-				const user = extractUser(ctx);
-				const userScopes = extractUserScopes(user);
+				let user = extractUser(ctx);
+				let userScopes = extractUserScopes(user);
 
-				// Execute before hooks FIRST for list operations
+				// Execute middleware BEFORE permission checks - they can modify user and context
+				const middlewareContext: QueryMiddlewareContext = {
+					user,
+					resource: name,
+					operation: "list",
+					request: ctx,
+					scopes: userScopes,
+				};
+
+				// Execute resource-level middleware
+				if (resourceConfig.middleware) {
+					try {
+						for (const middleware of resourceConfig.middleware) {
+							await middleware.handler(middlewareContext);
+						}
+						// Update user and scopes from middleware modifications
+						user = middlewareContext.user;
+						userScopes = middlewareContext.scopes || [];
+					} catch (error) {
+						return ctx.json(
+							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{ status: 500 },
+						);
+					}
+				}
+
+				// Execute before hooks AFTER middleware for list operations
 				const hookContext: QueryHookContext = {
 					user,
 					resource: name,
