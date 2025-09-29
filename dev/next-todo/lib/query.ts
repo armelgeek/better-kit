@@ -34,10 +34,23 @@ export const todoSchema = withId({
 const todoResource = createResource({
   name: "todo",
   schema: todoSchema,
+  // Middleware runs BEFORE permission checks - perfect for user injection
+  middleware: [
+    {
+      handler: async (context) => {
+        const session = await auth.api.getSession({
+          headers: await headers()
+        });
+        console.log('Middleware session user:', session?.user);
+        context.user = session?.user;
+      }
+    }
+  ],
   permissions: {
     create: async (context) => {
       console.log('Create context user:', context.user);
-      return true;
+      // Now we can properly check user permissions!
+      return !!context.user;
     },
     read: async (context) => {
       // For demo: allow all operations
@@ -62,11 +75,8 @@ const todoResource = createResource({
   },
   hooks: {
     beforeCreate: async (context) => {
-      const session = await auth.api.getSession({
-        headers: await headers()
-      })
-      console.log('Before create session user:', session?.user);
-      context.user =  session?.user;
+      // User is already injected by middleware, so we can use it here
+      console.log('Before create hook user:', context.user);
       context.data.createdAt = new Date();
       context.data.updatedAt = new Date();
     },
