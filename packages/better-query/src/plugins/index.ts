@@ -26,8 +26,5 @@ export type { CachePluginOptions } from "./cache";
 export { openApiPlugin } from "./openapi";
 export type { OpenAPIOptions } from "./openapi";
 
-export { betterAuth, createBetterAuthContext } from "./better-auth";
-export type { BetterAuthPluginOptions, BetterAuthUser, BetterAuthSession } from "./better-auth";
-
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";
