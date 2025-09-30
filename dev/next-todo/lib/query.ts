@@ -11,15 +11,7 @@ import { timestampPlugin } from "./plugins";
 
 export const todoSchema = withId({
 	title: z.string().min(1, "Title is required"),
-	description: z.string().optional(),
-	completed: z.boolean().default(false),
-	priority: z.enum(["low", "medium", "high"]).default("medium"),
-	category: z.string().optional(),
-	dueDate: z.preprocess((val) => {
-		if (val == null || val === "") return undefined;
-		return val instanceof Date ? val : new Date(String(val));
-	}, z.date().optional()),
-	tags: z.array(z.string()).default([]),
+	completed: z.boolean().default(false)
 });
 
 const todoResource = createResource({
@@ -71,7 +63,7 @@ export const query = betterQuery({
 	basePath: "/api/query",
 	database: {
 		provider: "sqlite",
-		url: "todos.db",
+		url: "todo.db",
 		autoMigrate: true,
 	},
 	plugins: [
@@ -93,7 +85,7 @@ export const query = betterQuery({
 		}),
 
 		// Built-in plugin: Cache for read operations
-		cachePlugin({
+		/**cachePlugin({
 			enabled: true,
 			defaultTTL: 300, // 5 minutes
 			resources: {
@@ -103,20 +95,20 @@ export const query = betterQuery({
 					listTTL: 300, // 5 minutes for todo lists
 				},
 			},
-		}),
+		}),**/
 
 		// Built-in plugin: Validation with global rules
-		validationPlugin({
+		/**validationPlugin({
 			strict: true,
 			globalRules: {
 				trimStrings: true,
 				validateEmails: true,
 				sanitizeHtml: false, // We don't need HTML sanitization for todos
 			},
-		}),
+		}),**/
 
 		// Custom plugin: Automatic timestamps
-		timestampPlugin,
+	//	timestampPlugin,
 	],
 	resources: [todoResource],
 });

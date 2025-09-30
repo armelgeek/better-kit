@@ -10,10 +10,6 @@ import { useRouter } from "next/navigation";
 
 const todoSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  description: z.string().max(500, "Description must be less than 500 characters").transform(val => val || undefined).optional(),
-  priority: z.enum(["low", "medium", "high"]),
-  category: z.string().max(100, "Category must be less than 100 characters").transform(val => val || undefined).optional(),
-  dueDate: z.string().transform(val => val || undefined).optional(), // Will be converted to Date later
 });
 
 type TodoFormData = z.infer<typeof todoSchema>;
@@ -26,11 +22,7 @@ export default function TodoApp() {
   const addTodoForm = useForm<TodoFormData>({
     resolver: zodResolver(todoSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      priority: "medium",
-      category: "",
-      dueDate: "",
+      title: ""
     },
   });
 
@@ -38,11 +30,7 @@ export default function TodoApp() {
   const editTodoForm = useForm<TodoFormData>({
     resolver: zodResolver(todoSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      priority: "medium",
-      category: "",
-      dueDate: "",
+      title: ""
     },
   });
 
@@ -50,12 +38,9 @@ export default function TodoApp() {
 
   const handleSubmit = async (data: TodoFormData) => {
     try {
-      const normalizedDueDate = data.dueDate ? new Date(data.dueDate) : undefined;
-      const todoData = {
+     const todoData = {
         ...data,
         completed: false,
-        dueDate: normalizedDueDate,
-        tags: [] as string[],
       };
       await createTodo(todoData);
 
@@ -85,13 +70,8 @@ export default function TodoApp() {
 
   const handleEditStart = (todo: any) => {
     setEditingTodo(todo);
-    const dueDateStr = todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : "";
     editTodoForm.reset({
       title: todo.title,
-      description: todo.description || "",
-      priority: todo.priority,
-      category: todo.category || "",
-      dueDate: dueDateStr,
     });
   };
 
@@ -107,8 +87,6 @@ export default function TodoApp() {
       const updatedTodo = {
         ...editingTodo,
         ...data,
-        createdAt: editingTodo.createdAt,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
       };
 
       const { completed, createdAt, updatedAt, ...rest } = updatedTodo;

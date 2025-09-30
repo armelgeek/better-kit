@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { betterAuth } from "better-auth";
 import Database from "better-sqlite3";
@@ -9,8 +8,8 @@ const userSchema = z.object({
   role: z.enum(["admin", "user"]).default("user"),
   emailVerified: z.boolean().default(false),
   image: z.string().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.preprocess((val) => val instanceof Date ? val : new Date(String(val)), z.date()),
+  updatedAt: z.preprocess((val) => val instanceof Date ? val : new Date(String(val)), z.date()),
 });
 
 export type User = z.infer<typeof userSchema>;
