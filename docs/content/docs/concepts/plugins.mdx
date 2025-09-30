@@ -244,18 +244,18 @@ Server plugins are the backbone of all plugins, and client plugins are there to 
 
 ## Create a Server plugin
 
-To create a server plugin you need to pass an object that satisfies the `BetterAuthPlugin` interface.
+To create a server plugin you need to pass an object that satisfies the `Plugin` interface.
 
 The only required property is `id`, which is a unique identifier for the plugin.
 Both server and client plugins can use the same `id`.
 
 ```ts title="plugin.ts"
-import type { BetterAuthPlugin } from "better-query";
+import type { Plugin } from "better-query";
 
 export const myPlugin = ()=>{
     return {
         id: "my-plugin",
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 <Callout>
@@ -377,7 +377,7 @@ const myPlugin = (opts: PluginOptions)=>{
                 disableMigration: opts.storage.provider !== "database", // [!code highlight]
             },
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -397,7 +397,7 @@ const myPlugin = ()=>{
                 },
             },
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -464,7 +464,7 @@ const myPlugin = ()=>{
                 })
             }
         ]
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -490,7 +490,7 @@ const myPlugin = ()=> {
         onRequest: async (request, context) => {
             //do something
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -510,7 +510,7 @@ const myPlugin = ()=>{
         onResponse: async (response, context) => {
             //do something
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -531,7 +531,7 @@ const myPlugin = ()=>{
                 window: 60,
             }
         ]
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -588,7 +588,7 @@ const myPlugin = ()=>{
                 })
             })
         }
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 

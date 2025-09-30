@@ -20,7 +20,7 @@ A modern, full-stack todo application demonstrating the power of **Better Query*
 - **Better Query** for type-safe CRUD operations
 - **Plugin System** with audit, cache, and validation plugins
 - **Custom Plugins** for extending functionality
-- **Better Auth Plugin** for seamless auth integration
+- **Better Auth Integration** through permissions and middleware
 - **Zod Validation** with React Hook Form
 - **Permission-based Filtering** at the database level
 - **Auto-generated API Endpoints** with authentication middleware
@@ -137,7 +137,7 @@ To enable complete authentication functionality:
 2. **Uncomment Integration Code**
    - In `lib/auth.ts`: Replace mock implementation with real Better Auth
    - In `lib/auth-client.ts`: Use real Better Auth React client
-   - In `lib/query.ts`: Enable the Better Auth plugin
+   - In `lib/query.ts`: Enable Better Auth middleware integration
    - In `components/TodoApp.tsx`: Enable authentication checks
 
 3. **Environment Setup**
@@ -354,4 +354,4 @@ This example demonstrates core authentication concepts. You can extend it with:
 
 - [Better Query Documentation](https://armelgeek.github.io/better-kit)
 - [Better Auth Documentation](https://better-auth.com)
-- [Better Auth Plugin Guide](https://armelgeek.github.io/better-kit/docs/plugins/better-auth)
+- [Plugin System Guide](https://armelgeek.github.io/better-kit/docs/concepts/plugins)
