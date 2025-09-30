@@ -417,3 +417,50 @@ const crud = adiemus({
 crud.api.getAuditLogs({ query: { resource: 'user' } });
 crud.api.getCacheStats();
 ```
+
+## Client Plugins
+
+Client plugins allow you to extend the better-query client with custom functionality that mirrors server plugins. This enables type-safe client-side methods, reactive state management, and seamless integration with your server endpoints.
+
+### Quick Start
+
+```typescript
+import { createQueryClient } from "better-query/client";
+import type { BetterQueryClientPlugin } from "better-query/client";
+
+// Define client plugin
+export const analyticsClientPlugin = (): BetterQueryClientPlugin => {
+  return {
+    id: "analytics",
+    
+    // Infer types from server plugin
+    $InferServerPlugin: {} as ReturnType<typeof analyticsPlugin>,
+    
+    // Define custom client actions
+    getActions: ($fetch) => ({
+      getStats: async (fetchOptions?) => {
+        return $fetch("/analytics/stats", {
+          method: "GET",
+          ...fetchOptions,
+        });
+      },
+    }),
+  };
+};
+
+// Use with client
+const queryClient = createQueryClient({
+  baseURL: "http://localhost:3000/api",
+  queryPlugins: [analyticsClientPlugin()],
+});
+```
+
+### Client Plugin Features
+
+- **Type Safety**: Infer types from server plugins for complete type safety
+- **Custom Actions**: Define client-side methods that call your plugin endpoints
+- **Reactive State**: Manage reactive state with atoms (compatible with nanostores)
+- **HTTP Method Overrides**: Control which HTTP methods are used for specific paths
+- **Atom Listeners**: Setup reactive listeners for automatic state updates
+
+For detailed documentation on client plugins, see [CLIENT_PLUGINS.md](./CLIENT_PLUGINS.md).

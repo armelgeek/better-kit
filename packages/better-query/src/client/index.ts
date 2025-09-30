@@ -2,10 +2,16 @@ import { BetterFetchOption } from "@better-fetch/fetch";
 import { createClient } from "better-call/client";
 import { BetterQuery } from "../query";
 import { QueryResourceConfig } from "../types";
+import { BetterQueryClientPlugin } from "../types/client-plugins";
 import { ZodSchema, z } from "zod";
 
 export interface QueryClientOptions extends BetterFetchOption {
 	baseURL?: string;
+	/**
+	 * Query client plugins to extend functionality
+	 * Note: Different from fetchPlugins which are better-fetch plugins
+	 */
+	queryPlugins?: BetterQueryClientPlugin[];
 }
 
 // Legacy alias
@@ -72,6 +78,7 @@ export function createQueryClient<T extends BetterQuery = BetterQuery>(
 		onRequest,
 		onResponse,
 		onError,
+		queryPlugins,
 		...rest
 	} = options || {};
 
@@ -82,7 +89,7 @@ export function createQueryClient<T extends BetterQuery = BetterQuery>(
 		} as any
 	);
 
-	const proxy = createQueryProxy(client);
+	const proxy = createQueryProxy(client, queryPlugins);
 	
 	(proxy as any).$ERROR_CODES = QUERY_ERROR_CODES;
 	
@@ -93,11 +100,40 @@ export function createQueryClient<T extends BetterQuery = BetterQuery>(
 export const createCrudClient = createQueryClient;
 
 /**
- * Create a proxy that organizes Query methods by resource
+ * Create a proxy that organizes Query methods by resource and plugins
  */
-function createQueryProxy(client: any) {
+function createQueryProxy(client: any, plugins?: BetterQueryClientPlugin[]) {
 	// Create resource proxies
 	const resources: Record<string, any> = {};
+
+	// Process plugins and add their actions
+	const pluginActions: Record<string, any> = {};
+	const pluginAtoms: Record<string, any> = {};
+
+	if (plugins) {
+		for (const plugin of plugins) {
+			// Add custom actions from plugin
+			if (plugin.getActions) {
+				const actions = plugin.getActions(client);
+				// Organize actions by plugin id (convert to camelCase)
+				const pluginKey = kebabToCamelCase(plugin.id);
+				pluginActions[pluginKey] = actions;
+			}
+
+			// Add atoms from plugin
+			if (plugin.getAtoms) {
+				const atoms = plugin.getAtoms(client);
+				const pluginKey = kebabToCamelCase(plugin.id);
+				pluginAtoms[pluginKey] = atoms;
+			}
+
+			// Setup atom listeners
+			if (plugin.atomListeners && plugin.getAtoms) {
+				const atoms = plugin.getAtoms(client);
+				plugin.atomListeners(atoms, client);
+			}
+		}
+	}
 
 	return new Proxy(resources, {
 		get(target, resourceName: string) {
@@ -108,6 +144,16 @@ function createQueryProxy(client: any) {
 			// Handle special properties (like $ERROR_CODES)
 			if (resourceName.startsWith('$')) {
 				return undefined;
+			}
+
+			// Check if this is a plugin action
+			if (pluginActions[resourceName]) {
+				return pluginActions[resourceName];
+			}
+
+			// Check if this is a plugin atom
+			if (pluginAtoms[resourceName]) {
+				return pluginAtoms[resourceName];
 			}
 
 			// Create resource-specific methods
@@ -177,6 +223,13 @@ const createCrudProxy = createQueryProxy;
  */
 function capitalize(str: string): string {
 	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Convert kebab-case to camelCase
+ */
+function kebabToCamelCase(str: string): string {
+	return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
 /**
@@ -287,3 +340,11 @@ export type CrudClient<T extends BetterQuery = BetterQuery> = QueryClient<T>;
 
 // Note: React exports are intentionally separated to avoid bundling React hooks 
 // in server-side code. Import from 'better-query/react' instead.
+
+// Export client plugin types
+export type { 
+	BetterQueryClientPlugin,
+	InferPluginEndpoints,
+	InferClientMethods,
+	InferClientAtoms,
+} from "../types/client-plugins";

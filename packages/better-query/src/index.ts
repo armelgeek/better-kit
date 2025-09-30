@@ -22,6 +22,7 @@ export * from "./types";
 export * from "./types/adapter";
 export * from "./types/plugins";
 export * from "./types/better-auth";
+export * from "./types/client-plugins";
 
 // Export custom operations types specifically
 export type { CustomOperation, CustomOperations } from "./types/adapter";
