@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 export default defineConfig([
 	// Core & server-side entries – keep splitting enabled so shared code
-	// remains deduplicated across bundles.
+	// remains deduplicated across bundles, but exclude React files from splitting
 	{
 		entry: {
 			index: "./src/index.ts",
@@ -11,12 +11,14 @@ export default defineConfig([
 			plugins: "./src/plugins/index.ts",
 			cli: "./src/cli/index.ts",
 		},
-		// Allow code-splitting for shared server/core code
+		// Allow code-splitting for shared server/core code but exclude React files
 		format: ["esm", "cjs"],
 		dts: true,
 		target: "es2022",
 		sourcemap: true,
 		external: ["pg", "mysql2", "better-sqlite3", "react", "@types/react"],
+		// Prevent React hooks from being bundled in shared chunks
+		noExternal: [],
 	},
 
 	// Dedicated React client entry – disable splitting so the 'use client'
@@ -32,5 +34,11 @@ export default defineConfig([
 		target: "es2022",
 		sourcemap: true,
 		external: ["pg", "mysql2", "better-sqlite3", "react", "@types/react"],
+		// Ensure all React code is bundled together
+		bundle: true,
+		// Preserve 'use client' directives
+		banner: {
+			js: '"use client";',
+		},
 	},
 ]);

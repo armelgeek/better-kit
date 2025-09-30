@@ -10,13 +10,12 @@ export { betterQuery as betterCrud } from "./query";
 export { createQueryClient } from "./client";
 export type { QueryClient, QueryClientOptions } from "./client";
 
-// React Client
-export { createReactQueryClient, useQuery, useResource } from "./client";
-export type { ReactQueryClient, ReactQueryClientOptions } from "./client";
+// React Client exports are in better-query/react to avoid mixing server and client code
+// Import from 'better-query/react' for React hooks and components
 
-// Legacy client exports
-export { createQueryClient as createCrudClient, createReactQueryClient as createReactCrudClient } from "./client";
-export type { QueryClient as CrudClient, QueryClientOptions as CrudClientOptions, ReactQueryClient as ReactCrudClient, ReactQueryClientOptions as ReactCrudClientOptions } from "./client";
+// Legacy client exports (non-React only)
+export { createQueryClient as createCrudClient } from "./client";
+export type { QueryClient as CrudClient, QueryClientOptions as CrudClientOptions } from "./client";
 
 // Types
 export * from "./types";

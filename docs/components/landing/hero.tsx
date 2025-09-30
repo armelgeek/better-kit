@@ -68,7 +68,7 @@ export default function Hero() {
 											></path>
 										</svg>
 										<span className="text-xs text-opacity-75">
-											Own Your Auth
+											Own Your Query
 										</span>
 									</div>
 								</div>

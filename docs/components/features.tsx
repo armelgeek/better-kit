@@ -111,9 +111,7 @@ export default function Features({ stars }: { stars: string | null }) {
 						</div>
 					))}
 				</div>
-				<div className="w-full border-l-2 hidden md:block">
-					<Testimonial />
-				</div>
+				
 				<div className="relative col-span-3 border-t-[1.2px] border-l-[1.2px] md:border-b-[1.2px] dark:border-b-0  h-full py-20">
 					<div className="w-full h-full p-16 pt-10 md:px-10 2xl:px-16">
 						<div className="flex flex-col items-center justify-center w-full h-full gap-3">
@@ -130,14 +128,8 @@ export default function Features({ stars }: { stars: string | null }) {
 								<TechStackDisplay
 									skills={[
 										"nextJs",
-										"nuxt",
-										"svelteKit",
-										"astro",
-										"solidStart",
-										// "react",
-										// "hono",
-										"expo",
-										"tanstack",
+										"react",
+										"hono"
 									]}
 								/>
 							</div>

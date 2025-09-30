@@ -32,7 +32,7 @@ interface Plugin {
   endpoints?: Record<string, Endpoint>;  // Additional API endpoints
   schema?: PluginSchema;         // Database schema extensions
   resources?: CrudResourceConfig[];      // Additional CRUD resources
-  middleware?: CrudMiddleware[]; // Global middleware
+  middlewares?: CrudMiddleware[]; // Global middleware
   hooks?: PluginHooks;          // Lifecycle hooks
   init?: (context: PluginInitContext) => Promise<void> | void;
   destroy?: () => Promise<void> | void;

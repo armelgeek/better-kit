@@ -1,23 +1,8 @@
 import { betterQuery, createResource, withId } from "better-query";
-// Note: In a real project, you would import from "better-query/plugins"
-// import { betterAuth as betterAuthPlugin } from "better-query/plugins";
 import { auth } from "./auth";
 import { z } from "zod";
 import { headers } from "next/headers";
 
-// Mock Better Auth plugin implementation for demonstration
-// In a real project, this would be imported from better-query/plugins
-const mockBetterAuthPlugin = (options: any) => ({
-  id: 'better-auth',
-  // Mock plugin implementation
-  init: async (context: any) => {
-    console.log("Mock Better Auth plugin initialized");
-  },
-  middleware: [],
-  hooks: {},
-});
-
-// Todo Schema - Enhanced with user ownership
 export const todoSchema = withId({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -34,10 +19,10 @@ export const todoSchema = withId({
 const todoResource = createResource({
   name: "todo",
   schema: todoSchema,
-  // Middleware runs BEFORE permission checks - perfect for user injection
   middleware: [
     {
       handler: async (context) => {
+        console.log('Todo resource middleware triggered', context);
         const session = await auth.api.getSession({
           headers: await headers()
         });
@@ -49,33 +34,23 @@ const todoResource = createResource({
   permissions: {
     create: async (context) => {
       console.log('Create context user:', context.user);
-      // Now we can properly check user permissions!
       return !!context.user;
     },
     read: async (context) => {
-      // For demo: allow all operations
-      // In real Better Auth integration: check user ownership
       return true;
     },
     update: async (context) => {
-      // For demo: allow all operations
-      // In real Better Auth integration: check user ownership or admin role
       return true;
     },
     delete: async (context) => {
-      // For demo: allow all operations
-      // In real Better Auth integration: check user ownership or admin role
       return true;
     },
     list: async (context) => {
-      // For demo: allow all operations
-      // In real Better Auth integration: return !!context.user;
       return true;
     },
   },
   hooks: {
     beforeCreate: async (context) => {
-      // User is already injected by middleware, so we can use it here
       console.log('Before create hook user:', context.user);
       context.data.createdAt = new Date();
       context.data.updatedAt = new Date();

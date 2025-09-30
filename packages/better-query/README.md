@@ -511,7 +511,7 @@ interface CrudOptions {
   database: CrudDatabaseConfig;    // Database configuration
   basePath?: string;               // Base path for all endpoints (optional)
   requireAuth?: boolean;           // Global auth requirement (default: false)
-  middleware?: CrudMiddleware[];   // Custom middleware
+  middlewares?: CrudMiddleware[];   // Custom middleware
 }
 ```
 

@@ -53,7 +53,7 @@ export interface QueryResourceConfig {
 	/** Custom endpoints for the resource */
 	customEndpoints?: Record<string, Endpoint>;
 	/** Middleware functions that run before permission checks */
-	middleware?: QueryMiddleware[];
+	middlewares?: QueryMiddleware[];
 	/** Permission functions */
 	permissions?: {
 		create?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
@@ -176,7 +176,7 @@ export interface QueryOptions {
 	/** Global auth requirement (default: false) */
 	requireAuth?: boolean;
 	/** Custom middleware */
-	middleware?: QueryMiddleware[];
+	middlewares?: QueryMiddleware[];
 	/** Plugins to enable */
 	plugins?: Plugin[];
 	/** Global lifecycle hooks that apply to all resources */

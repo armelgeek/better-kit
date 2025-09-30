@@ -283,7 +283,7 @@ export type QueryClient<T extends BetterQuery = BetterQuery> = {
 // Legacy alias
 export type CrudClient<T extends BetterQuery = BetterQuery> = QueryClient<T>;
 
-// Export React client
-export { createReactQueryClient, createReactCrudClient, useQuery, useResource } from "./react";
-export type { ReactQueryClient, ReactCrudClient, ReactQueryClientOptions, ReactCrudClientOptions } from "./react";
-export type * from "./react/types";
+// Client exports are in src/client/react/index.ts to avoid mixing server and client code
+
+// Note: React exports are intentionally separated to avoid bundling React hooks 
+// in server-side code. Import from 'better-query/react' instead.

@@ -219,9 +219,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Execute resource-level middleware
-				if (resourceConfig.middleware) {
+				if (resourceConfig.middlewares) {
 					try {
-						for (const middleware of resourceConfig.middleware) {
+						for (const middleware of resourceConfig.middlewares) {
 							await middleware.handler(middlewareContext);
 						}
 						// Update user and scopes from middleware modifications
@@ -383,9 +383,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Execute resource-level middleware
-				if (resourceConfig.middleware) {
+				if (resourceConfig.middlewares) {
 					try {
-						for (const middleware of resourceConfig.middleware) {
+						for (const middleware of resourceConfig.middlewares) {
 							await middleware.handler(middlewareContext);
 						}
 						// Update user and scopes from middleware modifications
@@ -516,9 +516,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Execute resource-level middleware
-				if (resourceConfig.middleware) {
+				if (resourceConfig.middlewares) {
 					try {
-						for (const middleware of resourceConfig.middleware) {
+						for (const middleware of resourceConfig.middlewares) {
 							await middleware.handler(middlewareContext);
 						}
 						// Update user and scopes from middleware modifications
@@ -673,9 +673,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Execute resource-level middleware
-				if (resourceConfig.middleware) {
+				if (resourceConfig.middlewares) {
 					try {
-						for (const middleware of resourceConfig.middleware) {
+						for (const middleware of resourceConfig.middlewares) {
 							await middleware.handler(middlewareContext);
 						}
 						// Update user and scopes from middleware modifications
@@ -802,9 +802,9 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				};
 
 				// Execute resource-level middleware
-				if (resourceConfig.middleware) {
+				if (resourceConfig.middlewares) {
 					try {
-						for (const middleware of resourceConfig.middleware) {
+						for (const middleware of resourceConfig.middlewares) {
 							await middleware.handler(middlewareContext);
 						}
 						// Update user and scopes from middleware modifications

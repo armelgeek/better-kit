@@ -48,6 +48,7 @@ export const auth = betterAuth({
   ],` : "";
 
 	return `import { betterQuery, createResource } from "better-query";${authImports}
+import type { QueryMiddlewareContext } from "better-query";
 import { productSchema, categorySchema } from "./schemas";
 ${authSetup}
 // Better Query configuration
@@ -61,6 +62,14 @@ export const query = betterQuery({
     createResource({
       name: "product",
       schema: productSchema,
+      middlewares: [
+        {
+          handler: async (context: QueryMiddlewareContext) => {
+            console.log('Product middleware triggered', context);
+            // Add any middleware logic here
+          }
+        }
+      ],
       permissions: {
         create: async (context) => !!context.user,
         update: async (context) => !!context.user,

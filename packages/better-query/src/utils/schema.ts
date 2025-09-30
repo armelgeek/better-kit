@@ -1,5 +1,5 @@
 import { ZodSchema, ZodTypeAny, z } from "zod";
-import { FieldAttribute, QueryPermissionContext, QueryHookContext } from "../types";
+import { FieldAttribute, QueryPermissionContext, QueryHookContext, QueryMiddlewareContext, QueryResourceConfig } from "../types";
 
 /**
  * Convert Zod schema to database field attributes
@@ -127,43 +127,7 @@ export function validateData(schema: ZodSchema, data: any) {
 /**
  * Create a simple resource configuration helper
  */
-export function createResource(config: {
-	name: string;
-	schema: ZodSchema;
-	tableName?: string;
-	endpoints?: {
-		create?: boolean;
-		read?: boolean;
-		update?: boolean;
-		delete?: boolean;
-		list?: boolean;
-	};
-	customEndpoints?: Record<string, any>;
-	permissions?: {
-		create?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
-		read?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
-		update?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
-		delete?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
-		list?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
-	};
-	hooks?: {
-		// Before hooks (support both naming conventions)
-		onCreate?: (context: QueryHookContext) => Promise<void> | void;
-		onUpdate?: (context: QueryHookContext) => Promise<void> | void;
-		onDelete?: (context: QueryHookContext) => Promise<void> | void;
-		beforeCreate?: (context: QueryHookContext) => Promise<void> | void;
-		beforeUpdate?: (context: QueryHookContext) => Promise<void> | void;
-		beforeDelete?: (context: QueryHookContext) => Promise<void> | void;
-		beforeRead?: (context: QueryHookContext) => Promise<void> | void;
-		beforeList?: (context: QueryHookContext) => Promise<void> | void;
-		// After hooks
-		afterCreate?: (context: QueryHookContext) => Promise<void> | void;
-		afterUpdate?: (context: QueryHookContext) => Promise<void> | void;
-		afterDelete?: (context: QueryHookContext) => Promise<void> | void;
-		afterRead?: (context: QueryHookContext) => Promise<void> | void;
-		afterList?: (context: QueryHookContext) => Promise<void> | void;
-	};
-}) {
+export function createResource(config: QueryResourceConfig): QueryResourceConfig {
 	return {
 		...config,
 		endpoints: {
