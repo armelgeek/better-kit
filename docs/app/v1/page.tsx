@@ -1,9 +1,9 @@
-import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BackgroundLines } from "./bg-line";
-import Link from "next/link";
 import { DiscordLogoIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
+import { ArrowRight } from "lucide-react";
 import { Metadata } from "next";
+import Link from "next/link";
+import { BackgroundLines } from "./bg-line";
 
 export const metadata: Metadata = {
 	title: "V1.0 Release",

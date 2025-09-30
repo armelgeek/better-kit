@@ -1,86 +1,93 @@
-import fs from "fs/promises";
 import path from "path";
-import { ProjectConfig } from "../index.js";
+import fs from "fs/promises";
 import { ensureDir, writeFile } from "../../utils/fs.js";
-import { packageJsonTemplate } from "./package.json.js";
-import { nextConfigTemplate } from "./next.config.js";
-import { queryConfigTemplate } from "./lib/query.js";
-import { clientConfigTemplate } from "./lib/client.js";
-import { apiRouteTemplate } from "./api/route.js";
-import { pageTemplate } from "./app/page.js";
-import { layoutTemplate } from "./app/layout.js";
-import { envTemplate } from "./env.js";
-import { schemasTemplate } from "./lib/schemas.js";
+import { ProjectConfig } from "../index.js";
 import { readmeTemplate } from "./README.js";
+import { apiRouteTemplate } from "./api/route.js";
+import { layoutTemplate } from "./app/layout.js";
+import { pageTemplate } from "./app/page.js";
+import { envTemplate } from "./env.js";
+import { clientConfigTemplate } from "./lib/client.js";
+import { queryConfigTemplate } from "./lib/query.js";
+import { schemasTemplate } from "./lib/schemas.js";
+import { nextConfigTemplate } from "./next.config.js";
+import { packageJsonTemplate } from "./package.json.js";
 
 class NextJSTemplate {
 	async generate(config: ProjectConfig): Promise<void> {
 		const { targetDir, withAuth, database, typescript } = config;
-		
+
 		// Create directory structure
 		await this.createDirectoryStructure(targetDir);
-		
+
 		// Generate configuration files
 		await this.generatePackageJson(targetDir, withAuth);
 		await this.generateNextConfig(targetDir);
 		await this.generateEnvFile(targetDir, withAuth, database);
 		await this.generateTailwindConfig(targetDir);
 		await this.generateTsConfig(targetDir);
-		
+
 		// Generate library files
 		await this.generateQueryConfig(targetDir, withAuth, database);
 		await this.generateClientConfig(targetDir);
 		await this.generateSchemas(targetDir);
-		
+
 		// Generate app files
 		await this.generateLayout(targetDir, withAuth);
 		await this.generatePage(targetDir, withAuth);
 		await this.generateApiRoutes(targetDir);
-		
+
 		// Generate documentation
 		await this.generateReadme(targetDir, withAuth);
-		
+
 		// Generate auth-specific files if needed
 		if (withAuth) {
 			await this.generateAuthFiles(targetDir);
 		}
-		
+
 		// Create globals.css file
 		await this.generateGlobalsCss(targetDir);
-		
+
 		// Create gitignore
 		await this.generateGitignore(targetDir);
 	}
-	
+
 	private async createDirectoryStructure(targetDir: string): Promise<void> {
 		const dirs = [
 			"src/app",
 			"src/app/api/query/[...any]",
 			"src/lib",
 			"src/components",
-			"public"
+			"public",
 		];
-		
+
 		for (const dir of dirs) {
 			await ensureDir(path.join(targetDir, dir));
 		}
 	}
-	
-	private async generatePackageJson(targetDir: string, withAuth: boolean): Promise<void> {
+
+	private async generatePackageJson(
+		targetDir: string,
+		withAuth: boolean,
+	): Promise<void> {
 		const content = packageJsonTemplate(withAuth);
 		await writeFile(path.join(targetDir, "package.json"), content);
 	}
-	
+
 	private async generateNextConfig(targetDir: string): Promise<void> {
 		const content = nextConfigTemplate();
 		await writeFile(path.join(targetDir, "next.config.mjs"), content);
 	}
-	
-	private async generateEnvFile(targetDir: string, withAuth: boolean, database: string): Promise<void> {
+
+	private async generateEnvFile(
+		targetDir: string,
+		withAuth: boolean,
+		database: string,
+	): Promise<void> {
 		const content = envTemplate(withAuth, database);
 		await writeFile(path.join(targetDir, ".env.local"), content);
 	}
-	
+
 	private async generateTailwindConfig(targetDir: string): Promise<void> {
 		const content = `/** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -101,7 +108,7 @@ module.exports = {
 }`;
 		await writeFile(path.join(targetDir, "tailwind.config.js"), content);
 	}
-	
+
 	private async generateTsConfig(targetDir: string): Promise<void> {
 		const content = `{
   "compilerOptions": {
@@ -132,55 +139,74 @@ module.exports = {
 }`;
 		await writeFile(path.join(targetDir, "tsconfig.json"), content);
 	}
-	
-	private async generateQueryConfig(targetDir: string, withAuth: boolean, database: string): Promise<void> {
+
+	private async generateQueryConfig(
+		targetDir: string,
+		withAuth: boolean,
+		database: string,
+	): Promise<void> {
 		const content = queryConfigTemplate(withAuth, database);
 		await writeFile(path.join(targetDir, "src/lib/query.ts"), content);
 	}
-	
+
 	private async generateClientConfig(targetDir: string): Promise<void> {
 		const content = clientConfigTemplate();
 		await writeFile(path.join(targetDir, "src/lib/client.ts"), content);
 	}
-	
+
 	private async generateSchemas(targetDir: string): Promise<void> {
 		const content = schemasTemplate();
 		await writeFile(path.join(targetDir, "src/lib/schemas.ts"), content);
 	}
-	
-	private async generateLayout(targetDir: string, withAuth: boolean): Promise<void> {
+
+	private async generateLayout(
+		targetDir: string,
+		withAuth: boolean,
+	): Promise<void> {
 		const content = layoutTemplate(withAuth);
 		await writeFile(path.join(targetDir, "src/app/layout.tsx"), content);
 	}
-	
-	private async generatePage(targetDir: string, withAuth: boolean): Promise<void> {
+
+	private async generatePage(
+		targetDir: string,
+		withAuth: boolean,
+	): Promise<void> {
 		const content = pageTemplate(withAuth);
 		await writeFile(path.join(targetDir, "src/app/page.tsx"), content);
 	}
-	
+
 	private async generateApiRoutes(targetDir: string): Promise<void> {
 		const content = apiRouteTemplate();
-		
+
 		// Ensure the directory exists first
 		await ensureDir(path.join(targetDir, "src/app/api/query/[...any]"));
-		await writeFile(path.join(targetDir, "src/app/api/query/[...any]/route.ts"), content);
+		await writeFile(
+			path.join(targetDir, "src/app/api/query/[...any]/route.ts"),
+			content,
+		);
 	}
-	
-	private async generateReadme(targetDir: string, withAuth: boolean): Promise<void> {
+
+	private async generateReadme(
+		targetDir: string,
+		withAuth: boolean,
+	): Promise<void> {
 		const content = readmeTemplate(withAuth);
 		await writeFile(path.join(targetDir, "README.md"), content);
 	}
-	
+
 	private async generateAuthFiles(targetDir: string): Promise<void> {
 		// Generate auth-specific API route
 		const authRouteContent = `import { auth } from "@/lib/query";
 
 export { auth as GET, auth as POST };`;
-		
+
 		await ensureDir(path.join(targetDir, "src/app/api/auth/[...all]"));
-		await writeFile(path.join(targetDir, "src/app/api/auth/[...all]/route.ts"), authRouteContent);
+		await writeFile(
+			path.join(targetDir, "src/app/api/auth/[...all]/route.ts"),
+			authRouteContent,
+		);
 	}
-	
+
 	private async generateGlobalsCss(targetDir: string): Promise<void> {
 		const content = `@tailwind base;
 @tailwind components;
@@ -211,7 +237,7 @@ body {
 }`;
 		await writeFile(path.join(targetDir, "src/app/globals.css"), content);
 	}
-	
+
 	private async generateGitignore(targetDir: string): Promise<void> {
 		const content = `# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 

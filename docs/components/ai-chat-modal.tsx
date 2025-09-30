@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Send, Bot, User, AlertCircle } from "lucide-react";
-import { MarkdownRenderer } from "./markdown-renderer";
 import { betterFetch } from "@better-fetch/fetch";
 import { atom } from "jotai";
+import { AlertCircle, Bot, Send, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MarkdownRenderer } from "./markdown-renderer";
 
 interface Message {
 	id: string;
@@ -38,7 +38,9 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
 	const [sessionId, setSessionId] = useState<string | null>(null);
 	const [externalUserId] = useState<string>(
 		() =>
-			`better-auth-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			`better-auth-user-${Date.now()}-${Math.random()
+				.toString(36)
+				.substr(2, 9)}`,
 	);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const abortControllerRef = useRef<AbortController | null>(null);

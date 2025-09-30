@@ -1,6 +1,6 @@
 /**
  * This example demonstrates how to create and use client plugins with better-query
- * 
+ *
  * Client plugins allow you to:
  * 1. Infer endpoint types from server plugins
  * 2. Add custom client-side methods
@@ -8,10 +8,15 @@
  * 4. Override HTTP methods for specific paths
  */
 
-import { z } from "zod";
-import { betterQuery, createPlugin, createQueryClient, createQueryEndpoint } from "..";
-import type { BetterQueryClientPlugin } from "../types/client-plugins";
 import type { BetterFetchOption } from "@better-fetch/fetch";
+import { z } from "zod";
+import {
+	betterQuery,
+	createPlugin,
+	createQueryClient,
+	createQueryEndpoint,
+} from "..";
+import type { BetterQueryClientPlugin } from "../types/client-plugins";
 
 // ============================================================================
 // SERVER PLUGIN DEFINITION
@@ -47,11 +52,14 @@ const analyticsPlugin = () =>
 					method: "POST",
 				},
 				async (ctx) => {
-					const body = ctx.body as { event: string; metadata?: Record<string, any> };
-					
+					const body = ctx.body as {
+						event: string;
+						metadata?: Record<string, any>;
+					};
+
 					// In a real app, you'd save to database
 					console.log("Tracked event:", body);
-					
+
 					return ctx.json({
 						success: true,
 						eventId: "evt_123",
@@ -67,7 +75,7 @@ const analyticsPlugin = () =>
 				},
 				async (ctx) => {
 					const userId = ctx.query?.userId as string;
-					
+
 					return ctx.json({
 						userId,
 						lastSeen: new Date().toISOString(),
@@ -89,7 +97,7 @@ const analyticsPlugin = () =>
 export const analyticsClientPlugin = (): BetterQueryClientPlugin => {
 	return {
 		id: "analytics",
-		
+
 		// Infer types from server plugin for type safety
 		$InferServerPlugin: {} as ReturnType<typeof analyticsPlugin>,
 
@@ -144,7 +152,7 @@ export const analyticsClientPlugin = (): BetterQueryClientPlugin => {
 		 */
 		getAtoms: ($fetch) => {
 			// Simple atom implementation (in production, use nanostores)
-			const createAtom = <T,>(initialValue: T) => {
+			const createAtom = <T>(initialValue: T) => {
 				let value = initialValue;
 				const listeners = new Set<(value: T) => void>();
 
@@ -247,11 +255,9 @@ const queryClient = createQueryClient<typeof query>({
 async function exampleUsage() {
 	// The plugin actions are available via the plugin id (converted to camelCase)
 	// Since id is "analytics", it becomes: queryClient.analytics
-	
-	// However, since we're using a proxy, the actual access pattern depends on 
+	// However, since we're using a proxy, the actual access pattern depends on
 	// how the client proxy is implemented. For plugin actions, they're typically
 	// accessed through the plugin's getActions return object.
-
 	// Note: The exact usage pattern would depend on how the client proxy
 	// exposes plugin methods. This is a conceptual example.
 }
@@ -339,7 +345,7 @@ export const authClientPlugin = (): BetterQueryClientPlugin => {
 		}),
 
 		getAtoms: ($fetch) => {
-			const createAtom = <T,>(initialValue: T) => {
+			const createAtom = <T>(initialValue: T) => {
 				let value = initialValue;
 				const listeners = new Set<(value: T) => void>();
 				return {

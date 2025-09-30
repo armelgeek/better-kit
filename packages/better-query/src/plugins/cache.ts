@@ -1,7 +1,7 @@
-import { createCrudEndpoint } from "../endpoints/crud-endpoint";
-import { Plugin } from "../types/plugins";
-import { CrudHookContext } from "../types";
 import { z } from "zod";
+import { createCrudEndpoint } from "../endpoints/crud-endpoint";
+import { CrudHookContext } from "../types";
+import { Plugin } from "../types/plugins";
 
 /**
  * Simple in-memory cache implementation
@@ -11,19 +11,19 @@ class MemoryCache {
 	private cache = new Map<string, { data: any; expires: number }>();
 
 	set(key: string, data: any, ttlSeconds = 300): void {
-		const expires = Date.now() + (ttlSeconds * 1000);
+		const expires = Date.now() + ttlSeconds * 1000;
 		this.cache.set(key, { data, expires });
 	}
 
 	get(key: string): any | null {
 		const entry = this.cache.get(key);
 		if (!entry) return null;
-		
+
 		if (Date.now() > entry.expires) {
 			this.cache.delete(key);
 			return null;
 		}
-		
+
 		return entry.data;
 	}
 
@@ -61,16 +61,19 @@ export interface CachePluginOptions {
 	/** Default TTL in seconds */
 	defaultTTL?: number;
 	/** Cache configuration per resource */
-	resources?: Record<string, {
-		/** Enable/disable caching for this resource */
-		enabled?: boolean;
-		/** TTL for read operations */
-		readTTL?: number;
-		/** TTL for list operations */
-		listTTL?: number;
-		/** Cache keys to invalidate on write operations */
-		invalidatePatterns?: string[];
-	}>;
+	resources?: Record<
+		string,
+		{
+			/** Enable/disable caching for this resource */
+			enabled?: boolean;
+			/** TTL for read operations */
+			readTTL?: number;
+			/** TTL for list operations */
+			listTTL?: number;
+			/** Cache keys to invalidate on write operations */
+			invalidatePatterns?: string[];
+		}
+	>;
 	/** Custom cache implementation */
 	cache?: {
 		get: (key: string) => any | Promise<any>;
@@ -99,7 +102,12 @@ export function cachePlugin(options: CachePluginOptions = {}): Plugin {
 		};
 	}
 
-	const getCacheKey = (resource: string, operation: string, id?: string, query?: any): string => {
+	const getCacheKey = (
+		resource: string,
+		operation: string,
+		id?: string,
+		query?: any,
+	): string => {
 		const parts = [resource, operation];
 		if (id) parts.push(id);
 		if (query) parts.push(JSON.stringify(query));
@@ -124,7 +132,7 @@ export function cachePlugin(options: CachePluginOptions = {}): Plugin {
 	const invalidateCache = async (resource: string): Promise<void> => {
 		const resourceConfig = resources[resource];
 		const patterns = resourceConfig?.invalidatePatterns || [`${resource}:*`];
-		
+
 		for (const pattern of patterns) {
 			if (cache.invalidatePattern) {
 				await cache.invalidatePattern(pattern);
@@ -134,46 +142,60 @@ export function cachePlugin(options: CachePluginOptions = {}): Plugin {
 
 	return {
 		id: "cache",
-		
-		endpoints: {
-			getCacheStats: createCrudEndpoint("/cache/stats", {
-				method: "GET",
-			}, async (ctx) => {
-				if ("getStats" in cache && typeof cache.getStats === "function") {
-					return ctx.json((cache as any).getStats());
-				}
-				return ctx.json({ message: "Cache stats not available" });
-			}),
 
-			clearCache: createCrudEndpoint("/cache/clear", {
-				method: "POST",
-				body: z.object({
-					resource: z.string().optional(),
-					pattern: z.string().optional(),
-				}).optional(),
-			}, async (ctx) => {
-				const { resource, pattern } = ctx.body || {};
-				
-				if (pattern && cache.invalidatePattern) {
-					await cache.invalidatePattern(pattern);
-					return ctx.json({ message: `Cleared cache for pattern: ${pattern}` });
-				} else if (resource) {
-					await invalidateCache(resource);
-					return ctx.json({ message: `Cleared cache for resource: ${resource}` });
-				} else {
-					await cache.clear();
-					return ctx.json({ message: "Cleared all cache" });
-				}
-			}),
+		endpoints: {
+			getCacheStats: createCrudEndpoint(
+				"/cache/stats",
+				{
+					method: "GET",
+				},
+				async (ctx) => {
+					if ("getStats" in cache && typeof cache.getStats === "function") {
+						return ctx.json((cache as any).getStats());
+					}
+					return ctx.json({ message: "Cache stats not available" });
+				},
+			),
+
+			clearCache: createCrudEndpoint(
+				"/cache/clear",
+				{
+					method: "POST",
+					body: z
+						.object({
+							resource: z.string().optional(),
+							pattern: z.string().optional(),
+						})
+						.optional(),
+				},
+				async (ctx) => {
+					const { resource, pattern } = ctx.body || {};
+
+					if (pattern && cache.invalidatePattern) {
+						await cache.invalidatePattern(pattern);
+						return ctx.json({
+							message: `Cleared cache for pattern: ${pattern}`,
+						});
+					} else if (resource) {
+						await invalidateCache(resource);
+						return ctx.json({
+							message: `Cleared cache for resource: ${resource}`,
+						});
+					} else {
+						await cache.clear();
+						return ctx.json({ message: "Cleared all cache" });
+					}
+				},
+			),
 		},
 
 		hooks: {
 			beforeRead: async (context) => {
 				if (!shouldCache(context.resource)) return;
-				
+
 				const cacheKey = getCacheKey(context.resource, "read", context.id);
 				const cached = await cache.get(cacheKey);
-				
+
 				if (cached) {
 					// Set cached result in context so endpoint can use it
 					(context as any).cachedResult = cached;
@@ -181,11 +203,12 @@ export function cachePlugin(options: CachePluginOptions = {}): Plugin {
 			},
 
 			afterRead: async (context) => {
-				if (!shouldCache(context.resource) || (context as any).cachedResult) return;
-				
+				if (!shouldCache(context.resource) || (context as any).cachedResult)
+					return;
+
 				const cacheKey = getCacheKey(context.resource, "read", context.id);
 				const ttl = getTTL(context.resource, "read");
-				
+
 				if (context.result) {
 					await cache.set(cacheKey, context.result, ttl);
 				}
@@ -193,21 +216,32 @@ export function cachePlugin(options: CachePluginOptions = {}): Plugin {
 
 			beforeList: async (context) => {
 				if (!shouldCache(context.resource)) return;
-				
-				const cacheKey = getCacheKey(context.resource, "list", undefined, context.data);
+
+				const cacheKey = getCacheKey(
+					context.resource,
+					"list",
+					undefined,
+					context.data,
+				);
 				const cached = await cache.get(cacheKey);
-				
+
 				if (cached) {
 					(context as any).cachedResult = cached;
 				}
 			},
 
 			afterList: async (context) => {
-				if (!shouldCache(context.resource) || (context as any).cachedResult) return;
-				
-				const cacheKey = getCacheKey(context.resource, "list", undefined, context.data);
+				if (!shouldCache(context.resource) || (context as any).cachedResult)
+					return;
+
+				const cacheKey = getCacheKey(
+					context.resource,
+					"list",
+					undefined,
+					context.data,
+				);
 				const ttl = getTTL(context.resource, "list");
-				
+
 				if (context.result) {
 					await cache.set(cacheKey, context.result, ttl);
 				}

@@ -1,35 +1,35 @@
-import { source } from "@/lib/source";
-import { DocsPage, DocsBody, DocsTitle } from "@/components/docs/page";
-import { notFound } from "next/navigation";
-import { absoluteUrl } from "@/lib/utils";
-import DatabaseTable from "@/components/mdx/database-tables";
-import { cn } from "@/lib/utils";
-import { Step, Steps } from "fumadocs-ui/components/steps";
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-import { GenerateSecret } from "@/components/generate-secret";
-import { AnimatePresence } from "@/components/ui/fade-in";
-import { TypeTable } from "fumadocs-ui/components/type-table";
+import { APIMethod } from "@/components/api-method";
 import { Features } from "@/components/blocks/features";
+import { DividerText } from "@/components/divider-text";
+import { DocsBody, DocsPage, DocsTitle } from "@/components/docs/page";
+import { Endpoint } from "@/components/endpoint";
 import { ForkButton } from "@/components/fork-button";
-import Link from "next/link";
-import defaultMdxComponents from "fumadocs-ui/mdx";
+import { GenerateAppleJwt } from "@/components/generate-apple-jwt";
+import { GenerateSecret } from "@/components/generate-secret";
+import { AddToCursor } from "@/components/mdx/add-to-cursor";
+import DatabaseTable from "@/components/mdx/database-tables";
+import { Callout } from "@/components/ui/callout";
 import {
 	CodeBlock,
-	Pre,
 	CodeBlockTab,
-	CodeBlockTabsList,
 	CodeBlockTabs,
+	CodeBlockTabsList,
+	Pre,
 } from "@/components/ui/code-block";
-import { File, Folder, Files } from "fumadocs-ui/components/files";
+import { AnimatePresence } from "@/components/ui/fade-in";
+import { source } from "@/lib/source";
+import { absoluteUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AutoTypeTable } from "fumadocs-typescript/ui";
 import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
-import { Endpoint } from "@/components/endpoint";
-import { DividerText } from "@/components/divider-text";
-import { APIMethod } from "@/components/api-method";
+import { File, Files, Folder } from "fumadocs-ui/components/files";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { TypeTable } from "fumadocs-ui/components/type-table";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { LLMCopyButton, ViewOptions } from "./page.client";
-import { GenerateAppleJwt } from "@/components/generate-apple-jwt";
-import { Callout } from "@/components/ui/callout";
-import { AddToCursor } from "@/components/mdx/add-to-cursor";
 export default async function Page({
 	params,
 }: {
@@ -172,7 +172,11 @@ export async function generateMetadata({
 	const { slug } = await params;
 	const page = source.getPage(slug);
 	if (page == null) notFound();
-	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+	const baseUrl =
+		process.env.NEXT_PUBLIC_URL ||
+		process.env.VERCEL_URL ||
+		process.env.NEXT_PUBLIC_APP_URL ||
+		"http://localhost:3000";
 	const url = new URL(`${baseUrl}/api/og`);
 	const { title, description } = page.data;
 	const pageSlug = page.file.path;

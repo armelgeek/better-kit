@@ -3,9 +3,9 @@
  * This would be part of a working betterQuery implementation
  */
 
-import { betterQuery } from "./query";
-import { createQueryClient, createResource } from "./index";
 import { z } from "zod";
+import { createQueryClient, createResource } from "./index";
+import { betterQuery } from "./query";
 
 // Schemas exactly like in the user's example
 const productSchema = z.object({
@@ -13,9 +13,11 @@ const productSchema = z.object({
 	name: z.string(),
 	price: z.number(),
 	status: z.string().optional(),
-	seo: z.object({
-		slug: z.string().optional(),
-	}).optional(),
+	seo: z
+		.object({
+			slug: z.string().optional(),
+		})
+		.optional(),
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional(),
 });
@@ -29,10 +31,12 @@ const categorySchema = z.object({
 const orderSchema = z.object({
 	id: z.string().optional(),
 	userId: z.string().optional(),
-	items: z.array(z.object({
-		price: z.number(),
-		quantity: z.number(),
-	})),
+	items: z.array(
+		z.object({
+			price: z.number(),
+			quantity: z.number(),
+		}),
+	),
 	subtotal: z.number().optional(),
 	tax: z.number().default(0),
 	shipping: z.number().default(0),
@@ -96,11 +100,11 @@ export const query = betterQuery({
 					if (!context.data.seo?.slug && context.data.name) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
-					
+
 					// Set default status if not provided
 					if (!context.data.status) {
 						context.data.status = "draft";
@@ -109,18 +113,23 @@ export const query = betterQuery({
 				beforeUpdate: async (context) => {
 					// Always update the updatedAt field
 					context.data.updatedAt = new Date();
-					
+
 					// Update slug if name changed
-					if (context.data.name && context.existingData?.name !== context.data.name) {
+					if (
+						context.data.name &&
+						context.existingData?.name !== context.data.name
+					) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
 				},
 				afterCreate: async (context) => {
-					console.log(`Product created: ${context.result.name} (ID: ${context.result.id})`);
+					console.log(
+						`Product created: ${context.result.name} (ID: ${context.result.id})`,
+					);
 				},
 			},
 			// Enable specific endpoints (all are enabled by default)
@@ -150,8 +159,8 @@ export const query = betterQuery({
 					if (!context.data.slug && context.data.name) {
 						context.data.slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 					}
 				},
 			},
@@ -164,9 +173,10 @@ export const query = betterQuery({
 			permissions: {
 				read: async (context) => {
 					// Users can only read their own orders
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				list: async (context) => {
@@ -176,9 +186,10 @@ export const query = betterQuery({
 				create: async (context) => !!context.user,
 				update: async (context) => {
 					// Only allow order updates by admin or order owner
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				delete: async (context) => {
@@ -192,28 +203,40 @@ export const query = betterQuery({
 					if (context.user) {
 						context.data.userId = context.user.id;
 					}
-					
+
 					// Calculate totals
-					const subtotal = context.data.items.reduce((sum: number, item: any) => 
-						sum + (item.price * item.quantity), 0
+					const subtotal = context.data.items.reduce(
+						(sum: number, item: any) => sum + item.price * item.quantity,
+						0,
 					);
 					context.data.subtotal = subtotal;
-					context.data.total = subtotal + context.data.tax + context.data.shipping - context.data.discount;
+					context.data.total =
+						subtotal +
+						context.data.tax +
+						context.data.shipping -
+						context.data.discount;
 				},
 				beforeUpdate: async (context) => {
 					// Prevent changing userId after creation
-					if (context.data.userId && context.existingData?.userId !== context.data.userId) {
+					if (
+						context.data.userId &&
+						context.existingData?.userId !== context.data.userId
+					) {
 						throw new Error("Cannot change order owner");
 					}
-					
+
 					// Recalculate totals if items changed
 					if (context.data.items) {
-						const subtotal = context.data.items.reduce((sum: number, item: any) => 
-							sum + (item.price * item.quantity), 0
+						const subtotal = context.data.items.reduce(
+							(sum: number, item: any) => sum + item.price * item.quantity,
+							0,
 						);
 						context.data.subtotal = subtotal;
-						context.data.total = subtotal + (context.data.tax || 0) + 
-							(context.data.shipping || 0) - (context.data.discount || 0);
+						context.data.total =
+							subtotal +
+							(context.data.tax || 0) +
+							(context.data.shipping || 0) -
+							(context.data.discount || 0);
 					}
 				},
 			},
@@ -229,15 +252,17 @@ export const query = betterQuery({
 				create: async (context) => !!context.user,
 				update: async (context) => {
 					// Users can update their own reviews, admins can update any
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				delete: async (context) => {
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 			},
@@ -259,9 +284,10 @@ export const query = betterQuery({
 			permissions: {
 				read: async (context) => {
 					// Users can read their own profile, admins can read any
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				list: async (context) => {
@@ -270,15 +296,17 @@ export const query = betterQuery({
 				},
 				create: async (context) => !!context.user,
 				update: async (context) => {
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				delete: async (context) => {
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 			},
@@ -291,7 +319,7 @@ export const query = betterQuery({
 			},
 		}),
 	],
-	
+
 	// Global hooks that apply to all resources
 	hooks: {
 		beforeCreate: async (context) => {

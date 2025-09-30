@@ -1,9 +1,9 @@
 import { BetterFetchOption } from "@better-fetch/fetch";
 import { createClient } from "better-call/client";
+import { ZodSchema, z } from "zod";
 import { BetterQuery } from "../query";
 import { QueryResourceConfig } from "../types";
 import { BetterQueryClientPlugin } from "../types/client-plugins";
-import { ZodSchema, z } from "zod";
 
 export interface QueryClientOptions extends BetterFetchOption {
 	baseURL?: string;
@@ -22,7 +22,7 @@ export type CrudClientOptions = QueryClientOptions;
  */
 export const QUERY_ERROR_CODES = {
 	VALIDATION_FAILED: "VALIDATION_FAILED",
-	FORBIDDEN: "FORBIDDEN", 
+	FORBIDDEN: "FORBIDDEN",
 	NOT_FOUND: "NOT_FOUND",
 	RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 	INTERNAL_ERROR: "INTERNAL_ERROR",
@@ -74,25 +74,18 @@ export function createQueryClient<T extends BetterQuery = BetterQuery>(
 	type API = T["api"];
 
 	// Only pass compatible options to createClient to avoid type conflicts
-	const {
-		onRequest,
-		onResponse,
-		onError,
-		queryPlugins,
-		...rest
-	} = options || {};
+	const { onRequest, onResponse, onError, queryPlugins, ...rest } =
+		options || {};
 
-	const client = createClient<API>(
-		{
-			...rest,
-			baseURL: rest.baseURL || inferBaseURL(),
-		} as any
-	);
+	const client = createClient<API>({
+		...rest,
+		baseURL: rest.baseURL || inferBaseURL(),
+	} as any);
 
 	const proxy = createQueryProxy(client, queryPlugins);
-	
+
 	(proxy as any).$ERROR_CODES = QUERY_ERROR_CODES;
-	
+
 	return proxy as QueryClient<T>;
 }
 
@@ -140,9 +133,9 @@ function createQueryProxy(client: any, plugins?: BetterQueryClientPlugin[]) {
 			if (resourceName in target) {
 				return target[resourceName];
 			}
-			
+
 			// Handle special properties (like $ERROR_CODES)
-			if (resourceName.startsWith('$')) {
+			if (resourceName.startsWith("$")) {
 				return undefined;
 			}
 
@@ -241,52 +234,58 @@ type InferResourceNames<T extends readonly QueryResourceConfig[]> = {
 
 type GetResourceByName<
 	T extends readonly QueryResourceConfig[],
-	K extends string
+	K extends string,
 > = Extract<T[number], { name: K }>;
 
-type SchemaInput<T extends ZodSchema> = T extends ZodSchema<infer U> ? U : never;
-type SchemaOutput<T extends ZodSchema> = T extends ZodSchema<any, any, infer U> ? U : never;
+type SchemaInput<T extends ZodSchema> = T extends ZodSchema<infer U>
+	? U
+	: never;
+type SchemaOutput<T extends ZodSchema> = T extends ZodSchema<any, any, infer U>
+	? U
+	: never;
 
 /**
  * Infer typed Query methods for a resource with proper schema typing
  */
 type InferQueryMethods<
 	TResources extends readonly QueryResourceConfig[],
-	TResourceName extends string
+	TResourceName extends string,
 > = {
 	create: (
 		data: SchemaInput<GetResourceByName<TResources, TResourceName>["schema"]>,
-		options?: BetterFetchOption
+		options?: BetterFetchOption,
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
 		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
-	
+
 	read: (
 		id: string,
-		options?: BetterFetchOption
+		options?: BetterFetchOption,
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
 		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
-	
+
 	update: (
 		id: string,
-		data: Partial<SchemaInput<GetResourceByName<TResources, TResourceName>["schema"]>>,
-		options?: BetterFetchOption
+		data: Partial<
+			SchemaInput<GetResourceByName<TResources, TResourceName>["schema"]>
+		>,
+		options?: BetterFetchOption,
 	) => Promise<{
 		data?: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>;
 		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
-	
+
 	delete: (
 		id: string,
-		options?: BetterFetchOption
+		options?: BetterFetchOption,
 	) => Promise<{
 		data?: { success: boolean };
 		error?: { code?: QueryErrorCode; message: string; details?: any };
 	}>;
-	
+
 	list: (
 		params?: {
 			page?: number;
@@ -298,10 +297,12 @@ type InferQueryMethods<
 			where?: Record<string, any>;
 			filters?: Record<string, any>;
 		},
-		options?: BetterFetchOption
+		options?: BetterFetchOption,
 	) => Promise<{
 		data?: {
-			items: SchemaOutput<GetResourceByName<TResources, TResourceName>["schema"]>[];
+			items: SchemaOutput<
+				GetResourceByName<TResources, TResourceName>["schema"]
+			>[];
 			pagination: {
 				page: number;
 				limit: number;
@@ -318,7 +319,7 @@ type InferQueryMethods<
 // Legacy alias
 type InferCrudMethods<
 	TResources extends readonly QueryResourceConfig[],
-	TResourceName extends string
+	TResourceName extends string,
 > = InferQueryMethods<TResources, TResourceName>;
 
 /**
@@ -338,11 +339,11 @@ export type CrudClient<T extends BetterQuery = BetterQuery> = QueryClient<T>;
 
 // Client exports are in src/client/react/index.ts to avoid mixing server and client code
 
-// Note: React exports are intentionally separated to avoid bundling React hooks 
+// Note: React exports are intentionally separated to avoid bundling React hooks
 // in server-side code. Import from 'better-query/react' instead.
 
 // Export client plugin types
-export type { 
+export type {
 	BetterQueryClientPlugin,
 	InferPluginEndpoints,
 	InferClientMethods,

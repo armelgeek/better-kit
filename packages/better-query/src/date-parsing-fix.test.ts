@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { createResource, withId } from "../src/index";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { createResource, withId } from "../src/index";
 
 describe("Date parsing fix for todo app", () => {
 	const todoSchema = withId({
@@ -19,13 +19,16 @@ describe("Date parsing fix for todo app", () => {
 			hooks: {
 				beforeCreate: async (context) => {
 					// Convert date string to Date object if present (like our fix)
-					if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+					if (
+						context.data.dueDate &&
+						typeof context.data.dueDate === "string"
+					) {
 						context.data.dueDate = new Date(context.data.dueDate);
 					}
 					// Auto-generate timestamps
 					context.data.createdAt = new Date();
 					context.data.updatedAt = new Date();
-				}
+				},
 			},
 		});
 
@@ -62,16 +65,19 @@ describe("Date parsing fix for todo app", () => {
 
 	it("should handle date string conversion in beforeUpdate hook", async () => {
 		const todoResource = createResource({
-			name: "todo", 
+			name: "todo",
 			schema: todoSchema,
 			hooks: {
 				beforeUpdate: async (context) => {
 					// Convert date string to Date object if present (like our fix)
-					if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+					if (
+						context.data.dueDate &&
+						typeof context.data.dueDate === "string"
+					) {
 						context.data.dueDate = new Date(context.data.dueDate);
 					}
 					context.data.updatedAt = new Date();
-				}
+				},
 			},
 		});
 
@@ -104,12 +110,15 @@ describe("Date parsing fix for todo app", () => {
 			hooks: {
 				beforeCreate: async (context) => {
 					// Convert date string to Date object if present (like our fix)
-					if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+					if (
+						context.data.dueDate &&
+						typeof context.data.dueDate === "string"
+					) {
 						context.data.dueDate = new Date(context.data.dueDate);
 					}
 					context.data.createdAt = new Date();
 					context.data.updatedAt = new Date();
-				}
+				},
 			},
 		});
 
@@ -131,7 +140,7 @@ describe("Date parsing fix for todo app", () => {
 
 		// Should not have dueDate and should pass validation
 		expect(mockContext.data.dueDate).toBeUndefined();
-		
+
 		// Schema validation should pass
 		const parsed = todoSchema.parse(mockContext.data);
 		expect(parsed.dueDate).toBeUndefined();

@@ -12,12 +12,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { useAtom } from "jotai";
 import { Key } from "lucide-react";
 import Link from "next/link";
-import { useAtom } from "jotai";
-import { optionsAtom } from "./store";
 import { socialProviders } from "./social-provider";
-import { cn } from "@/lib/utils";
+import { optionsAtom } from "./store";
 
 export default function SignIn() {
 	const [options] = useAtom(optionsAtom);

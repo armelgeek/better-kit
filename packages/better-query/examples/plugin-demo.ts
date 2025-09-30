@@ -1,4 +1,9 @@
-import { auditPlugin, validationPlugin, cachePlugin, createPlugin } from "../src/index";
+import {
+	auditPlugin,
+	cachePlugin,
+	createPlugin,
+	validationPlugin,
+} from "../src/index";
 
 console.log("🚀 Better-CRUD Plugin System Demo\n");
 
@@ -9,14 +14,20 @@ const audit = auditPlugin({
 	operations: ["create", "update", "delete"],
 	includeRequestData: true,
 	logger: (event) => {
-		console.log(`   📋 [AUDIT] ${event.operation.toUpperCase()} on ${event.resource}`);
+		console.log(
+			`   📋 [AUDIT] ${event.operation.toUpperCase()} on ${event.resource}`,
+		);
 	},
 });
 console.log(`   ✅ Created with id: ${audit.id}`);
-console.log(`   📊 Endpoints: ${Object.keys(audit.endpoints || {}).join(", ")}`);
-console.log(`   🗃️ Schema tables: ${Object.keys(audit.schema || {}).join(", ")}\n`);
+console.log(
+	`   📊 Endpoints: ${Object.keys(audit.endpoints || {}).join(", ")}`,
+);
+console.log(
+	`   🗃️ Schema tables: ${Object.keys(audit.schema || {}).join(", ")}\n`,
+);
 
-// Example 2: Validation Plugin  
+// Example 2: Validation Plugin
 console.log("2️⃣ Validation Plugin");
 const validation = validationPlugin({
 	strict: true,
@@ -41,7 +52,9 @@ const cache = cachePlugin({
 	},
 });
 console.log(`   ✅ Created with id: ${cache.id}`);
-console.log(`   📊 Endpoints: ${Object.keys(cache.endpoints || {}).join(", ")}`);
+console.log(
+	`   📊 Endpoints: ${Object.keys(cache.endpoints || {}).join(", ")}`,
+);
 console.log(`   ⏰ Default TTL: 300s\n`);
 
 // Example 4: Custom Plugin
@@ -64,7 +77,9 @@ const timestampPlugin = createPlugin({
 	},
 });
 console.log(`   ✅ Created with id: ${timestampPlugin.id}`);
-console.log(`   🎣 Hooks: ${Object.keys(timestampPlugin.hooks || {}).join(", ")}\n`);
+console.log(
+	`   🎣 Hooks: ${Object.keys(timestampPlugin.hooks || {}).join(", ")}\n`,
+);
 
 // Example 5: Advanced Custom Plugin with Endpoints and Schema
 console.log("5️⃣ Advanced Custom Plugin");
@@ -79,7 +94,7 @@ const loggingPlugin = createPlugin({
 		},
 		clearLogs: {
 			path: "/logs/clear",
-			method: "DELETE", 
+			method: "DELETE",
 			handler: async (ctx: any) => ctx.json({ success: true }),
 			options: { method: "DELETE" },
 		},
@@ -102,9 +117,15 @@ const loggingPlugin = createPlugin({
 	},
 });
 console.log(`   ✅ Created with id: ${loggingPlugin.id}`);
-console.log(`   📊 Endpoints: ${Object.keys(loggingPlugin.endpoints || {}).join(", ")}`);
-console.log(`   🗃️ Schema tables: ${Object.keys(loggingPlugin.schema || {}).join(", ")}`);
-console.log(`   🎣 Hooks: ${Object.keys(loggingPlugin.hooks || {}).join(", ")}\n`);
+console.log(
+	`   📊 Endpoints: ${Object.keys(loggingPlugin.endpoints || {}).join(", ")}`,
+);
+console.log(
+	`   🗃️ Schema tables: ${Object.keys(loggingPlugin.schema || {}).join(", ")}`,
+);
+console.log(
+	`   🎣 Hooks: ${Object.keys(loggingPlugin.hooks || {}).join(", ")}\n`,
+);
 
 console.log("✨ All plugins created successfully!");
 console.log("🔌 These plugins can be used with adiemus() like this:");

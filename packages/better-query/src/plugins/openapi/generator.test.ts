@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { generator } from "./generator";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import type { CrudContext } from "../../types";
+import { generator } from "./generator";
 
 describe("OpenAPI Generator", () => {
 	const createMockContext = (resources: any[]): CrudContext => ({
@@ -61,15 +61,29 @@ describe("OpenAPI Generator", () => {
 
 		// Check User schema includes timestamps and ID
 		const userSchema_result = result.components.schemas.User;
-		expect(userSchema_result.properties.id).toEqual({ type: "string", description: "Unique identifier" });
-		expect(userSchema_result.properties.createdAt).toEqual({ type: "string", format: "date-time", description: "Creation timestamp" });
-		expect(userSchema_result.properties.updatedAt).toEqual({ type: "string", format: "date-time", description: "Last update timestamp" });
+		expect(userSchema_result.properties.id).toEqual({
+			type: "string",
+			description: "Unique identifier",
+		});
+		expect(userSchema_result.properties.createdAt).toEqual({
+			type: "string",
+			format: "date-time",
+			description: "Creation timestamp",
+		});
+		expect(userSchema_result.properties.updatedAt).toEqual({
+			type: "string",
+			format: "date-time",
+			description: "Last update timestamp",
+		});
 
 		// Check UserInput schema
 		const userInputSchema = result.components.schemas.UserInput;
 		expect(userInputSchema.properties.name).toEqual({ type: "string" });
 		expect(userInputSchema.properties.email).toEqual({ type: "string" });
-		expect(userInputSchema.properties.age).toEqual({ type: "number", nullable: true });
+		expect(userInputSchema.properties.age).toEqual({
+			type: "number",
+			nullable: true,
+		});
 	});
 
 	it("should generate CRUD endpoints", async () => {
@@ -107,7 +121,9 @@ describe("OpenAPI Generator", () => {
 
 		// Check DELETE endpoint
 		expect(result.paths["/product/{id}"].delete).toBeDefined();
-		expect(result.paths["/product/{id}"].delete.operationId).toBe("deleteProduct");
+		expect(result.paths["/product/{id}"].delete.operationId).toBe(
+			"deleteProduct",
+		);
 	});
 
 	it("should include standard response codes", async () => {
@@ -210,7 +226,9 @@ describe("OpenAPI Generator", () => {
 
 		expect(result.paths["/openapi/schema"]).toBeDefined();
 		expect(result.paths["/openapi/schema"].get).toBeDefined();
-		expect(result.paths["/openapi/schema"].get.operationId).toBe("getOpenAPISchema");
+		expect(result.paths["/openapi/schema"].get.operationId).toBe(
+			"getOpenAPISchema",
+		);
 	});
 
 	it("should handle disabled endpoints", async () => {
@@ -267,8 +285,14 @@ describe("OpenAPI Generator", () => {
 		expect(inputSchema.properties.name).toEqual({ type: "string" });
 		expect(inputSchema.properties.age).toEqual({ type: "number" });
 		expect(inputSchema.properties.email).toEqual({ type: "string" });
-		expect(inputSchema.properties.tags).toEqual({ type: "array", description: undefined });
-		expect(inputSchema.properties.metadata).toEqual({ type: "object", nullable: true });
+		expect(inputSchema.properties.tags).toEqual({
+			type: "array",
+			description: undefined,
+		});
+		expect(inputSchema.properties.metadata).toEqual({
+			type: "object",
+			nullable: true,
+		});
 		expect(inputSchema.properties.status).toEqual({ type: "string" });
 	});
 });

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { adiemus } from "../index";
-import { belongsTo, hasMany, belongsToMany } from "../schemas/relationships";
+import { belongsTo, belongsToMany, hasMany } from "../schemas/relationships";
 
 // Define test schemas since we no longer have predefined ones
 const testUserSchema = z.object({
@@ -106,7 +106,12 @@ describe("CRUD Relationship Management", () => {
 					name: "tag",
 					schema: testTagSchema,
 					relationships: {
-						products: belongsToMany("product", "product_tags", "tagId", "productId"),
+						products: belongsToMany(
+							"product",
+							"product_tags",
+							"tagId",
+							"productId",
+						),
 					},
 				},
 			],
@@ -114,11 +119,11 @@ describe("CRUD Relationship Management", () => {
 
 		// Wait a bit for database initialization
 		await new Promise((resolve) => setTimeout(resolve, 100));
-		
+
 		// Create junction tables for many-to-many relationships
 		const relationshipManager = crud.context.adapter.relationshipManager;
 		const junctionTables = relationshipManager.getRequiredJunctionTables();
-		
+
 		for (const junctionTable of junctionTables) {
 			await crud.context.adapter.createJunctionTable(junctionTable);
 		}
@@ -341,10 +346,10 @@ describe("CRUD Relationship Management", () => {
 				include: {
 					select: {
 						product: {
-							include: ["category"]
+							include: ["category"],
 						},
-						user: true
-					}
+						user: true,
+					},
 				},
 			});
 
@@ -470,7 +475,7 @@ describe("CRUD Relationship Management", () => {
 					},
 				});
 			} catch (e) {
-				// Product already exists, ignore  
+				// Product already exists, ignore
 			}
 
 			// Create tags
@@ -540,7 +545,7 @@ describe("CRUD Relationship Management", () => {
 				// Product already exists, ignore
 			}
 
-			// Create tags  
+			// Create tags
 			try {
 				await adapter.create({
 					model: "tag",
@@ -587,7 +592,7 @@ describe("CRUD Relationship Management", () => {
 			expect(productWithTags.tags).toBeDefined();
 			expect(Array.isArray(productWithTags.tags)).toBe(true);
 			expect(productWithTags.tags.length).toBe(2);
-			
+
 			const tagNames = productWithTags.tags.map((tag: any) => tag.name).sort();
 			expect(tagNames).toEqual(["Popular", "Sale"]);
 		});
@@ -657,19 +662,23 @@ describe("CRUD Relationship Management", () => {
 			});
 
 			expect(productWithRemainingTags.tags.length).toBe(2);
-			const remainingTagNames = productWithRemainingTags.tags.map((tag: any) => tag.name).sort();
+			const remainingTagNames = productWithRemainingTags.tags
+				.map((tag: any) => tag.name)
+				.sort();
 			expect(remainingTagNames).toEqual(["New", "Popular"]);
 		});
 
 		it("should handle junction table creation", async () => {
 			const relationshipManager = crud.context.adapter.relationshipManager;
-			
+
 			// Get required junction tables
 			const junctionTables = relationshipManager.getRequiredJunctionTables();
-			
+
 			expect(junctionTables.length).toBeGreaterThan(0);
-			const productTagsJunction = junctionTables.find(jt => jt.tableName === "product_tags");
-			
+			const productTagsJunction = junctionTables.find(
+				(jt) => jt.tableName === "product_tags",
+			);
+
 			expect(productTagsJunction).toBeDefined();
 			expect(productTagsJunction.sourceKey).toBe("productId");
 			expect(productTagsJunction.targetKey).toBe("tagId");

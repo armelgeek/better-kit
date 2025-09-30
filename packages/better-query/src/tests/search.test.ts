@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { SearchBuilder, FilterBuilder, SearchUtils } from "../utils/search";
+import { describe, expect, it } from "vitest";
 import { CrudQueryParams } from "../types";
+import { FilterBuilder, SearchBuilder, SearchUtils } from "../utils/search";
 
 describe("Search Utils", () => {
 	describe("SearchBuilder", () => {
@@ -9,14 +9,17 @@ describe("Search Utils", () => {
 				const query: CrudQueryParams = {
 					search: "test product",
 				};
-				
+
 				const searchConfig = {
 					fields: ["name", "description"],
 					strategy: "contains" as const,
 				};
 
-				const conditions = SearchBuilder.buildSearchConditions(query, searchConfig);
-				
+				const conditions = SearchBuilder.buildSearchConditions(
+					query,
+					searchConfig,
+				);
+
 				expect(conditions).toHaveLength(2);
 				expect(conditions[0]).toEqual({
 					field: "name",
@@ -24,7 +27,7 @@ describe("Search Utils", () => {
 					operator: "ilike",
 				});
 				expect(conditions[1]).toEqual({
-					field: "description", 
+					field: "description",
 					value: "%test product%",
 					operator: "ilike",
 				});
@@ -41,7 +44,10 @@ describe("Search Utils", () => {
 					strategy: "startsWith" as const,
 				};
 
-				const startsWithConditions = SearchBuilder.buildSearchConditions(query, startsWithConfig);
+				const startsWithConditions = SearchBuilder.buildSearchConditions(
+					query,
+					startsWithConfig,
+				);
 				expect(startsWithConditions[0].value).toBe("test%");
 
 				// Test exact strategy
@@ -50,7 +56,10 @@ describe("Search Utils", () => {
 					strategy: "exact" as const,
 				};
 
-				const exactConditions = SearchBuilder.buildSearchConditions(query, exactConfig);
+				const exactConditions = SearchBuilder.buildSearchConditions(
+					query,
+					exactConfig,
+				);
 				expect(exactConditions[0].value).toBe("test");
 				expect(exactConditions[0].operator).toBe("eq");
 			});
@@ -64,7 +73,7 @@ describe("Search Utils", () => {
 				};
 
 				const conditions = SearchBuilder.buildSearchConditions(query);
-				
+
 				expect(conditions).toHaveLength(2);
 				expect(conditions).toContainEqual({
 					field: "price",
@@ -88,7 +97,7 @@ describe("Search Utils", () => {
 				};
 
 				const conditions = SearchBuilder.buildSearchConditions(query);
-				
+
 				expect(conditions).toHaveLength(2);
 				expect(conditions[0]).toEqual({
 					field: "createdAt",
@@ -111,7 +120,7 @@ describe("Search Utils", () => {
 				};
 
 				const conditions = SearchBuilder.buildSearchConditions(query);
-				
+
 				expect(conditions).toHaveLength(2);
 				expect(conditions).toContainEqual({
 					field: "status",
@@ -136,7 +145,7 @@ describe("Search Utils", () => {
 				};
 
 				const orderBy = SearchBuilder.buildOrderBy(query);
-				
+
 				expect(orderBy).toEqual([
 					{ field: "name", direction: "asc" },
 					{ field: "createdAt", direction: "desc" },
@@ -150,20 +159,16 @@ describe("Search Utils", () => {
 				};
 
 				const orderBy = SearchBuilder.buildOrderBy(query);
-				
-				expect(orderBy).toEqual([
-					{ field: "price", direction: "desc" },
-				]);
+
+				expect(orderBy).toEqual([{ field: "price", direction: "desc" }]);
 			});
 
 			it("should provide default ordering when none specified", () => {
 				const query: CrudQueryParams = {};
 
 				const orderBy = SearchBuilder.buildOrderBy(query);
-				
-				expect(orderBy).toEqual([
-					{ field: "createdAt", direction: "desc" },
-				]);
+
+				expect(orderBy).toEqual([{ field: "createdAt", direction: "desc" }]);
 			});
 		});
 
@@ -175,7 +180,7 @@ describe("Search Utils", () => {
 				};
 
 				const pagination = SearchBuilder.buildPagination(query);
-				
+
 				expect(pagination).toEqual({
 					page: 3,
 					limit: 20,
@@ -187,7 +192,7 @@ describe("Search Utils", () => {
 				const query: CrudQueryParams = {};
 
 				const pagination = SearchBuilder.buildPagination(query);
-				
+
 				expect(pagination).toEqual({
 					page: 1,
 					limit: 10,
@@ -202,7 +207,7 @@ describe("Search Utils", () => {
 				};
 
 				const pagination = SearchBuilder.buildPagination(query);
-				
+
 				expect(pagination.page).toBe(1);
 				expect(pagination.limit).toBe(100);
 			});
@@ -237,7 +242,9 @@ describe("Search Utils", () => {
 			});
 
 			it("should return default value for invalid JSON", () => {
-				const result = SearchBuilder.parseJSON("invalid json", { default: true });
+				const result = SearchBuilder.parseJSON("invalid json", {
+					default: true,
+				});
 				expect(result).toEqual({ default: true });
 			});
 
@@ -251,7 +258,7 @@ describe("Search Utils", () => {
 	describe("FilterBuilder", () => {
 		it("should build conditions using fluent interface", () => {
 			const builder = new FilterBuilder();
-			
+
 			const conditions = builder
 				.equals("status", "active")
 				.greaterThan("price", 100)
@@ -284,10 +291,8 @@ describe("Search Utils", () => {
 
 		it("should handle between conditions", () => {
 			const builder = new FilterBuilder();
-			
-			const conditions = builder
-				.between("price", 100, 500)
-				.build();
+
+			const conditions = builder.between("price", 100, 500).build();
 
 			expect(conditions).toContainEqual({
 				field: "price",
@@ -298,10 +303,10 @@ describe("Search Utils", () => {
 
 		it("should reset builder", () => {
 			const builder = new FilterBuilder();
-			
+
 			builder.equals("status", "active");
 			expect(builder.build()).toHaveLength(1);
-			
+
 			builder.reset();
 			expect(builder.build()).toHaveLength(0);
 		});
@@ -343,9 +348,9 @@ describe("Search Utils", () => {
 			it("should build conditions for multiple terms and fields", () => {
 				const terms = ["hello", "world"];
 				const fields = ["title", "description"];
-				
+
 				const conditions = SearchUtils.buildFullTextQuery(terms, fields);
-				
+
 				expect(conditions).toHaveLength(4);
 				expect(conditions).toContainEqual({
 					field: "title",
@@ -353,7 +358,7 @@ describe("Search Utils", () => {
 					operator: "ilike",
 				});
 				expect(conditions).toContainEqual({
-					field: "description", 
+					field: "description",
 					value: "%hello%",
 					operator: "ilike",
 				});
@@ -372,9 +377,9 @@ describe("Search Utils", () => {
 			it("should escape special characters in terms", () => {
 				const terms = ["test%value"];
 				const fields = ["title"];
-				
+
 				const conditions = SearchUtils.buildFullTextQuery(terms, fields);
-				
+
 				expect(conditions[0].value).toBe("%test\\%value%");
 			});
 		});

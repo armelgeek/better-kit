@@ -1,9 +1,9 @@
 "use client";
 
+import { AIChatModal } from "@/components/ai-chat-modal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { AIChatModal } from "@/components/ai-chat-modal";
 
 interface AskAIButtonProps {
 	className?: string;

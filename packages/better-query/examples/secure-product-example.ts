@@ -25,13 +25,13 @@ const secureProductResource: CrudResourceConfig = {
 	name: "product",
 	schema: productSchema,
 	tableName: "products",
-	
+
 	// Ownership-based security
 	ownership: {
 		field: "userId", // Field that identifies the owner
 		strategy: "flexible", // Allow owners + admins
 	},
-	
+
 	// Scope-based permissions
 	scopes: {
 		create: ["product:write"],
@@ -40,18 +40,18 @@ const secureProductResource: CrudResourceConfig = {
 		delete: ["product:delete"],
 		list: ["product:read"],
 	},
-	
+
 	// Custom permission functions (optional, in addition to scopes)
 	permissions: {
 		create: async (context) => {
 			// Additional business logic for create permission
 			const user = context.user;
 			if (!user) return false;
-			
+
 			// Check if user has reached their product limit
 			const userProductCount = await getUserProductCount(user.id);
 			const maxProducts = user.plan === "premium" ? 1000 : 10;
-			
+
 			return userProductCount < maxProducts;
 		},
 		update: async (context) => {
@@ -62,7 +62,7 @@ const secureProductResource: CrudResourceConfig = {
 			return true;
 		},
 	},
-	
+
 	// Input sanitization rules
 	sanitization: {
 		global: [
@@ -74,11 +74,14 @@ const secureProductResource: CrudResourceConfig = {
 				{ type: "strip" }, // Remove < and > characters
 			],
 			name: [
-				{ type: "custom", customFn: (value: string) => value.replace(/[^\w\s-]/g, "") },
+				{
+					type: "custom",
+					customFn: (value: string) => value.replace(/[^\w\s-]/g, ""),
+				},
 			],
 		},
 	},
-	
+
 	// Lifecycle hooks
 	hooks: {
 		// Before operations
@@ -87,64 +90,66 @@ const secureProductResource: CrudResourceConfig = {
 			context.data.createdAt = new Date();
 			context.data.updatedAt = new Date();
 			context.data.userId = context.user?.id;
-			
+
 			// Validate business rules
 			if (context.data.price > 10000) {
 				throw new Error("Products over $10,000 require approval");
 			}
 		},
-		
+
 		onUpdate: async (context) => {
 			// Update timestamp
 			context.data.updatedAt = new Date();
-			
+
 			// Log significant price changes
 			const oldPrice = context.existingData?.price || 0;
 			const newPrice = context.data.price;
-			
+
 			if (Math.abs(newPrice - oldPrice) > oldPrice * 0.5) {
-				console.log(`Significant price change for product ${context.id}: ${oldPrice} -> ${newPrice}`);
+				console.log(
+					`Significant price change for product ${context.id}: ${oldPrice} -> ${newPrice}`,
+				);
 			}
 		},
-		
+
 		onDelete: async (context) => {
 			// Soft delete instead of hard delete
 			if (context.existingData?.status !== "draft") {
 				throw new Error("Only draft products can be deleted");
 			}
 		},
-		
+
 		// After operations
 		afterCreate: async (context) => {
 			// Send notifications
 			await sendProductCreatedNotification(context.user, context.result);
-			
+
 			// Update analytics
 			await updateProductAnalytics("product_created", context.result);
 		},
-		
+
 		afterUpdate: async (context) => {
 			// Clear cache
 			await clearProductCache(context.id);
-			
+
 			// Send update notifications to followers
 			await notifyProductFollowers(context.id, context.result);
 		},
-		
+
 		afterDelete: async (context) => {
 			// Clean up related data
 			await deleteProductImages(context.id);
 			await removeFromWishlists(context.id);
 		},
 	},
-	
+
 	// Advanced search configuration
 	search: {
 		fields: ["name", "description", "tags"],
 		strategy: "contains",
 		caseSensitive: false,
 	},
-	
+
 	// Enable/disable specific endpoints
 	endpoints: {
 		create: true,
@@ -172,8 +177,8 @@ const productCrud = createCrudEndpoints(secureProductResource);
 //   "category": "electronics",
 //   "tags": ["secure", "tested"]
 // }
-// 
-// Result: 
+//
+// Result:
 // - Input sanitized (HTML escaped)
 // - User scopes checked
 // - Ownership automatically assigned
@@ -217,11 +222,17 @@ async function getUserProductCount(userId: string): Promise<number> {
 	return 5;
 }
 
-async function sendProductCreatedNotification(user: any, product: any): Promise<void> {
+async function sendProductCreatedNotification(
+	user: any,
+	product: any,
+): Promise<void> {
 	console.log(`Notification: User ${user.id} created product ${product.name}`);
 }
 
-async function updateProductAnalytics(event: string, product: any): Promise<void> {
+async function updateProductAnalytics(
+	event: string,
+	product: any,
+): Promise<void> {
 	console.log(`Analytics: ${event} for product ${product.id}`);
 }
 
@@ -229,7 +240,10 @@ async function clearProductCache(productId: string): Promise<void> {
 	console.log(`Cache cleared for product ${productId}`);
 }
 
-async function notifyProductFollowers(productId: string, product: any): Promise<void> {
+async function notifyProductFollowers(
+	productId: string,
+	product: any,
+): Promise<void> {
 	console.log(`Notifying followers of product ${productId} update`);
 }
 
@@ -241,8 +255,4 @@ async function removeFromWishlists(productId: string): Promise<void> {
 	console.log(`Removed product ${productId} from wishlists`);
 }
 
-export {
-	secureProductResource,
-	productCrud,
-	productSchema,
-};
+export { secureProductResource, productCrud, productSchema };

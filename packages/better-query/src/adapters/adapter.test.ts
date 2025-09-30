@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { getCrudAdapter } from "../adapters/utils";
 import { CrudOptions } from "../types";
-import { z } from "zod";
 
 describe("Adapter System", () => {
 	const basicOptions: CrudOptions = {
@@ -60,7 +60,7 @@ describe("Adapter System", () => {
 		} as any;
 
 		expect(() => getCrudAdapter(invalidOptions)).toThrow(
-			"Invalid database configuration"
+			"Invalid database configuration",
 		);
 	});
 });

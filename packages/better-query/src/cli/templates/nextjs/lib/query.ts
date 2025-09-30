@@ -1,4 +1,7 @@
-export function queryConfigTemplate(withAuth: boolean, database: string): string {
+export function queryConfigTemplate(
+	withAuth: boolean,
+	database: string,
+): string {
 	let dbConfig = "";
 	switch (database) {
 		case "sqlite":
@@ -14,11 +17,14 @@ export function queryConfigTemplate(withAuth: boolean, database: string): string
     url: process.env.DATABASE_URL,`;
 			break;
 	}
-	
-	const authImports = withAuth ? `
-import { betterAuth } from "better-auth";` : "";
 
-	const authSetup = withAuth ? `
+	const authImports = withAuth
+		? `
+import { betterAuth } from "better-auth";`
+		: "";
+
+	const authSetup = withAuth
+		? `
 // Better Auth configuration
 export const auth = betterAuth({
   database: {
@@ -28,11 +34,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-});` : "";
+});`
+		: "";
 
-	const authPlugin = withAuth ? `
+	const authPlugin = withAuth
+		? `
   // Note: Better Auth integration is done through resource permissions
-  // See the permissions configuration in resources below` : "";
+  // See the permissions configuration in resources below`
+		: "";
 
 	return `import { betterQuery, createResource } from "better-query";${authImports}
 import type { QueryMiddlewareContext } from "better-query";

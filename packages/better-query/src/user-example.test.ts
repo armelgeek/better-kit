@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { createResource } from "./utils/schema";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createResource } from "./utils/schema";
 
 // Schemas from the user's example
 const productSchema = z.object({
@@ -8,9 +8,11 @@ const productSchema = z.object({
 	name: z.string(),
 	price: z.number(),
 	status: z.string().optional(),
-	seo: z.object({
-		slug: z.string().optional(),
-	}).optional(),
+	seo: z
+		.object({
+			slug: z.string().optional(),
+		})
+		.optional(),
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional(),
 });
@@ -24,10 +26,12 @@ const categorySchema = z.object({
 const orderSchema = z.object({
 	id: z.string().optional(),
 	userId: z.string().optional(),
-	items: z.array(z.object({
-		price: z.number(),
-		quantity: z.number(),
-	})),
+	items: z.array(
+		z.object({
+			price: z.number(),
+			quantity: z.number(),
+		}),
+	),
 	subtotal: z.number().optional(),
 	tax: z.number().default(0),
 	shipping: z.number().default(0),
@@ -68,11 +72,11 @@ describe("User Example Integration Test", () => {
 					if (!context.data.seo?.slug && context.data.name) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
-					
+
 					// Set default status if not provided
 					if (!context.data.status) {
 						context.data.status = "draft";
@@ -81,18 +85,23 @@ describe("User Example Integration Test", () => {
 				beforeUpdate: async (context) => {
 					// Always update the updatedAt field
 					context.data.updatedAt = new Date();
-					
+
 					// Update slug if name changed
-					if (context.data.name && context.existingData?.name !== context.data.name) {
+					if (
+						context.data.name &&
+						context.existingData?.name !== context.data.name
+					) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
 				},
 				afterCreate: async (context) => {
-					console.log(`Product created: ${context.result.name} (ID: ${context.result.id})`);
+					console.log(
+						`Product created: ${context.result.name} (ID: ${context.result.id})`,
+					);
 				},
 			},
 			// Enable specific endpoints (all are enabled by default)
@@ -122,8 +131,8 @@ describe("User Example Integration Test", () => {
 					if (!context.data.slug && context.data.name) {
 						context.data.slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 					}
 				},
 			},
@@ -136,9 +145,10 @@ describe("User Example Integration Test", () => {
 			permissions: {
 				read: async (context) => {
 					// Users can only read their own orders
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				list: async (context) => {
@@ -148,9 +158,10 @@ describe("User Example Integration Test", () => {
 				create: async (context) => !!context.user,
 				update: async (context) => {
 					// Only allow order updates by admin or order owner
-					return !!context.user && (
-						context.user.role === "admin" || 
-						context.existingData?.userId === context.user.id
+					return (
+						!!context.user &&
+						(context.user.role === "admin" ||
+							context.existingData?.userId === context.user.id)
 					);
 				},
 				delete: async (context) => {
@@ -164,28 +175,40 @@ describe("User Example Integration Test", () => {
 					if (context.user) {
 						context.data.userId = context.user.id;
 					}
-					
+
 					// Calculate totals
-					const subtotal = context.data.items.reduce((sum: number, item: any) => 
-						sum + (item.price * item.quantity), 0
+					const subtotal = context.data.items.reduce(
+						(sum: number, item: any) => sum + item.price * item.quantity,
+						0,
 					);
 					context.data.subtotal = subtotal;
-					context.data.total = subtotal + context.data.tax + context.data.shipping - context.data.discount;
+					context.data.total =
+						subtotal +
+						context.data.tax +
+						context.data.shipping -
+						context.data.discount;
 				},
 				beforeUpdate: async (context) => {
 					// Prevent changing userId after creation
-					if (context.data.userId && context.existingData?.userId !== context.data.userId) {
+					if (
+						context.data.userId &&
+						context.existingData?.userId !== context.data.userId
+					) {
 						throw new Error("Cannot change order owner");
 					}
-					
+
 					// Recalculate totals if items changed
 					if (context.data.items) {
-						const subtotal = context.data.items.reduce((sum: number, item: any) => 
-							sum + (item.price * item.quantity), 0
+						const subtotal = context.data.items.reduce(
+							(sum: number, item: any) => sum + item.price * item.quantity,
+							0,
 						);
 						context.data.subtotal = subtotal;
-						context.data.total = subtotal + (context.data.tax || 0) + 
-							(context.data.shipping || 0) - (context.data.discount || 0);
+						context.data.total =
+							subtotal +
+							(context.data.tax || 0) +
+							(context.data.shipping || 0) -
+							(context.data.discount || 0);
 					}
 				},
 			},
@@ -215,11 +238,11 @@ describe("User Example Integration Test", () => {
 					if (!context.data.seo?.slug && context.data.name) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
-					
+
 					// Set default status if not provided
 					if (!context.data.status) {
 						context.data.status = "draft";
@@ -232,9 +255,9 @@ describe("User Example Integration Test", () => {
 			user: { id: "user123" },
 			resource: "product",
 			operation: "create" as const,
-			data: { 
+			data: {
 				name: "Awesome Product With Spaces!",
-				price: 99.99 
+				price: 99.99,
 			},
 			adapter: {} as any,
 		};
@@ -242,7 +265,9 @@ describe("User Example Integration Test", () => {
 		await productResource.hooks?.beforeCreate?.(mockContext);
 
 		// Verify the hook logic worked
-		expect((mockContext.data as any).seo?.slug).toBe("awesome-product-with-spaces");
+		expect((mockContext.data as any).seo?.slug).toBe(
+			"awesome-product-with-spaces",
+		);
 		expect((mockContext.data as any).status).toBe("draft");
 	});
 
@@ -256,13 +281,18 @@ describe("User Example Integration Test", () => {
 					if (context.user) {
 						context.data.userId = context.user.id;
 					}
-					
+
 					// Calculate totals
-					const subtotal = context.data.items.reduce((sum: number, item: any) => 
-						sum + (item.price * item.quantity), 0
+					const subtotal = context.data.items.reduce(
+						(sum: number, item: any) => sum + item.price * item.quantity,
+						0,
 					);
 					context.data.subtotal = subtotal;
-					context.data.total = subtotal + context.data.tax + context.data.shipping - context.data.discount;
+					context.data.total =
+						subtotal +
+						context.data.tax +
+						context.data.shipping -
+						context.data.discount;
 				},
 			},
 		});
@@ -271,14 +301,14 @@ describe("User Example Integration Test", () => {
 			user: { id: "user123" },
 			resource: "order",
 			operation: "create" as const,
-			data: { 
+			data: {
 				items: [
-					{ price: 10.00, quantity: 2 },
-					{ price: 15.00, quantity: 1 }
+					{ price: 10.0, quantity: 2 },
+					{ price: 15.0, quantity: 1 },
 				],
-				tax: 5.00,
-				shipping: 3.00,
-				discount: 2.00
+				tax: 5.0,
+				shipping: 3.0,
+				discount: 2.0,
 			},
 			adapter: {} as any,
 		};
@@ -287,7 +317,7 @@ describe("User Example Integration Test", () => {
 
 		// Verify the hook logic worked
 		expect((mockContext.data as any).userId).toBe("user123");
-		expect((mockContext.data as any).subtotal).toBe(35.00); // (10*2) + (15*1)
-		expect((mockContext.data as any).total).toBe(41.00); // 35 + 5 + 3 - 2
+		expect((mockContext.data as any).subtotal).toBe(35.0); // (10*2) + (15*1)
+		expect((mockContext.data as any).total).toBe(41.0); // 35 + 5 + 3 - 2
 	});
 });

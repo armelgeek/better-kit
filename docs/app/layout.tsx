@@ -1,22 +1,23 @@
 import { Navbar } from "@/components/nav-bar";
 import "./global.css";
-import { RootProvider } from "fumadocs-ui/provider";
-import type { ReactNode } from "react";
 import { NavbarProvider } from "@/components/nav-mobile";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-import { baseUrl, createMetadata } from "@/lib/metadata";
-import { Analytics } from "@vercel/analytics/react";
+import { CustomSearchDialog } from "@/components/search-dialog";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { CustomSearchDialog } from "@/components/search-dialog";
+import { baseUrl, createMetadata } from "@/lib/metadata";
+import { Analytics } from "@vercel/analytics/react";
+import { RootProvider } from "fumadocs-ui/provider";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import type { ReactNode } from "react";
 
 export const metadata = createMetadata({
 	title: {
 		template: "%s | Better Query",
 		default: "Better Query",
 	},
-	description: "The most comprehensive query and CRUD framework for TypeScript.",
+	description:
+		"The most comprehensive query and CRUD framework for TypeScript.",
 	metadataBase: baseUrl,
 });
 

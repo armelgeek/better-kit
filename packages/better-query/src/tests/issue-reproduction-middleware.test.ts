@@ -2,14 +2,20 @@
  * This test validates that the middleware system solves the original issue
  * where user injection in beforeCreate hooks wasn't available for permission checks
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { createQueryEndpoints } from "../endpoints";
 import { QueryResourceConfig } from "../types";
-import { z } from "zod";
 
 describe("Issue Reproduction: User Injection for Permissions", () => {
 	const mockAdapter = {
-		create: vi.fn().mockResolvedValue({ id: "todo-123", title: "Test Todo", userId: "user-456" }),
+		create: vi
+			.fn()
+			.mockResolvedValue({
+				id: "todo-123",
+				title: "Test Todo",
+				userId: "user-456",
+			}),
 	};
 
 	const mockContext = {
@@ -25,7 +31,7 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 	it("should solve the original issue: user available in permission checks via middleware", async () => {
 		// Mock session API (like Better Auth)
 		const mockGetSession = vi.fn().mockResolvedValue({
-			user: { id: "user-456", name: "John Doe" }
+			user: { id: "user-456", name: "John Doe" },
 		});
 
 		// Track what's available in permission check
@@ -34,7 +40,7 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 		const todoResource: QueryResourceConfig = {
 			name: "todo",
 			schema: todoSchema,
-			
+
 			// SOLUTION: Use middleware to inject user BEFORE permission checks
 			middleware: [
 				{
@@ -42,10 +48,10 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 						// Simulate getting session (like Better Auth)
 						const session = await mockGetSession();
 						context.user = session?.user;
-					}
-				}
+					},
+				},
 			],
-			
+
 			permissions: {
 				create: async (context) => {
 					// Capture what user is available during permission check
@@ -72,11 +78,11 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 
 		// VERIFY: User should be available in permission check thanks to middleware
 		expect(permissionCheckUser).toEqual({ id: "user-456", name: "John Doe" });
-		
+
 		// VERIFY: Operation should succeed because user was injected
 		expect(requestContext.json).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "todo-123", title: "Test Todo" }),
-			{ status: 201 }
+			{ status: 201 },
 		);
 
 		// VERIFY: Session API should have been called
@@ -85,14 +91,14 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 
 	it("should demonstrate the old problem: beforeCreate hooks run too late", async () => {
 		// This test shows why the old approach didn't work
-		
+
 		let permissionCheckUser: any = undefined;
 		let hookUser: any = undefined;
 
 		const problemResource: QueryResourceConfig = {
 			name: "todo",
 			schema: todoSchema,
-			
+
 			// OLD APPROACH: No middleware, trying to inject user in beforeCreate
 			permissions: {
 				create: async (context) => {
@@ -101,7 +107,7 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 					return !!context.user;
 				},
 			},
-			
+
 			hooks: {
 				beforeCreate: async (context) => {
 					// This runs AFTER permission check, so it's too late
@@ -127,53 +133,53 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 
 		// DEMONSTRATE PROBLEM: User is null during permission check
 		expect(permissionCheckUser).toBeNull();
-		
+
 		// But user gets set in hook (too late for permissions)
 		expect(hookUser).toEqual({ id: "user-456", name: "John Doe" });
-		
+
 		// Operation fails due to permission denial
 		expect(requestContext.json).toHaveBeenCalledWith(
 			{ error: "Forbidden" },
-			{ status: 403 }
+			{ status: 403 },
 		);
 	});
 
 	it("should work with complex permission logic using middleware-injected user", async () => {
 		const mockGetSession = vi.fn().mockResolvedValue({
-			user: { 
-				id: "user-456", 
+			user: {
+				id: "user-456",
 				name: "John Doe",
-				roles: ["user", "todo-creator"]
-			}
+				roles: ["user", "todo-creator"],
+			},
 		});
 
 		const advancedResource: QueryResourceConfig = {
 			name: "todo",
 			schema: todoSchema,
-			
+
 			middleware: [
 				{
 					handler: async (context) => {
 						const session = await mockGetSession();
 						context.user = session?.user;
 						context.scopes = session?.user?.roles || [];
-					}
-				}
+					},
+				},
 			],
-			
+
 			permissions: {
 				create: async (context) => {
 					// Complex permission logic using middleware-injected data
 					if (!context.user) return false;
-					
+
 					// Check if user has required role
 					if (!context.scopes?.includes("todo-creator")) return false;
-					
+
 					// Add user ID to data for ownership
 					if (context.data) {
 						context.data.userId = context.user.id;
 					}
-					
+
 					return true;
 				},
 			},
@@ -193,21 +199,21 @@ describe("Issue Reproduction: User Injection for Permissions", () => {
 
 		// Should succeed with proper user and data enrichment
 		expect(requestContext.json).toHaveBeenCalledWith(
-			expect.objectContaining({ 
-				id: "todo-123", 
+			expect.objectContaining({
+				id: "todo-123",
 				title: "Test Todo",
-				userId: "user-456" // Added by permission logic
+				userId: "user-456", // Added by permission logic
 			}),
-			{ status: 201 }
+			{ status: 201 },
 		);
 
 		// Verify the adapter was called with enriched data
 		expect(mockAdapter.create).toHaveBeenCalledWith({
 			model: "todo",
 			data: expect.objectContaining({
-				userId: "user-456" // User ID was added by permission check
+				userId: "user-456", // User ID was added by permission check
 			}),
-			include: undefined
+			include: undefined,
 		});
 	});
 });

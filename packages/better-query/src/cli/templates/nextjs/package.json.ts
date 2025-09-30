@@ -1,7 +1,9 @@
 export function packageJsonTemplate(withAuth: boolean): string {
-	const authDependencies = withAuth ? `    "better-auth": "^1.0.0",
-` : "";
-	
+	const authDependencies = withAuth
+		? `    "better-auth": "^1.0.0",
+`
+		: "";
+
 	return `{
   "name": "better-query-app",
   "version": "0.1.0",

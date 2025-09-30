@@ -2,7 +2,7 @@
 
 import { AsideLink } from "@/components/ui/aside-link";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useSearchContext } from "fumadocs-ui/provider";
 import { ChevronDownIcon, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -173,7 +173,7 @@ const tabs = [
 		),
 		title: "Docs",
 		description: "get started, concepts, and plugins",
-	}
+	},
 ];
 
 function SidebarTab({

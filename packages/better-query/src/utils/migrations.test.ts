@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { 
-	SchemaMigrationManager, 
-	withSchemaVersion, 
-	createSchemaMigration,
+import {
 	type Migration,
-	type SchemaChange
+	type SchemaChange,
+	SchemaMigrationManager,
+	createSchemaMigration,
+	withSchemaVersion,
 } from "../utils/migrations";
 
 describe("Schema Migration Manager", () => {
@@ -23,7 +23,7 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const version = withSchemaVersion("1.0.0", schema);
-			
+
 			expect(version.version).toBe("1.0.0");
 			expect(version.schema).toBe(schema);
 			expect(version.createdAt).toBeInstanceOf(Date);
@@ -44,11 +44,11 @@ describe("Schema Migration Manager", () => {
 				type: "add_field",
 				description: "Test migration",
 				up: vi.fn(),
-				down: vi.fn()
+				down: vi.fn(),
 			};
 
 			const version = withSchemaVersion("1.0.0", schema, [migration]);
-			
+
 			expect(version.migrations).toContain(migration);
 		});
 	});
@@ -68,13 +68,15 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("product", oldSchema, newSchema);
-			
-			const addedChanges = changes.filter(c => c.type === "added");
+
+			const addedChanges = changes.filter((c) => c.type === "added");
 			expect(addedChanges).toHaveLength(2);
-			
-			const descriptionChange = addedChanges.find(c => c.field === "description");
-			const priceChange = addedChanges.find(c => c.field === "price");
-			
+
+			const descriptionChange = addedChanges.find(
+				(c) => c.field === "description",
+			);
+			const priceChange = addedChanges.find((c) => c.field === "price");
+
 			expect(descriptionChange?.breaking).toBe(false); // Optional field
 			expect(priceChange?.breaking).toBe(true); // Required field
 		});
@@ -92,8 +94,8 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("product", oldSchema, newSchema);
-			
-			const removedChanges = changes.filter(c => c.type === "removed");
+
+			const removedChanges = changes.filter((c) => c.type === "removed");
 			expect(removedChanges).toHaveLength(1);
 			expect(removedChanges[0].field).toBe("deprecated");
 			expect(removedChanges[0].breaking).toBe(true);
@@ -111,8 +113,8 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("product", oldSchema, newSchema);
-			
-			const modifiedChanges = changes.filter(c => c.type === "modified");
+
+			const modifiedChanges = changes.filter((c) => c.type === "modified");
 			expect(modifiedChanges).toHaveLength(1);
 			expect(modifiedChanges[0].field).toBe("price");
 			expect(modifiedChanges[0].oldType).toBe("string");
@@ -132,10 +134,10 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("product", oldSchema, newSchema);
-			
+
 			// This would be handled by the database adapter specifics
 			// For this test, same Zod types won't show as changed
-			expect(changes.filter(c => c.type === "modified")).toHaveLength(0);
+			expect(changes.filter((c) => c.type === "modified")).toHaveLength(0);
 		});
 	});
 
@@ -153,8 +155,8 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("user", oldSchema, newSchema);
-			const migration = changes.find(c => c.field === "email")?.migration;
-			
+			const migration = changes.find((c) => c.field === "email")?.migration;
+
 			expect(migration).toBeDefined();
 			expect(migration?.type).toBe("add_field");
 			expect(migration?.description).toContain("Add field 'email'");
@@ -173,8 +175,10 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const changes = manager.compareSchemas("user", oldSchema, newSchema);
-			const migration = changes.find(c => c.field === "deprecated")?.migration;
-			
+			const migration = changes.find(
+				(c) => c.field === "deprecated",
+			)?.migration;
+
 			expect(migration).toBeDefined();
 			expect(migration?.type).toBe("remove_field");
 			expect(migration?.description).toContain("Remove field 'deprecated'");
@@ -192,11 +196,11 @@ describe("Schema Migration Manager", () => {
 				type: "add_field",
 				description: "Add email field",
 				up: vi.fn(),
-				down: vi.fn()
+				down: vi.fn(),
 			};
 
 			await manager.applyMigrations(mockAdapter as any, [migration]);
-			
+
 			expect(migration.up).toHaveBeenCalledWith(mockAdapter);
 		});
 
@@ -212,7 +216,7 @@ describe("Schema Migration Manager", () => {
 				type: "add_field",
 				description: "Migration 1",
 				up: vi.fn(),
-				down: vi.fn()
+				down: vi.fn(),
 			};
 
 			const migration2: Migration = {
@@ -221,11 +225,14 @@ describe("Schema Migration Manager", () => {
 				type: "add_field",
 				description: "Migration 2",
 				up: vi.fn(),
-				down: vi.fn()
+				down: vi.fn(),
 			};
 
-			await manager.rollbackMigrations(mockAdapter as any, [migration1, migration2]);
-			
+			await manager.rollbackMigrations(mockAdapter as any, [
+				migration1,
+				migration2,
+			]);
+
 			// Should call in reverse order
 			expect(migration2.down).toHaveBeenCalled();
 			expect(migration1.down).toHaveBeenCalled();
@@ -238,29 +245,29 @@ describe("Schema Migration Manager", () => {
 				{
 					type: "removed",
 					field: "deprecated",
-					breaking: true
+					breaking: true,
 				},
 				{
 					type: "added",
 					field: "email",
-					breaking: true
+					breaking: true,
 				},
 				{
 					type: "added",
 					field: "description",
-					breaking: false
+					breaking: false,
 				},
 				{
 					type: "modified",
 					field: "price",
 					oldType: "string",
 					newType: "number",
-					breaking: true
-				}
+					breaking: true,
+				},
 			];
 
 			const report = manager.generateBreakingChangesReport(changes);
-			
+
 			expect(report).toContain("BREAKING CHANGES DETECTED");
 			expect(report).toContain("Field 'deprecated' has been removed");
 			expect(report).toContain("Field 'email' has been added as required");
@@ -273,12 +280,12 @@ describe("Schema Migration Manager", () => {
 				{
 					type: "added",
 					field: "description",
-					breaking: false
-				}
+					breaking: false,
+				},
 			];
 
 			const report = manager.generateBreakingChangesReport(changes);
-			
+
 			expect(report).toBe("No breaking changes detected.");
 		});
 	});
@@ -297,11 +304,11 @@ describe("Schema Migration Manager", () => {
 			});
 
 			const result = createSchemaMigration("user", oldSchema, newSchema);
-			
+
 			expect(result.changes).toBeDefined();
 			expect(result.migrations).toBeDefined();
 			expect(result.report).toBeDefined();
-			
+
 			expect(result.changes).toHaveLength(1);
 			expect(result.changes[0].field).toBe("email");
 		});

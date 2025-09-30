@@ -1,4 +1,14 @@
+import { cn } from "@/lib/utils";
+import { Link } from "lucide-react";
+import { JSX, ReactNode } from "react";
+import {
+	ApiMethodTabs,
+	ApiMethodTabsContent,
+	ApiMethodTabsList,
+	ApiMethodTabsTrigger,
+} from "./api-method-tabs";
 import { Endpoint } from "./endpoint";
+import { Button } from "./ui/button";
 // import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { DynamicCodeBlock } from "./ui/dynamic-code-block";
 import {
@@ -9,16 +19,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "./ui/table";
-import {
-	ApiMethodTabs,
-	ApiMethodTabsContent,
-	ApiMethodTabsList,
-	ApiMethodTabsTrigger,
-} from "./api-method-tabs";
-import { JSX, ReactNode } from "react";
-import { Link } from "lucide-react";
-import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
 
 type Property = {
 	isOptional: boolean;

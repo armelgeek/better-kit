@@ -5,11 +5,13 @@ import { createKyselyAdapter, kyselyQueryAdapter } from "./kysely";
 /**
  * Convert old where clause format to new QueryWhere format
  */
-export function convertToQueryWhere(where: Array<{ field: string; value: any; operator?: string }>): QueryWhere[] {
-	return where.map(w => ({
+export function convertToQueryWhere(
+	where: Array<{ field: string; value: any; operator?: string }>,
+): QueryWhere[] {
+	return where.map((w) => ({
 		field: w.field,
 		value: w.value,
-		operator: w.operator as any || "eq",
+		operator: (w.operator as any) || "eq",
 	}));
 }
 
@@ -19,8 +21,10 @@ export const convertToCrudWhere = convertToQueryWhere;
 /**
  * Convert old orderBy format to new QueryOrderBy format
  */
-export function convertToQueryOrderBy(orderBy: Array<{ field: string; direction: "asc" | "desc" }>): import("../types/adapter").QueryOrderBy[] {
-	return orderBy.map(o => ({
+export function convertToQueryOrderBy(
+	orderBy: Array<{ field: string; direction: "asc" | "desc" }>,
+): import("../types/adapter").QueryOrderBy[] {
+	return orderBy.map((o) => ({
 		field: o.field,
 		direction: o.direction,
 	}));
@@ -54,7 +58,9 @@ export function getQueryAdapter(options: QueryOptions): QueryAdapter {
 		});
 	}
 
-	throw new Error("Invalid database configuration. Provide either 'adapter' or 'provider' configuration.");
+	throw new Error(
+		"Invalid database configuration. Provide either 'adapter' or 'provider' configuration.",
+	);
 }
 
 // Legacy alias

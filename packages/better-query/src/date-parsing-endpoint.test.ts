@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { betterQuery, createResource, withId } from "./index";
-import { z } from "zod";
 import Database from "better-sqlite3";
-import { KyselyQueryAdapter } from "./adapters/kysely";
 import { Kysely, SqliteDialect } from "kysely";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
+import { KyselyQueryAdapter } from "./adapters/kysely";
+import { betterQuery, createResource, withId } from "./index";
 
 describe("Date parsing endpoint integration", () => {
 	const todoSchema = withId({
@@ -23,7 +23,7 @@ describe("Date parsing endpoint integration", () => {
 	beforeEach(() => {
 		// Create in-memory SQLite database
 		db = new Database(":memory:");
-		
+
 		kyselyDb = new Kysely({
 			dialect: new SqliteDialect({
 				database: db,
@@ -39,7 +39,10 @@ describe("Date parsing endpoint integration", () => {
 			hooks: {
 				beforeCreate: async (context) => {
 					// Convert date string to Date object if present (our fix)
-					if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+					if (
+						context.data.dueDate &&
+						typeof context.data.dueDate === "string"
+					) {
 						context.data.dueDate = new Date(context.data.dueDate);
 					}
 					// Auto-generate timestamps
@@ -48,7 +51,10 @@ describe("Date parsing endpoint integration", () => {
 				},
 				beforeUpdate: async (context) => {
 					// Convert date string to Date object if present (our fix)
-					if (context.data.dueDate && typeof context.data.dueDate === 'string') {
+					if (
+						context.data.dueDate &&
+						typeof context.data.dueDate === "string"
+					) {
 						context.data.dueDate = new Date(context.data.dueDate);
 					}
 					context.data.updatedAt = new Date();
@@ -97,7 +103,7 @@ describe("Date parsing endpoint integration", () => {
 
 		// Get the create endpoint
 		const createEndpoint = query.api.createTodo;
-		
+
 		expect(createEndpoint).toBeDefined();
 
 		// Mock context for the endpoint
@@ -123,7 +129,9 @@ describe("Date parsing endpoint integration", () => {
 			expect(result.data.dueDate).toBeDefined();
 			// The final result should have a proper date (as ISO string in database)
 			expect(typeof result.data.dueDate).toBe("string");
-			expect(new Date(result.data.dueDate).getTime()).toBe(new Date("2024-01-15").getTime());
+			expect(new Date(result.data.dueDate).getTime()).toBe(
+				new Date("2024-01-15").getTime(),
+			);
 		}
 	});
 
@@ -210,7 +218,9 @@ describe("Date parsing endpoint integration", () => {
 			expect(updateResult.data.dueDate).toBeDefined();
 			// The final result should have a proper date (as ISO string in database)
 			expect(typeof updateResult.data.dueDate).toBe("string");
-			expect(new Date(updateResult.data.dueDate).getTime()).toBe(new Date("2024-02-20").getTime());
+			expect(new Date(updateResult.data.dueDate).getTime()).toBe(
+				new Date("2024-02-20").getTime(),
+			);
 		}
 	});
 });

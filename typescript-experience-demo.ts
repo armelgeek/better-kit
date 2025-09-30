@@ -224,7 +224,7 @@ export {
 // This example demonstrates the key improvements made to better-crud:
 //
 // 1. **Schema-aware typing**: Full TypeScript suggestions for all resource fields
-// 2. **Error handling**: $ERROR_CODES pattern similar to better-auth 
+// 2. **Error handling**: $ERROR_CODES pattern similar to better-auth
 // 3. **Type safety**: Input validation and output typing based on Zod schemas
 // 4. **Advanced queries**: Support for filtering, searching, relationships
 // 5. **Developer experience**: Same pattern as better-auth with `createClient<typeof server>()`

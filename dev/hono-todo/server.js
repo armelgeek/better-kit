@@ -1,30 +1,30 @@
-import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { cors } from "hono/cors";
+import { Hono } from "hono";
 import { serveStatic } from "hono/bun"; // Import for static file serving
+import { cors } from "hono/cors";
 import { query } from "./query.js";
 
 const app = new Hono();
 
 // Configure CORS for cross-origin requests
 app.use(
-  "/api/query/*",
-  cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-    allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS", "PUT", "DELETE"],
-    credentials: true,
-  })
+	"/api/query/*",
+	cors({
+		origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+		allowHeaders: ["Content-Type", "Authorization"],
+		allowMethods: ["POST", "GET", "OPTIONS", "PUT", "DELETE"],
+		credentials: true,
+	}),
 );
 
 // Mount Better Query handler
 app.on(["POST", "GET", "PUT", "DELETE"], "/api/query/*", (c) => {
-  return query.handler(c.req.raw);
+	return query.handler(c.req.raw);
 });
 
 // Serve static files (HTML interface)
 app.get("/", (c) => {
-  return c.html(`<!DOCTYPE html>
+	return c.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -260,7 +260,7 @@ app.get("/", (c) => {
 
 // Health check endpoint
 app.get("/api/health", (c) => {
-  return c.json({ status: "ok", message: "Hono Todo API is running!" });
+	return c.json({ status: "ok", message: "Hono Todo API is running!" });
 });
 
 const port = 3000;
@@ -268,6 +268,6 @@ console.log(`🚀 Todo App running on http://localhost:${port}`);
 console.log(`📚 API docs: http://localhost:${port}/api/query/`);
 
 serve({
-  fetch: app.fetch,
-  port,
+	fetch: app.fetch,
+	port,
 });

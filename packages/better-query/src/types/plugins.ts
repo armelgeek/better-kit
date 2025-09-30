@@ -1,7 +1,7 @@
 import { Endpoint } from "better-call";
 import { ZodSchema } from "zod";
 import { FieldAttribute } from "./index";
-import { CrudResourceConfig, CrudMiddleware, CrudHookContext } from "./index";
+import { CrudHookContext, CrudMiddleware, CrudResourceConfig } from "./index";
 
 export type LiteralString = string;
 
@@ -39,44 +39,44 @@ export interface PluginHooks {
 export interface Plugin {
 	/** Unique plugin identifier */
 	id: LiteralString;
-	
+
 	/** Additional endpoints the plugin provides */
 	endpoints?: {
 		[key: string]: Endpoint<any>;
 	};
-	
-	/** 
+
+	/**
 	 * Database schema extensions the plugin needs
 	 * This will also be used for auto-migration if enabled
 	 */
 	schema?: PluginSchema;
-	
+
 	/**
 	 * Resources the plugin wants to register
 	 * This allows plugins to add entirely new CRUD resources
 	 */
 	resources?: CrudResourceConfig[];
-	
+
 	/**
 	 * Global middleware the plugin wants to apply
 	 */
 	middleware?: CrudMiddleware[];
-	
+
 	/**
 	 * Global hooks the plugin provides
 	 */
 	hooks?: PluginHooks;
-	
+
 	/**
 	 * Plugin configuration/options
 	 */
 	options?: Record<string, any>;
-	
+
 	/**
 	 * Plugin initialization function called when betterCrud is created
 	 */
 	init?: (context: PluginInitContext) => Promise<void> | void;
-	
+
 	/**
 	 * Plugin cleanup function
 	 */

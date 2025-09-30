@@ -38,7 +38,7 @@ export const crud = adiemus({
 	plugins: [
 		// Add OpenAPI plugin with default settings
 		openApiPlugin(),
-		
+
 		// Or with custom configuration:
 		// openApiPlugin({
 		//   path: "/docs",
@@ -57,7 +57,7 @@ export async function demonstrateOpenAPI() {
 	console.log("OpenAPI endpoints available:");
 	console.log("- GET /openapi/schema - OpenAPI JSON schema");
 	console.log("- GET /reference - Interactive API documentation");
-	
+
 	// You can programmatically access the schema
 	const schema = await crud.api.generateOpenAPISchema({});
 	console.log("Generated OpenAPI schema info:", {

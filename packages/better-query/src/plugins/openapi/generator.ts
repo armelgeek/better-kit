@@ -1,5 +1,5 @@
+import { ZodObject, ZodOptional, ZodSchema, ZodType } from "zod";
 import type { CrudContext } from "../../types";
-import { ZodSchema, ZodObject, ZodType, ZodOptional } from "zod";
 
 export interface OpenAPIPath {
 	get?: {
@@ -161,7 +161,7 @@ function processZodType(zodType: ZodType<any>): any {
 
 function getTypeFromZodType(zodType: ZodType<any>): AllowedType {
 	const typeName = (zodType as any)._def?.typeName;
-	
+
 	switch (typeName) {
 		case "ZodString":
 			return "string";
@@ -273,8 +273,16 @@ function generateResourceSchema(resourceName: string, schema: ZodSchema): any {
 		properties: {
 			id: { type: "string", description: "Unique identifier" },
 			...processedSchema.properties,
-			createdAt: { type: "string", format: "date-time", description: "Creation timestamp" },
-			updatedAt: { type: "string", format: "date-time", description: "Last update timestamp" },
+			createdAt: {
+				type: "string",
+				format: "date-time",
+				description: "Creation timestamp",
+			},
+			updatedAt: {
+				type: "string",
+				format: "date-time",
+				description: "Last update timestamp",
+			},
 		},
 		required: ["id", ...(processedSchema.required || [])],
 	};
@@ -313,10 +321,14 @@ export async function generator(context: CrudContext): Promise<any> {
 	// Generate schemas and paths for each resource
 	for (const resource of options.resources) {
 		const resourceName = resource.name;
-		const capitalizedName = resourceName.charAt(0).toUpperCase() + resourceName.slice(1);
-		
+		const capitalizedName =
+			resourceName.charAt(0).toUpperCase() + resourceName.slice(1);
+
 		// Generate schema for the resource
-		const resourceSchema = generateResourceSchema(resourceName, resource.schema);
+		const resourceSchema = generateResourceSchema(
+			resourceName,
+			resource.schema,
+		);
 		components.schemas[capitalizedName] = resourceSchema;
 
 		// Generate paginated list response schema
@@ -555,7 +567,7 @@ export async function generator(context: CrudContext): Promise<any> {
 	};
 
 	const basePath = options.basePath || "/api";
-	
+
 	return {
 		openapi: "3.1.0",
 		info: {

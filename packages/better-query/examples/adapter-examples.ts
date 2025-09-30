@@ -1,4 +1,8 @@
-import { adiemus, createPrismaAdapter, createDrizzleAdapter } from "better-crud";
+import {
+	adiemus,
+	createDrizzleAdapter,
+	createPrismaAdapter,
+} from "better-crud";
 import { z } from "zod";
 
 // Example 1: Using built-in Kysely adapter with SQLite
@@ -65,7 +69,7 @@ const crudWithPrisma = adiemus({
 // import { drizzle } from 'drizzle-orm/better-sqlite3';
 // import Database from 'better-sqlite3';
 // import * as schema from './schema';
-// 
+//
 // const sqlite = new Database('sqlite.db');
 // const db = drizzle(sqlite);
 
@@ -103,7 +107,7 @@ class InMemoryAdapter implements CrudAdapter {
 		const { model, where = [] } = params;
 		for (const [key, value] of this.data.entries()) {
 			if (key.startsWith(model)) {
-				const matches = where.every(w => value[w.field] === w.value);
+				const matches = where.every((w) => value[w.field] === w.value);
 				if (matches) return value;
 			}
 		}
@@ -114,10 +118,10 @@ class InMemoryAdapter implements CrudAdapter {
 		const { model, where = [], limit, offset = 0 } = params;
 		const results = [];
 		let count = 0;
-		
+
 		for (const [key, value] of this.data.entries()) {
 			if (key.startsWith(model)) {
-				const matches = where.every(w => value[w.field] === w.value);
+				const matches = where.every((w) => value[w.field] === w.value);
 				if (matches) {
 					if (count >= offset) {
 						results.push(value);
@@ -154,7 +158,7 @@ class InMemoryAdapter implements CrudAdapter {
 		let count = 0;
 		for (const [key, value] of this.data.entries()) {
 			if (key.startsWith(model)) {
-				const matches = where.every(w => value[w.field] === w.value);
+				const matches = where.every((w) => value[w.field] === w.value);
 				if (matches) count++;
 			}
 		}

@@ -1,7 +1,7 @@
-import { createCrudEndpoint } from "../endpoints/crud-endpoint";
-import { Plugin } from "../types/plugins";
-import { CrudHookContext } from "../types";
 import { z } from "zod";
+import { createCrudEndpoint } from "../endpoints/crud-endpoint";
+import { CrudHookContext } from "../types";
+import { Plugin } from "../types/plugins";
 
 /**
  * Audit plugin options
@@ -39,12 +39,17 @@ export interface AuditEvent {
  * Default audit logger - logs to console
  */
 const defaultAuditLogger = (event: AuditEvent) => {
-	console.log(`[AUDIT] ${event.timestamp.toISOString()} - ${event.operation.toUpperCase()} on ${event.resource}`, {
-		recordId: event.recordId,
-		user: event.user?.id || "anonymous",
-		ipAddress: event.ipAddress,
-		error: event.error,
-	});
+	console.log(
+		`[AUDIT] ${event.timestamp.toISOString()} - ${event.operation.toUpperCase()} on ${
+			event.resource
+		}`,
+		{
+			recordId: event.recordId,
+			user: event.user?.id || "anonymous",
+			ipAddress: event.ipAddress,
+			error: event.error,
+		},
+	);
 };
 
 /**
@@ -77,9 +82,10 @@ export function auditPlugin(options: AuditPluginOptions = {}): Plugin {
 			resource: context.resource,
 			recordId: context.id,
 			user: context.user,
-			ipAddress: context.request?.headers?.get?.("x-forwarded-for") || 
-					   context.request?.headers?.get?.("x-real-ip") || 
-					   context.request?.ip,
+			ipAddress:
+				context.request?.headers?.get?.("x-forwarded-for") ||
+				context.request?.headers?.get?.("x-real-ip") ||
+				context.request?.ip,
 			userAgent: context.request?.headers?.get?.("user-agent"),
 			requestData: includeRequestData ? context.data : undefined,
 			responseData: includeResponseData ? context.result : undefined,
@@ -95,27 +101,40 @@ export function auditPlugin(options: AuditPluginOptions = {}): Plugin {
 
 	return {
 		id: "audit",
-		
+
 		endpoints: {
-			getAuditLogs: createCrudEndpoint("/audit/logs", {
-				method: "GET",
-				query: z.object({
-					resource: z.string().optional(),
-					operation: z.string().optional(),
-					user: z.string().optional(),
-					startDate: z.string().optional(),
-					endDate: z.string().optional(),
-					page: z.string().optional().transform(val => val ? parseInt(val) : 1),
-					limit: z.string().optional().transform(val => val ? parseInt(val) : 50),
-				}).optional(),
-			}, async (ctx) => {
-				// This would typically query an audit table
-				// For now, return a placeholder response
-				return ctx.json({
-					message: "Audit logs endpoint - requires audit table implementation",
-					query: ctx.query,
-				});
-			}),
+			getAuditLogs: createCrudEndpoint(
+				"/audit/logs",
+				{
+					method: "GET",
+					query: z
+						.object({
+							resource: z.string().optional(),
+							operation: z.string().optional(),
+							user: z.string().optional(),
+							startDate: z.string().optional(),
+							endDate: z.string().optional(),
+							page: z
+								.string()
+								.optional()
+								.transform((val) => (val ? parseInt(val) : 1)),
+							limit: z
+								.string()
+								.optional()
+								.transform((val) => (val ? parseInt(val) : 50)),
+						})
+						.optional(),
+				},
+				async (ctx) => {
+					// This would typically query an audit table
+					// For now, return a placeholder response
+					return ctx.json({
+						message:
+							"Audit logs endpoint - requires audit table implementation",
+						query: ctx.query,
+					});
+				},
+			),
 		},
 
 		schema: {

@@ -1,5 +1,10 @@
 import { ZodSchema } from "zod";
-import { SanitizationRule, SecurityContext, CrudPermissionContext, UserScope } from "../types";
+import {
+	CrudPermissionContext,
+	SanitizationRule,
+	SecurityContext,
+	UserScope,
+} from "../types";
 
 /**
  * Sanitize input data based on rules
@@ -43,11 +48,11 @@ export function applySanitizationRule(data: any, rule: SanitizationRule): any {
 
 	if (typeof data === "object" && data !== null) {
 		const sanitized: any = Array.isArray(data) ? [] : {};
-		
+
 		for (const [key, value] of Object.entries(data)) {
 			sanitized[key] = applySanitizationRule(value, rule);
 		}
-		
+
 		return sanitized;
 	}
 
@@ -59,13 +64,13 @@ export function applySanitizationRule(data: any, rule: SanitizationRule): any {
  */
 function escapeHtml(text: string): string {
 	const map: Record<string, string> = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#039;'
+		"&": "&amp;",
+		"<": "&lt;",
+		">": "&gt;",
+		'"': "&quot;",
+		"'": "&#039;",
 	};
-	
+
 	return text.replace(/[&<>"']/g, (m: string) => map[m] || m);
 }
 
@@ -73,8 +78,8 @@ function escapeHtml(text: string): string {
  * Sanitize specific fields in data
  */
 export function sanitizeFields(
-	data: any, 
-	fieldRules: Record<string, SanitizationRule[]>
+	data: any,
+	fieldRules: Record<string, SanitizationRule[]>,
 ): any {
 	if (!data || !fieldRules) {
 		return data;
@@ -95,24 +100,24 @@ export function sanitizeFields(
  * Check if user has required scopes
  */
 export function hasRequiredScopes(
-	userScopes: string[] = [], 
-	requiredScopes: string[] = []
+	userScopes: string[] = [],
+	requiredScopes: string[] = [],
 ): boolean {
 	if (requiredScopes.length === 0) {
 		return true; // No scopes required
 	}
 
-	return requiredScopes.every(scope => userScopes.includes(scope));
+	return requiredScopes.every((scope) => userScopes.includes(scope));
 }
 
 /**
  * Check ownership of a resource
  */
 export function checkOwnership(
-	user: any, 
-	data: any, 
+	user: any,
+	data: any,
 	ownershipField: string,
-	strategy: "strict" | "flexible" = "strict"
+	strategy: "strict" | "flexible" = "strict",
 ): boolean {
 	if (!user || !data || !ownershipField) {
 		return false;
@@ -132,12 +137,12 @@ export function checkOwnership(
 		if (resourceOwnerId === userId) {
 			return true;
 		}
-		
+
 		// Check if user has admin privileges
 		const userRoles = user.roles || user.scopes || [];
 		const adminRoles = ["admin", "super_admin", "administrator"];
-		
-		return adminRoles.some(role => userRoles.includes(role));
+
+		return adminRoles.some((role) => userRoles.includes(role));
 	}
 
 	return false;
@@ -150,8 +155,11 @@ export function extractSecurityContext(request: any): SecurityContext {
 	return {
 		user: request.user || null,
 		scopes: request.user?.scopes || request.user?.roles || [],
-		ipAddress: request.ip || request.headers?.['x-forwarded-for'] || request.headers?.['x-real-ip'],
-		userAgent: request.headers?.['user-agent'],
+		ipAddress:
+			request.ip ||
+			request.headers?.["x-forwarded-for"] ||
+			request.headers?.["x-real-ip"],
+		userAgent: request.headers?.["user-agent"],
 		session: request.session || null,
 	};
 }
@@ -162,7 +170,7 @@ export function extractSecurityContext(request: any): SecurityContext {
 export async function checkEnhancedPermissions(
 	context: CrudPermissionContext,
 	requiredScopes?: string[],
-	ownershipConfig?: { field: string; strategy: "strict" | "flexible" }
+	ownershipConfig?: { field: string; strategy: "strict" | "flexible" },
 ): Promise<boolean> {
 	const { user, scopes = [], existingData } = context;
 
@@ -174,10 +182,10 @@ export async function checkEnhancedPermissions(
 	// Check ownership if configured
 	if (ownershipConfig && existingData) {
 		return checkOwnership(
-			user, 
-			existingData, 
-			ownershipConfig.field, 
-			ownershipConfig.strategy
+			user,
+			existingData,
+			ownershipConfig.field,
+			ownershipConfig.strategy,
 		);
 	}
 
@@ -190,34 +198,38 @@ export async function checkEnhancedPermissions(
 class RateLimiter {
 	public requests: Map<string, number[]> = new Map();
 
-	public isAllowed(key: string, windowMs: number, maxRequests: number): boolean {
+	public isAllowed(
+		key: string,
+		windowMs: number,
+		maxRequests: number,
+	): boolean {
 		const now = Date.now();
 		const windowStart = now - windowMs;
-		
+
 		// Get existing requests for this key
 		const keyRequests = this.requests.get(key) || [];
-		
+
 		// Filter out old requests outside the window
-		const recentRequests = keyRequests.filter(time => time > windowStart);
-		
+		const recentRequests = keyRequests.filter((time) => time > windowStart);
+
 		// Check if we're within the limit
 		if (recentRequests.length >= maxRequests) {
 			return false;
 		}
-		
+
 		// Add current request
 		recentRequests.push(now);
 		this.requests.set(key, recentRequests);
-		
+
 		return true;
 	}
 
 	public cleanup(): void {
 		const now = Date.now();
 		const maxAge = 60 * 60 * 1000; // 1 hour
-		
+
 		for (const [key, requests] of this.requests.entries()) {
-			const validRequests = requests.filter(time => now - time < maxAge);
+			const validRequests = requests.filter((time) => now - time < maxAge);
 			if (validRequests.length === 0) {
 				this.requests.delete(key);
 			} else {
@@ -225,7 +237,7 @@ class RateLimiter {
 			}
 		}
 	}
-	
+
 	public clear(): void {
 		this.requests.clear();
 	}
@@ -239,7 +251,7 @@ export const rateLimiter = new RateLimiter();
 export function validateAndSanitizeInput(
 	schema: ZodSchema,
 	data: any,
-	sanitizationRules?: SanitizationRule[]
+	sanitizationRules?: SanitizationRule[],
 ): { success: boolean; data?: any; errors?: any } {
 	try {
 		// First sanitize the input
@@ -250,7 +262,7 @@ export function validateAndSanitizeInput(
 
 		// Then validate with Zod
 		const validated = schema.parse(sanitizedData);
-		
+
 		return {
 			success: true,
 			data: validated,

@@ -11,7 +11,7 @@ export function envTemplate(withAuth: boolean, database: string): string {
 			dbUrl = "mysql://user:password@localhost:3306/mydb";
 			break;
 	}
-	
+
 	let content = `# Database
 DATABASE_URL=${dbUrl}
 
@@ -26,6 +26,6 @@ BETTER_AUTH_SECRET=your-secret-key-here-change-in-production
 BETTER_AUTH_URL=http://localhost:3000
 `;
 	}
-	
+
 	return content;
 }

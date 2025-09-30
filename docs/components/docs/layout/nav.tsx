@@ -1,15 +1,15 @@
 "use client";
 import Link, { type LinkProps } from "fumadocs-core/link";
+import { useI18n } from "fumadocs-ui/provider";
 import {
-	createContext,
 	type ReactNode,
+	createContext,
 	useContext,
 	useEffect,
 	useMemo,
 	useState,
 } from "react";
 import { cn } from "../../../lib/utils";
-import { useI18n } from "fumadocs-ui/provider";
 
 export interface NavProviderProps {
 	/**

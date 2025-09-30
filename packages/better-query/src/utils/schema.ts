@@ -1,5 +1,11 @@
 import { ZodSchema, ZodTypeAny, z } from "zod";
-import { FieldAttribute, QueryPermissionContext, QueryHookContext, QueryMiddlewareContext, QueryResourceConfig } from "../types";
+import {
+	FieldAttribute,
+	QueryHookContext,
+	QueryMiddlewareContext,
+	QueryPermissionContext,
+	QueryResourceConfig,
+} from "../types";
 
 /**
  * Convert Zod schema to database field attributes
@@ -127,7 +133,9 @@ export function validateData(schema: ZodSchema, data: any) {
 /**
  * Create a simple resource configuration helper
  */
-export function createResource(config: QueryResourceConfig): QueryResourceConfig {
+export function createResource(
+	config: QueryResourceConfig,
+): QueryResourceConfig {
 	return {
 		...config,
 		endpoints: {

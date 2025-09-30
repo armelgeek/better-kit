@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Icons } from "../icons";
-import Link from "next/link";
 import { noSSR } from "foxact/no-ssr";
+import Link from "next/link";
 import { Suspense } from "react";
+import { Icons } from "../icons";
 
 const testimonials = [
 	{

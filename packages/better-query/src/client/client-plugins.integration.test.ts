@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { betterQuery, createQueryClient, createPlugin } from "..";
-import type { BetterQueryClientPlugin } from "../types/client-plugins";
+import { betterQuery, createPlugin, createQueryClient } from "..";
 import { createQueryEndpoint } from "../endpoints";
+import type { BetterQueryClientPlugin } from "../types/client-plugins";
 
 describe("Client Plugin Integration", () => {
 	it("should integrate client plugins with query client", async () => {
@@ -132,7 +132,7 @@ describe("Client Plugin Integration", () => {
 	});
 
 	it("should support atoms for reactive state", () => {
-		const createAtom = <T,>(initialValue: T) => {
+		const createAtom = <T>(initialValue: T) => {
 			let value = initialValue;
 			const listeners = new Set<(value: T) => void>();
 			return {
@@ -175,7 +175,7 @@ describe("Client Plugin Integration", () => {
 	it("should call atomListeners on initialization", () => {
 		let listenerCalled = false;
 
-		const createAtom = <T,>(initialValue: T) => {
+		const createAtom = <T>(initialValue: T) => {
 			let value = initialValue;
 			const listeners = new Set<(value: T) => void>();
 			return {

@@ -1,6 +1,6 @@
+import Section from "@/components/landing/section";
 import CommunityHeader from "./_components/header";
 import Stats from "./_components/stats";
-import Section from "@/components/landing/section";
 type NpmPackageResp = {
 	downloads: number;
 	start: string;
@@ -19,13 +19,13 @@ async function getNPMPackageDownloads() {
 		const npmStat: NpmPackageResp = await res.json();
 		return npmStat;
 	} catch (error) {
-		console.log('Failed to fetch npm downloads:', error);
+		console.log("Failed to fetch npm downloads:", error);
 		// Return mock data for static build
 		return {
 			downloads: 10000,
-			start: '',
-			end: '',
-			package: 'better-auth'
+			start: "",
+			end: "",
+			package: "better-auth",
 		};
 	}
 }
@@ -43,7 +43,7 @@ async function getGitHubStars() {
 		const stars = Number(json.stargazers_count);
 		return stars;
 	} catch (error) {
-		console.log('Failed to fetch GitHub stars:', error);
+		console.log("Failed to fetch GitHub stars:", error);
 		return 100; // Default value for static build
 	}
 }

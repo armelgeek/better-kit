@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { betterQuery, createQueryClient, createPlugin } from "..";
-import type { BetterQueryClientPlugin } from "../types/client-plugins";
+import { betterQuery, createPlugin, createQueryClient } from "..";
 import { createQueryEndpoint } from "../endpoints";
+import type { BetterQueryClientPlugin } from "../types/client-plugins";
 
 describe("Client Plugin System", () => {
 	// Create a simple plugin with custom endpoint
@@ -114,7 +114,7 @@ describe("Client Plugin System", () => {
 	describe("Client Plugin with Atoms", () => {
 		it("should support getAtoms for reactive state", () => {
 			// Simple atom implementation for testing
-			const createAtom = <T,>(initialValue: T) => {
+			const createAtom = <T>(initialValue: T) => {
 				let value = initialValue;
 				const listeners = new Set<(value: T) => void>();
 
@@ -158,7 +158,7 @@ describe("Client Plugin System", () => {
 		});
 
 		it("should support atomListeners for reactive updates", () => {
-			const createAtom = <T,>(initialValue: T) => {
+			const createAtom = <T>(initialValue: T) => {
 				let value = initialValue;
 				const listeners = new Set<(value: T) => void>();
 				return {

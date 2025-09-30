@@ -1,27 +1,27 @@
 import { createEndpointCreator, createMiddleware } from "better-call";
-import { ZodObject, z, ZodSchema, ZodTypeAny } from "zod";
+import { ZodObject, ZodSchema, ZodTypeAny, z } from "zod";
+import { convertToQueryOrderBy, convertToQueryWhere } from "../adapters/utils";
 import {
+	IncludeOptions,
+	PaginationResult,
 	QueryContext,
+	QueryHookContext,
+	QueryMiddlewareContext,
+	QueryParams,
 	QueryPermissionContext,
 	QueryResourceConfig,
-	PaginationResult,
-	IncludeOptions,
-	QueryHookContext,
-	QueryParams,
-	QueryMiddlewareContext,
 } from "../types";
-import { convertToQueryWhere, convertToQueryOrderBy } from "../adapters/utils";
+import { AuditLogger, HookExecutor } from "../utils/hooks";
 import { capitalize, generateId } from "../utils/schema";
-import { 
-	sanitizeFields, 
-	hasRequiredScopes, 
-	extractSecurityContext, 
+import { FilterBuilder, SearchBuilder } from "../utils/search";
+import {
 	checkEnhancedPermissions,
+	extractSecurityContext,
+	hasRequiredScopes,
 	rateLimiter,
-	validateAndSanitizeInput 
+	sanitizeFields,
+	validateAndSanitizeInput,
 } from "../utils/security";
-import { HookExecutor, AuditLogger } from "../utils/hooks";
-import { SearchBuilder, FilterBuilder } from "../utils/search";
 
 /**
  * Create a flexible version of a Zod schema that allows string input for date fields
@@ -32,16 +32,18 @@ function createFlexibleSchema(schema: ZodSchema, isPartial = false): ZodSchema {
 	if (schema instanceof ZodObject) {
 		const shape = schema.shape;
 		const flexibleShape: Record<string, ZodTypeAny> = {};
-		
+
 		for (const [key, fieldSchema] of Object.entries(shape)) {
 			const fieldSchemaAny = fieldSchema as any;
-			
+
 			// Check if this field is a date or optional date
-			if (fieldSchemaAny._def?.typeName === 'ZodDate') {
+			if (fieldSchemaAny._def?.typeName === "ZodDate") {
 				// Replace date with union of string or date
 				flexibleShape[key] = z.union([z.string(), z.date()]);
-			} else if (fieldSchemaAny._def?.typeName === 'ZodOptional' && 
-					   fieldSchemaAny._def?.innerType?._def?.typeName === 'ZodDate') {
+			} else if (
+				fieldSchemaAny._def?.typeName === "ZodOptional" &&
+				fieldSchemaAny._def?.innerType?._def?.typeName === "ZodDate"
+			) {
 				// Replace optional date with optional union of string or date
 				flexibleShape[key] = z.union([z.string(), z.date()]).optional();
 			} else {
@@ -49,13 +51,13 @@ function createFlexibleSchema(schema: ZodSchema, isPartial = false): ZodSchema {
 				flexibleShape[key] = fieldSchemaAny;
 			}
 		}
-		
+
 		const flexibleSchema = z.object(flexibleShape);
 		return isPartial ? flexibleSchema.partial() : flexibleSchema;
 	}
-	
+
 	// For non-object schemas, return as-is (with partial if requested)
-	if (isPartial && 'partial' in schema) {
+	if (isPartial && "partial" in schema) {
 		return (schema as any).partial();
 	}
 	return schema;
@@ -67,7 +69,7 @@ function createFlexibleSchema(schema: ZodSchema, isPartial = false): ZodSchema {
 export const queryContextMiddleware = createMiddleware(async (ctx) => {
 	// Extract security context from request
 	const securityContext = extractSecurityContext(ctx.request || ctx);
-	
+
 	// Add security utilities to context
 	const enhancedContext = {
 		...({} as QueryContext),
@@ -75,7 +77,7 @@ export const queryContextMiddleware = createMiddleware(async (ctx) => {
 		rateLimiter,
 		auditLogger: new AuditLogger(),
 	};
-	
+
 	return enhancedContext;
 });
 
@@ -143,13 +145,17 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 		// Check enhanced permissions (scopes, ownership) if config is provided
 		if (config) {
-			return await checkEnhancedPermissions(context, requiredScopes, ownershipConfig);
+			return await checkEnhancedPermissions(
+				context,
+				requiredScopes,
+				ownershipConfig,
+			);
 		}
 
 		return true;
 	};
 
-	// Helper to extract user from request/context  
+	// Helper to extract user from request/context
 	const extractUser = (ctx: any): any => {
 		return ctx.user || ctx.context?.user || ctx.request?.user || null;
 	};
@@ -193,16 +199,18 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 			{
 				method: "POST",
 				body: createFlexibleSchema(schema),
-				query: z.object({
-					include: z.string().optional(),
-					select: z.string().optional(),
-				}).optional(),
+				query: z
+					.object({
+						include: z.string().optional(),
+						select: z.string().optional(),
+					})
+					.optional(),
 			},
 			async (ctx) => {
-				console.log('ici');
+				console.log("ici");
 				const { body, context, query } = ctx;
 				const { adapter } = context;
-				
+
 				// Extract user and security context
 				let user = extractUser(ctx);
 				let userScopes = extractUserScopes(user);
@@ -229,7 +237,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						userScopes = middlewareContext.scopes || [];
 					} catch (error) {
 						return ctx.json(
-							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{
+								error: "Middleware execution failed",
+								details: error instanceof Error ? error.message : String(error),
+							},
 							{ status: 500 },
 						);
 					}
@@ -252,7 +263,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
 				} catch (error) {
 					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{
+							error: "Hook execution failed",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -262,13 +276,15 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 				// Rate limiting check
 				if (context.security?.rateLimit) {
-					const rateLimitKey = `${securityContext.ipAddress || 'unknown'}-create-${name}`;
+					const rateLimitKey = `${
+						securityContext.ipAddress || "unknown"
+					}-create-${name}`;
 					const isAllowed = rateLimiter.isAllowed(
 						rateLimitKey,
 						context.security.rateLimit.windowMs,
-						context.security.rateLimit.max
+						context.security.rateLimit.max,
 					);
-					
+
 					if (!isAllowed) {
 						return ctx.json({ error: "Rate limit exceeded" }, { status: 429 });
 					}
@@ -276,8 +292,12 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 				// Enhanced validation and sanitization
 				const sanitizationRules = resourceConfig.sanitization?.global || [];
-				const validation = validateAndSanitizeInput(schema, data, sanitizationRules);
-				
+				const validation = validateAndSanitizeInput(
+					schema,
+					data,
+					sanitizationRules,
+				);
+
 				if (!validation.success) {
 					return ctx.json(
 						{ error: "Validation failed", details: validation.errors },
@@ -302,7 +322,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					scopes: userScopes,
 				};
 
-				const hasPermission = await checkPermission("create", permissionContext, resourceConfig);
+				const hasPermission = await checkPermission(
+					"create",
+					permissionContext,
+					resourceConfig,
+				);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
@@ -331,7 +355,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 					// Log audit event
 					if (context.auditLogger) {
-						await context.auditLogger.logFromContext(hookContext, undefined, result);
+						await context.auditLogger.logFromContext(
+							hookContext,
+							undefined,
+							result,
+						);
 					}
 
 					return ctx.json(result, { status: 201 });
@@ -358,16 +386,18 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				params: z.object({
 					id: z.string(),
 				}),
-				query: z.object({
-					include: z.string().optional(),
-					select: z.string().optional(),
-				}).optional(),
+				query: z
+					.object({
+						include: z.string().optional(),
+						select: z.string().optional(),
+					})
+					.optional(),
 			},
 			async (ctx) => {
 				const { params, context, query } = ctx;
 				const { adapter } = context;
 				const { id } = params;
-				
+
 				// Extract user and security context
 				let user = extractUser(ctx);
 				let userScopes = extractUserScopes(user);
@@ -393,7 +423,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						userScopes = middlewareContext.scopes || [];
 					} catch (error) {
 						return ctx.json(
-							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{
+								error: "Middleware execution failed",
+								details: error instanceof Error ? error.message : String(error),
+							},
 							{ status: 500 },
 						);
 					}
@@ -416,7 +449,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
 				} catch (error) {
 					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{
+							error: "Hook execution failed",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -449,7 +485,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						scopes: userScopes,
 					};
 
-					const hasPermission = await checkPermission("read", permissionContext, resourceConfig);
+					const hasPermission = await checkPermission(
+						"read",
+						permissionContext,
+						resourceConfig,
+					);
 					if (!hasPermission) {
 						return ctx.json({ error: "Forbidden" }, { status: 403 });
 					}
@@ -473,7 +513,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 		);
 	}
 
-	// UPDATE endpoint  
+	// UPDATE endpoint
 	if (enabledEndpoints.update) {
 		queryEndpoints[`update${capitalize(name)}`] = createQueryEndpoint(
 			`/${name}/:id`,
@@ -488,7 +528,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { params, body, context } = ctx;
 				const { adapter } = context;
 				const { id } = params;
-				
+
 				// Extract user and security context
 				let user = extractUser(ctx);
 				let userScopes = extractUserScopes(user);
@@ -526,7 +566,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						userScopes = middlewareContext.scopes || [];
 					} catch (error) {
 						return ctx.json(
-							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{
+								error: "Middleware execution failed",
+								details: error instanceof Error ? error.message : String(error),
+							},
 							{ status: 500 },
 						);
 					}
@@ -551,7 +594,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
 				} catch (error) {
 					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{
+							error: "Hook execution failed",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -562,11 +608,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				// Enhanced validation and sanitization
 				const sanitizationRules = resourceConfig.sanitization?.global || [];
 				const validation = validateAndSanitizeInput(
-					(schema as ZodObject<any>).partial(), 
-					data, 
-					sanitizationRules
+					(schema as ZodObject<any>).partial(),
+					data,
+					sanitizationRules,
 				);
-				
+
 				if (!validation.success) {
 					return ctx.json(
 						{ error: "Validation failed", details: validation.errors },
@@ -593,7 +639,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					scopes: userScopes,
 				};
 
-				const hasPermission = await checkPermission("update", permissionContext, resourceConfig);
+				const hasPermission = await checkPermission(
+					"update",
+					permissionContext,
+					resourceConfig,
+				);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
@@ -614,7 +664,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 					// Log audit event
 					if (context.auditLogger) {
-						await context.auditLogger.logFromContext(hookContext, existing, result);
+						await context.auditLogger.logFromContext(
+							hookContext,
+							existing,
+							result,
+						);
 					}
 
 					return ctx.json(result);
@@ -646,7 +700,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				const { params, context } = ctx;
 				const { adapter } = context;
 				const { id } = params;
-				
+
 				// Extract user and security context
 				let user = extractUser(ctx);
 				let userScopes = extractUserScopes(user);
@@ -683,7 +737,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						userScopes = middlewareContext.scopes || [];
 					} catch (error) {
 						return ctx.json(
-							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{
+								error: "Middleware execution failed",
+								details: error instanceof Error ? error.message : String(error),
+							},
 							{ status: 500 },
 						);
 					}
@@ -707,7 +764,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
 				} catch (error) {
 					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{
+							error: "Hook execution failed",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -723,7 +783,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					scopes: userScopes,
 				};
 
-				const hasPermission = await checkPermission("delete", permissionContext, resourceConfig);
+				const hasPermission = await checkPermission(
+					"delete",
+					permissionContext,
+					resourceConfig,
+				);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
@@ -739,7 +803,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 
 					// Log audit event
 					if (context.auditLogger) {
-						await context.auditLogger.logFromContext(hookContext, existing, undefined);
+						await context.auditLogger.logFromContext(
+							hookContext,
+							existing,
+							undefined,
+						);
 					}
 
 					return ctx.json({ success: true });
@@ -787,7 +855,7 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 			async (ctx) => {
 				const { query, context } = ctx;
 				const { adapter } = context;
-				
+
 				// Extract user and security context
 				let user = extractUser(ctx);
 				let userScopes = extractUserScopes(user);
@@ -812,7 +880,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 						userScopes = middlewareContext.scopes || [];
 					} catch (error) {
 						return ctx.json(
-							{ error: "Middleware execution failed", details: error instanceof Error ? error.message : String(error) },
+							{
+								error: "Middleware execution failed",
+								details: error instanceof Error ? error.message : String(error),
+							},
 							{ status: 500 },
 						);
 					}
@@ -834,7 +905,10 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					await HookExecutor.executeBefore(resourceConfig.hooks, hookContext);
 				} catch (error) {
 					return ctx.json(
-						{ error: "Hook execution failed", details: error instanceof Error ? error.message : String(error) },
+						{
+							error: "Hook execution failed",
+							details: error instanceof Error ? error.message : String(error),
+						},
 						{ status: 500 },
 					);
 				}
@@ -842,13 +916,19 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 				// Build enhanced query parameters with proper typing
 				const enhancedQuery: QueryParams = {
 					...query,
-					include: query.include ? SearchBuilder.parseStringArray(query.include) : undefined,
+					include: query.include
+						? SearchBuilder.parseStringArray(query.include)
+						: undefined,
 					searchFields: SearchBuilder.parseStringArray(query.searchFields),
 					filters: SearchBuilder.parseJSON(query.filters),
 					where: SearchBuilder.parseJSON(query.where),
 					dateRange: SearchBuilder.parseJSON(query.dateRange),
 					// Handle select field appropriately
-					select: query.select ? (typeof query.select === 'string' ? SearchBuilder.parseJSON(query.select) : query.select) : undefined,
+					select: query.select
+						? typeof query.select === "string"
+							? SearchBuilder.parseJSON(query.select)
+							: query.select
+						: undefined,
 				};
 
 				// Check permissions with enhanced context
@@ -860,7 +940,11 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					scopes: userScopes,
 				};
 
-				const hasPermission = await checkPermission("list", permissionContext, resourceConfig);
+				const hasPermission = await checkPermission(
+					"list",
+					permissionContext,
+					resourceConfig,
+				);
 				if (!hasPermission) {
 					return ctx.json({ error: "Forbidden" }, { status: 403 });
 				}
@@ -869,27 +953,32 @@ export function createQueryEndpoints(resourceConfig: QueryResourceConfig) {
 					// Build search conditions
 					const searchConditions = SearchBuilder.buildSearchConditions(
 						enhancedQuery,
-						resourceConfig.search
+						resourceConfig.search,
 					);
 
 					// Build pagination
-					const { page, limit, offset } = SearchBuilder.buildPagination(enhancedQuery);
+					const { page, limit, offset } =
+						SearchBuilder.buildPagination(enhancedQuery);
 
 					// Build ordering
 					const orderBy = SearchBuilder.buildOrderBy(enhancedQuery);
 
 					// Build include options
-					const includeOptions = SearchBuilder.buildIncludeOptions(enhancedQuery);
+					const includeOptions =
+						SearchBuilder.buildIncludeOptions(enhancedQuery);
 
 					// Apply ownership filtering if configured
 					let whereConditions = [...searchConditions];
 					if (resourceConfig.ownership && user) {
 						const ownershipField = resourceConfig.ownership.field;
 						const userId = user.id || user.userId;
-						
+
 						// If strategy is flexible, allow users to see their own data plus admin access
 						if (resourceConfig.ownership.strategy === "flexible") {
-							const isAdmin = hasRequiredScopes(userScopes, ["admin", "super_admin"]);
+							const isAdmin = hasRequiredScopes(userScopes, [
+								"admin",
+								"super_admin",
+							]);
 							if (!isAdmin) {
 								whereConditions.push({
 									field: ownershipField,

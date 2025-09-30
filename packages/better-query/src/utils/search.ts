@@ -1,4 +1,4 @@
-import { QueryParams, IncludeOptions } from "../types";
+import { IncludeOptions, QueryParams } from "../types";
 
 /**
  * Search and filtering utilities
@@ -13,14 +13,16 @@ export class SearchBuilder {
 			fields: string[];
 			strategy: "contains" | "startsWith" | "exact" | "fuzzy";
 			caseSensitive?: boolean;
-		}
+		},
 	): Array<{ field: string; value: any; operator?: string }> {
-		const conditions: Array<{ field: string; value: any; operator?: string }> = [];
+		const conditions: Array<{ field: string; value: any; operator?: string }> =
+			[];
 
 		// Handle basic search
 		if (query.search || query.q) {
 			const searchTerm = query.search || query.q || "";
-			const searchFields = query.searchFields || searchConfig?.fields || ["name"];
+			const searchFields = query.searchFields ||
+				searchConfig?.fields || ["name"];
 			const strategy = searchConfig?.strategy || "contains";
 			const caseSensitive = searchConfig?.caseSensitive || false;
 
@@ -51,7 +53,7 @@ export class SearchBuilder {
 			}
 
 			// Add search conditions for each field
-			searchFields.forEach(field => {
+			searchFields.forEach((field) => {
 				conditions.push({
 					field,
 					value: searchValue,
@@ -74,7 +76,7 @@ export class SearchBuilder {
 		// Handle date range filters
 		if (query.dateRange) {
 			const { field, start, end } = query.dateRange;
-			
+
 			if (start) {
 				conditions.push({
 					field,
@@ -82,7 +84,7 @@ export class SearchBuilder {
 					operator: "gte",
 				});
 			}
-			
+
 			if (end) {
 				conditions.push({
 					field,
@@ -110,16 +112,18 @@ export class SearchBuilder {
 	 * Build order by conditions
 	 */
 	static buildOrderBy(
-		query: QueryParams
+		query: QueryParams,
 	): Array<{ field: string; direction: "asc" | "desc" }> {
 		const orderBy: Array<{ field: string; direction: "asc" | "desc" }> = [];
 
 		// Handle explicit orderBy from query
 		if (query.orderBy) {
-			orderBy.push(...query.orderBy.map(order => ({
-				field: order.field,
-				direction: order.direction,
-			})));
+			orderBy.push(
+				...query.orderBy.map((order) => ({
+					field: order.field,
+					direction: order.direction,
+				})),
+			);
 		}
 
 		// Handle simple sortBy and sortOrder
@@ -164,8 +168,11 @@ export class SearchBuilder {
 
 		if (query.include) {
 			// Handle both string and string array
-			if (typeof query.include === 'string') {
-				options.include = query.include.split(',').map(s => s.trim()).filter(Boolean);
+			if (typeof query.include === "string") {
+				options.include = query.include
+					.split(",")
+					.map((s) => s.trim())
+					.filter(Boolean);
 			} else {
 				options.include = query.include;
 			}
@@ -184,7 +191,10 @@ export class SearchBuilder {
 	static parseStringArray(value: string | string[] | undefined): string[] {
 		if (!value) return [];
 		if (Array.isArray(value)) return value;
-		return value.split(",").map(s => s.trim()).filter(Boolean);
+		return value
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean);
 	}
 
 	/**
@@ -192,7 +202,7 @@ export class SearchBuilder {
 	 */
 	static parseJSON(value: string | undefined, defaultValue: any = {}): any {
 		if (!value) return defaultValue;
-		
+
 		try {
 			return JSON.parse(value);
 		} catch {
@@ -205,7 +215,8 @@ export class SearchBuilder {
  * Filter builder for complex queries
  */
 export class FilterBuilder {
-	private conditions: Array<{ field: string; value: any; operator: string }> = [];
+	private conditions: Array<{ field: string; value: any; operator: string }> =
+		[];
 	private logicalOperator: "AND" | "OR" = "AND";
 
 	/**
@@ -342,9 +353,10 @@ export const SearchUtils = {
 	buildFullTextQuery(
 		terms: string[],
 		fields: string[],
-		operator: "AND" | "OR" = "OR"
+		operator: "AND" | "OR" = "OR",
 	): Array<{ field: string; value: any; operator: string }> {
-		const conditions: Array<{ field: string; value: any; operator: string }> = [];
+		const conditions: Array<{ field: string; value: any; operator: string }> =
+			[];
 
 		for (const term of terms) {
 			for (const field of fields) {

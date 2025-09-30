@@ -1,26 +1,26 @@
-import { changelogs } from "@/lib/source";
-import { notFound } from "next/navigation";
-import { absoluteUrl, formatDate } from "@/lib/utils";
-import DatabaseTable from "@/components/mdx/database-tables";
-import { cn } from "@/lib/utils";
-import { Step, Steps } from "fumadocs-ui/components/steps";
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-import { GenerateSecret } from "@/components/generate-secret";
-import { AnimatePresence } from "@/components/ui/fade-in";
-import { TypeTable } from "fumadocs-ui/components/type-table";
 import { Features } from "@/components/blocks/features";
 import { ForkButton } from "@/components/fork-button";
-import Link from "next/link";
-import defaultMdxComponents from "fumadocs-ui/mdx";
-import { File, Folder, Files } from "fumadocs-ui/components/files";
+import { GenerateSecret } from "@/components/generate-secret";
+import DatabaseTable from "@/components/mdx/database-tables";
+import { Callout } from "@/components/ui/callout";
+import { AnimatePresence } from "@/components/ui/fade-in";
+import { changelogs } from "@/lib/source";
+import { absoluteUrl, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
 import { Pre } from "fumadocs-ui/components/codeblock";
-import ChangelogPage, { Glow } from "../_components/default-changelog";
+import { File, Files, Folder } from "fumadocs-ui/components/files";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { TypeTable } from "fumadocs-ui/components/type-table";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { IconLink } from "../_components/changelog-layout";
+import ChangelogPage, { Glow } from "../_components/default-changelog";
+import { GridPatterns } from "../_components/grid-pattern";
 import { XIcon } from "../_components/icons";
 import { StarField } from "../_components/stat-field";
-import { GridPatterns } from "../_components/grid-pattern";
-import { Callout } from "@/components/ui/callout";
 
 const metaTitle = "Changelogs";
 const metaDescription = "Latest changes , fixes and updates.";
@@ -154,7 +154,11 @@ export async function generateMetadata({
 	}
 	const page = changelogs.getPage(slug);
 	if (page == null) notFound();
-	const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+	const baseUrl =
+		process.env.NEXT_PUBLIC_URL ||
+		process.env.VERCEL_URL ||
+		process.env.NEXT_PUBLIC_APP_URL ||
+		"http://localhost:3000";
 	const url = new URL(`${baseUrl}/release-og/${slug.join("")}.png`);
 	const { title, description } = page.data;
 

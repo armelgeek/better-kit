@@ -1,8 +1,8 @@
 "use client";
-import { ArrowUpRight } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { kFormatter } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 export default function Stats({
 	npmDownloads,
 	githubStars,
