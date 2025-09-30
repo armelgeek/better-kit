@@ -1,0 +1,542 @@
+---
+title: Permissions
+description: Manage access control and permissions in Better Admin
+---
+
+Better Admin integrates seamlessly with Better Query's permission system to provide fine-grained access control for your admin panel.
+
+## Permission Basics
+
+Permissions are defined at the Better Query resource level and automatically enforced in the admin interface:
+
+```typescript
+createResource({
+  name: "product",
+  schema: productSchema,
+  permissions: {
+    create: (ctx) => ctx.user?.role === "admin",
+    read: (ctx) => true,
+    update: (ctx) => ctx.user?.role === "admin",
+    delete: (ctx) => ctx.user?.role === "admin",
+    list: (ctx) => true,
+  },
+})
+```
+
+## Permission Context
+
+The permission functions receive a context object with:
+
+```typescript
+{
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    // ... other user fields
+  },
+  session: {
+    // session data
+  },
+  headers: Headers,
+  request: Request,
+}
+```
+
+## Role-Based Permissions
+
+### Simple Role Check
+
+```typescript
+permissions: {
+  create: (ctx) => ctx.user?.role === "admin",
+  read: (ctx) => true,
+  update: (ctx) => ctx.user?.role === "admin" || ctx.user?.role === "editor",
+  delete: (ctx) => ctx.user?.role === "admin",
+  list: (ctx) => true,
+}
+```
+
+### Multiple Roles
+
+```typescript
+const ADMIN_ROLES = ["admin", "super_admin"];
+const EDITOR_ROLES = ["admin", "super_admin", "editor"];
+
+permissions: {
+  create: (ctx) => ADMIN_ROLES.includes(ctx.user?.role),
+  read: (ctx) => true,
+  update: (ctx) => EDITOR_ROLES.includes(ctx.user?.role),
+  delete: (ctx) => ADMIN_ROLES.includes(ctx.user?.role),
+  list: (ctx) => true,
+}
+```
+
+## Resource-Level Permissions
+
+Control access to entire resources:
+
+```typescript
+createAdminResource({
+  name: "product",
+  permissions: {
+    // Only admins can access this resource
+    access: (ctx) => ctx.user?.role === "admin",
+  },
+})
+```
+
+## Operation-Level Permissions
+
+Control specific operations:
+
+```typescript
+createAdminResource({
+  name: "product",
+  permissions: {
+    list: (ctx) => true, // Everyone can list
+    create: (ctx) => ctx.user?.role === "admin",
+    read: (ctx) => true, // Everyone can view
+    update: (ctx) => {
+      // Admins and owners can update
+      return ctx.user?.role === "admin" || 
+             ctx.user?.id === ctx.record?.ownerId;
+    },
+    delete: (ctx) => ctx.user?.role === "admin",
+  },
+})
+```
+
+## Field-Level Permissions
+
+Control access to specific fields:
+
+```typescript
+fieldMetadata: {
+  price: {
+    label: "Price",
+    inputType: "number",
+    // Only admins can edit price
+    readOnly: (ctx) => ctx.user?.role !== "admin",
+  },
+  internalNotes: {
+    label: "Internal Notes",
+    inputType: "textarea",
+    // Only admins can see this field
+    visible: (ctx) => ctx.user?.role === "admin",
+  },
+  cost: {
+    label: "Cost",
+    inputType: "number",
+    // Hide from non-admins in list view
+    listVisible: (ctx) => ctx.user?.role === "admin",
+  },
+}
+```
+
+## Organization-Based Permissions
+
+Control access based on organization membership:
+
+```typescript
+permissions: {
+  list: (ctx) => ctx.user?.organizationId !== undefined,
+  create: (ctx) => ctx.user?.organizationRole === "admin",
+  read: (ctx) => {
+    // Users can only read resources from their organization
+    return ctx.record?.organizationId === ctx.user?.organizationId;
+  },
+  update: (ctx) => {
+    return ctx.record?.organizationId === ctx.user?.organizationId &&
+           (ctx.user?.organizationRole === "admin" || 
+            ctx.user?.organizationRole === "editor");
+  },
+  delete: (ctx) => {
+    return ctx.record?.organizationId === ctx.user?.organizationId &&
+           ctx.user?.organizationRole === "admin";
+  },
+}
+```
+
+## Owner-Based Permissions
+
+Control access based on resource ownership:
+
+```typescript
+permissions: {
+  read: (ctx) => true,
+  update: (ctx) => {
+    // Admins or owners can update
+    return ctx.user?.role === "admin" || 
+           ctx.user?.id === ctx.record?.ownerId;
+  },
+  delete: (ctx) => {
+    // Admins or owners can delete
+    return ctx.user?.role === "admin" || 
+           ctx.user?.id === ctx.record?.ownerId;
+  },
+}
+```
+
+## Status-Based Permissions
+
+Control access based on resource status:
+
+```typescript
+permissions: {
+  update: (ctx) => {
+    // Can't update published items unless admin
+    if (ctx.record?.status === "published") {
+      return ctx.user?.role === "admin";
+    }
+    return true;
+  },
+  delete: (ctx) => {
+    // Can't delete published items
+    return ctx.record?.status !== "published";
+  },
+}
+```
+
+## Time-Based Permissions
+
+Control access based on time:
+
+```typescript
+permissions: {
+  update: (ctx) => {
+    const createdAt = new Date(ctx.record?.createdAt);
+    const hoursSinceCreation = 
+      (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+    
+    // Can only edit within 24 hours of creation unless admin
+    if (hoursSinceCreation > 24) {
+      return ctx.user?.role === "admin";
+    }
+    return true;
+  },
+}
+```
+
+## Custom Permission Logic
+
+Implement complex permission logic:
+
+```typescript
+async function canManageProduct(ctx: Context, productId: string) {
+  // Check if user is admin
+  if (ctx.user?.role === "admin") {
+    return true;
+  }
+  
+  // Check if user is in the product's team
+  const product = await db.query.products.findFirst({
+    where: eq(products.id, productId),
+  });
+  
+  if (!product) {
+    return false;
+  }
+  
+  const teamMember = await db.query.teamMembers.findFirst({
+    where: and(
+      eq(teamMembers.teamId, product.teamId),
+      eq(teamMembers.userId, ctx.user?.id)
+    ),
+  });
+  
+  return teamMember !== undefined;
+}
+
+permissions: {
+  update: async (ctx) => {
+    return await canManageProduct(ctx, ctx.record?.id);
+  },
+  delete: async (ctx) => {
+    return await canManageProduct(ctx, ctx.record?.id);
+  },
+}
+```
+
+## Frontend Permission Checks
+
+### Using useAdminPermissions Hook
+
+```typescript
+import { useAdminPermissions } from "better-admin/react";
+
+function ProductActions({ product }) {
+  const { canUpdate, canDelete } = useAdminPermissions("product", product.id);
+
+  return (
+    <div>
+      {canUpdate && (
+        <button onClick={() => handleEdit(product)}>Edit</button>
+      )}
+      {canDelete && (
+        <button onClick={() => handleDelete(product)}>Delete</button>
+      )}
+    </div>
+  );
+}
+```
+
+### Conditional Rendering
+
+```typescript
+import { useAdminPermissions } from "better-admin/react";
+
+function AdminPanel() {
+  const { canCreate, canList } = useAdminPermissions("product");
+
+  if (!canList) {
+    return <div>Access denied</div>;
+  }
+
+  return (
+    <div>
+      <h1>Products</h1>
+      {canCreate && (
+        <button>Create Product</button>
+      )}
+      <ProductList />
+    </div>
+  );
+}
+```
+
+## Permission Helpers
+
+Create reusable permission helpers:
+
+```typescript
+// lib/permissions.ts
+export const isAdmin = (ctx: Context) => {
+  return ctx.user?.role === "admin";
+};
+
+export const isOwner = (ctx: Context, ownerId: string) => {
+  return ctx.user?.id === ownerId;
+};
+
+export const isInOrganization = (ctx: Context, orgId: string) => {
+  return ctx.user?.organizationId === orgId;
+};
+
+export const hasRole = (ctx: Context, ...roles: string[]) => {
+  return roles.includes(ctx.user?.role);
+};
+
+// Usage
+permissions: {
+  update: (ctx) => {
+    return isAdmin(ctx) || isOwner(ctx, ctx.record?.ownerId);
+  },
+  delete: (ctx) => {
+    return isAdmin(ctx);
+  },
+}
+```
+
+## Permission Testing
+
+Test your permissions:
+
+```typescript
+// test/permissions.test.ts
+import { describe, it, expect } from "vitest";
+import { query } from "../lib/query";
+
+describe("Product Permissions", () => {
+  it("allows admins to create products", async () => {
+    const ctx = {
+      user: { id: "1", role: "admin" },
+      session: {},
+    };
+    
+    const resource = query.resources.find(r => r.name === "product");
+    const canCreate = await resource.permissions.create(ctx);
+    
+    expect(canCreate).toBe(true);
+  });
+  
+  it("prevents non-admins from deleting products", async () => {
+    const ctx = {
+      user: { id: "1", role: "user" },
+      session: {},
+    };
+    
+    const resource = query.resources.find(r => r.name === "product");
+    const canDelete = await resource.permissions.delete(ctx);
+    
+    expect(canDelete).toBe(false);
+  });
+});
+```
+
+## Error Handling
+
+Handle permission errors gracefully:
+
+```typescript
+import { useAdminUpdate } from "better-admin/react";
+
+function EditProduct({ id }) {
+  const { update, error } = useAdminUpdate(adminClient, "product");
+
+  const handleSubmit = async (data) => {
+    try {
+      await update(id, data);
+    } catch (err) {
+      if (err.code === "PERMISSION_DENIED") {
+        alert("You don't have permission to update this product");
+      } else {
+        alert("An error occurred");
+      }
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* form fields */}
+    </form>
+  );
+}
+```
+
+## Best Practices
+
+### 1. Default Deny
+
+Always default to denying access:
+
+```typescript
+permissions: {
+  create: (ctx) => ctx.user?.role === "admin",
+  read: (ctx) => ctx.user !== undefined, // Require authentication
+  update: (ctx) => ctx.user?.role === "admin",
+  delete: (ctx) => ctx.user?.role === "admin",
+  list: (ctx) => ctx.user !== undefined,
+}
+```
+
+### 2. Consistent Checks
+
+Use consistent permission checks across operations:
+
+```typescript
+const canManage = (ctx: Context) => {
+  return ctx.user?.role === "admin" || 
+         ctx.user?.id === ctx.record?.ownerId;
+};
+
+permissions: {
+  read: (ctx) => true,
+  update: canManage,
+  delete: canManage,
+}
+```
+
+### 3. Clear Error Messages
+
+Provide clear error messages:
+
+```typescript
+permissions: {
+  delete: (ctx) => {
+    if (!ctx.user) {
+      throw new Error("Authentication required");
+    }
+    if (ctx.user.role !== "admin") {
+      throw new Error("Only admins can delete products");
+    }
+    if (ctx.record?.status === "published") {
+      throw new Error("Cannot delete published products");
+    }
+    return true;
+  },
+}
+```
+
+### 4. Audit Logging
+
+Log permission checks for security:
+
+```typescript
+permissions: {
+  delete: async (ctx) => {
+    const canDelete = ctx.user?.role === "admin";
+    
+    await db.insert(auditLog).values({
+      userId: ctx.user?.id,
+      action: "delete",
+      resource: "product",
+      resourceId: ctx.record?.id,
+      allowed: canDelete,
+      timestamp: new Date(),
+    });
+    
+    return canDelete;
+  },
+}
+```
+
+## Examples
+
+### Multi-Tenant System
+
+```typescript
+permissions: {
+  list: (ctx) => {
+    // Filter by tenant
+    return {
+      where: {
+        tenantId: ctx.user?.tenantId,
+      },
+    };
+  },
+  create: (ctx) => {
+    return ctx.user?.tenantRole === "admin";
+  },
+  update: (ctx) => {
+    return ctx.record?.tenantId === ctx.user?.tenantId &&
+           ctx.user?.tenantRole !== "viewer";
+  },
+  delete: (ctx) => {
+    return ctx.record?.tenantId === ctx.user?.tenantId &&
+           ctx.user?.tenantRole === "admin";
+  },
+}
+```
+
+### Content Management
+
+```typescript
+permissions: {
+  read: (ctx) => {
+    // Public content visible to all
+    if (ctx.record?.visibility === "public") {
+      return true;
+    }
+    // Draft content only visible to author and admins
+    return ctx.user?.role === "admin" || 
+           ctx.user?.id === ctx.record?.authorId;
+  },
+  update: (ctx) => {
+    // Authors can update their own content
+    // Editors and admins can update any content
+    return ctx.user?.role === "admin" ||
+           ctx.user?.role === "editor" ||
+           ctx.user?.id === ctx.record?.authorId;
+  },
+  publish: (ctx) => {
+    // Only editors and admins can publish
+    return ctx.user?.role === "admin" || ctx.user?.role === "editor";
+  },
+}
+```
+
+## Next Steps
+
+- [Examples](/docs/admin/examples) - See complete examples
+- [Security](/docs/reference/security) - Learn about security best practices

@@ -1,0 +1,84 @@
+---
+title: Introduction
+description: Introduction to Better Admin - Full-stack admin kit built on Better Query
+---
+
+Better Admin is a comprehensive admin panel solution that combines the power of Better Query's backend with an auto-generated admin UI. It provides a complete CRUD interface for your resources with minimal configuration.
+
+## What is Better Admin?
+
+Better Admin is a **headless admin framework** that automatically generates a full-featured admin panel from your Better Query resources. Unlike traditional admin frameworks that lock you into specific UI libraries, Better Admin is framework-agnostic and works with any UI library or framework.
+
+## Key Features
+
+Better Admin provides everything you need to build production-ready admin panels:
+
+- 🚀 **Auto-Generated Admin UI**: Define your resources once with Better Query, get a full admin interface automatically
+- 🔐 **Better Auth Integration**: Seamless integration with Better Auth for authentication and permissions
+- ✅ **Type-Safe**: Full TypeScript support with automatic type inference from Better Query
+- 🎨 **Headless UI**: Framework-agnostic components that work with any UI library (React, Vue, Svelte, etc.)
+- 🔧 **Fully Customizable**: Override any component or behavior for specific resources
+- 📊 **Rich Features**: Pagination, sorting, filtering, search, bulk operations out of the box
+- 🎯 **Permission-Aware**: Respects Better Query permissions for all operations
+- 🌐 **Framework Agnostic**: Works with Next.js, Remix, React, Vue, and more
+
+## How It Works
+
+Better Admin builds on top of Better Query's resource definitions:
+
+1. **Define Resources**: Create resources using Better Query with schemas and permissions
+2. **Configure Admin**: Add UI metadata to resources (labels, icons, field configurations)
+3. **Use Client**: Connect frontend with the admin client and hooks
+4. **Customize**: Override default behaviors and UI components as needed
+
+```typescript
+// 1. Define resource with Better Query
+const product = createResource({
+  name: "product",
+  schema: productSchema,
+  permissions: { /* ... */ }
+});
+
+// 2. Add admin configuration
+const productAdmin = createAdminResource({
+  name: "product",
+  label: "Product",
+  icon: "📦",
+  list: { fields: ["name", "price", "status"] }
+});
+
+// 3. Use in your UI
+const { data, loading } = useAdminList(adminClient, "product");
+```
+
+## Comparison with Alternatives
+
+| Feature | Better Admin | shadcn-admin-kit | React Admin |
+|---------|--------------|------------------|-------------|
+| Type Safety | ✅ Full | ⚠️ Partial | ⚠️ Partial |
+| Backend | Better Query | ra-core | REST/GraphQL |
+| UI Library | Headless | shadcn/ui | Material-UI |
+| Bundle Size | Small | Medium | Large |
+| Learning Curve | Low | Medium | High |
+| Customization | Complete | High | Medium |
+| Framework Support | Any | React | React |
+
+## Inspiration
+
+Better Admin combines the best aspects of existing solutions:
+
+- **shadcn-admin-kit** (Marmelab) - UI structure and admin patterns
+- **Better Query** (armelgeek) - Type-safe CRUD generation and backend
+- **React Admin** - Comprehensive admin features
+
+Unlike shadcn-admin-kit which uses ra-core, Better Admin is built on Better Query for a lighter, more flexible solution with full type safety.
+
+## Next Steps
+
+Ready to get started? Follow these guides:
+
+- [Installation](/docs/admin/installation) - Install Better Admin and set up your first admin panel
+- [Configuration](/docs/admin/configuration) - Configure resources and admin settings
+- [Resources](/docs/admin/resources) - Learn about admin resources and their features
+- [Client](/docs/admin/client) - Set up the frontend client
+- [Hooks](/docs/admin/hooks) - Use React hooks for admin operations

@@ -1,0 +1,568 @@
+---
+title: Hooks
+description: React hooks for Better Admin operations
+---
+
+Better Admin provides a comprehensive set of React hooks for building admin interfaces. These hooks handle loading states, errors, caching, and provide a clean API for admin operations.
+
+## useAdminList
+
+Fetch and display a paginated list of resources:
+
+```typescript
+import { useAdminList } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+function ProductsList() {
+  const {
+    data,
+    loading,
+    error,
+    page,
+    pageSize,
+    totalPages,
+    setPage,
+    setPageSize,
+    setSearch,
+    setFilters,
+    setSort,
+    refresh,
+  } = useAdminList(adminClient, "product");
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {data?.items.map((product) => (
+        <div key={product.id}>{product.name}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Options
+
+```typescript
+useAdminList(adminClient, "product", {
+  pageSize: 20,
+  initialPage: 1,
+  initialSort: "name",
+  initialOrder: "asc",
+  initialFilters: { status: "active" },
+  initialSearch: "",
+  autoRefresh: false,
+  refreshInterval: 30000, // 30 seconds
+});
+```
+
+### Return Values
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `data` | `{ items, total, page, pageSize, totalPages }` | List data |
+| `loading` | `boolean` | Loading state |
+| `error` | `Error \| null` | Error if any |
+| `page` | `number` | Current page |
+| `pageSize` | `number` | Items per page |
+| `totalPages` | `number` | Total number of pages |
+| `setPage` | `(page: number) => void` | Set current page |
+| `setPageSize` | `(size: number) => void` | Set page size |
+| `setSearch` | `(search: string) => void` | Set search query |
+| `setFilters` | `(filters: object) => void` | Set filters |
+| `setSort` | `(field: string, order: "asc" \| "desc") => void` | Set sorting |
+| `refresh` | `() => Promise<void>` | Refresh data |
+
+## useAdminGet
+
+Fetch a single resource by ID:
+
+```typescript
+import { useAdminGet } from "better-admin/react";
+
+function ProductDetail({ id }) {
+  const { data, loading, error, refresh } = useAdminGet(
+    adminClient,
+    "product",
+    id
+  );
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      <h1>{data.name}</h1>
+      <p>{data.description}</p>
+      <p>Price: ${data.price}</p>
+    </div>
+  );
+}
+```
+
+### Options
+
+```typescript
+useAdminGet(adminClient, "product", id, {
+  enabled: true, // Whether to fetch immediately
+  refetchOnMount: true,
+  refetchOnWindowFocus: false,
+});
+```
+
+## useAdminCreate
+
+Create a new resource:
+
+```typescript
+import { useAdminCreate } from "better-admin/react";
+
+function CreateProduct() {
+  const { create, loading, error } = useAdminCreate(adminClient, "product");
+
+  const handleSubmit = async (formData) => {
+    try {
+      const newProduct = await create(formData);
+      console.log("Created:", newProduct);
+    } catch (err) {
+      console.error("Failed to create:", err);
+    }
+  };
+
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit({
+        name: e.target.name.value,
+        price: parseFloat(e.target.price.value),
+      });
+    }}>
+      <input name="name" required />
+      <input name="price" type="number" required />
+      <button type="submit" disabled={loading}>
+        {loading ? "Creating..." : "Create"}
+      </button>
+      {error && <div>Error: {error.message}</div>}
+    </form>
+  );
+}
+```
+
+### Options
+
+```typescript
+useAdminCreate(adminClient, "product", {
+  onSuccess: (data) => {
+    console.log("Created successfully:", data);
+  },
+  onError: (error) => {
+    console.error("Creation failed:", error);
+  },
+});
+```
+
+## useAdminUpdate
+
+Update an existing resource:
+
+```typescript
+import { useAdminUpdate } from "better-admin/react";
+
+function EditProduct({ id }) {
+  const { data } = useAdminGet(adminClient, "product", id);
+  const { update, loading, error } = useAdminUpdate(adminClient, "product");
+
+  const handleSubmit = async (formData) => {
+    await update(id, formData);
+  };
+
+  if (!data) return <div>Loading...</div>;
+
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit({
+        name: e.target.name.value,
+        price: parseFloat(e.target.price.value),
+      });
+    }}>
+      <input name="name" defaultValue={data.name} />
+      <input name="price" type="number" defaultValue={data.price} />
+      <button type="submit" disabled={loading}>
+        {loading ? "Saving..." : "Save"}
+      </button>
+    </form>
+  );
+}
+```
+
+## useAdminDelete
+
+Delete a resource:
+
+```typescript
+import { useAdminDelete } from "better-admin/react";
+
+function ProductActions({ id }) {
+  const { deleteResource, loading, error } = useAdminDelete(
+    adminClient,
+    "product"
+  );
+
+  const handleDelete = async () => {
+    if (confirm("Are you sure?")) {
+      await deleteResource(id);
+    }
+  };
+
+  return (
+    <button onClick={handleDelete} disabled={loading}>
+      {loading ? "Deleting..." : "Delete"}
+    </button>
+  );
+}
+```
+
+## useAdminBulkDelete
+
+Delete multiple resources:
+
+```typescript
+import { useAdminBulkDelete } from "better-admin/react";
+
+function BulkActions({ selectedIds }) {
+  const { bulkDelete, loading } = useAdminBulkDelete(adminClient, "product");
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Delete ${selectedIds.length} items?`)) {
+      await bulkDelete(selectedIds);
+    }
+  };
+
+  return (
+    <button onClick={handleBulkDelete} disabled={loading || selectedIds.length === 0}>
+      Delete Selected ({selectedIds.length})
+    </button>
+  );
+}
+```
+
+## useAdminForm
+
+Comprehensive form hook with validation:
+
+```typescript
+import { useAdminForm } from "better-admin/react";
+
+function ProductForm({ id, mode }) {
+  const {
+    values,
+    errors,
+    touched,
+    loading,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    setFieldValue,
+    resetForm,
+  } = useAdminForm(adminClient, "product", {
+    mode, // "create" | "edit"
+    id,
+    initialValues: mode === "create" ? {} : undefined,
+    onSuccess: (data) => {
+      console.log("Form submitted:", data);
+    },
+  });
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        name="name"
+        value={values.name || ""}
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+      {errors.name && touched.name && (
+        <div className="error">{errors.name}</div>
+      )}
+
+      <input
+        name="price"
+        type="number"
+        value={values.price || ""}
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+      {errors.price && touched.price && (
+        <div className="error">{errors.price}</div>
+      )}
+
+      <button type="submit" disabled={loading}>
+        {loading ? "Saving..." : "Save"}
+      </button>
+    </form>
+  );
+}
+```
+
+## useAdminResource
+
+Access admin resource configuration:
+
+```typescript
+import { useAdminResource } from "better-admin/react";
+
+function ResourceInfo({ resourceName }) {
+  const resource = useAdminResource(resourceName);
+
+  return (
+    <div>
+      <h1>{resource.icon} {resource.labelPlural}</h1>
+      <p>{resource.description}</p>
+    </div>
+  );
+}
+```
+
+## useAdminPermissions
+
+Check user permissions:
+
+```typescript
+import { useAdminPermissions } from "better-admin/react";
+
+function ProductActions({ product }) {
+  const { canUpdate, canDelete } = useAdminPermissions("product");
+
+  return (
+    <div>
+      {canUpdate && <button>Edit</button>}
+      {canDelete && <button>Delete</button>}
+    </div>
+  );
+}
+```
+
+## Complete Example
+
+Here's a complete example using multiple hooks:
+
+```typescript
+import {
+  useAdminList,
+  useAdminDelete,
+  useAdminBulkDelete,
+} from "better-admin/react";
+import { useState } from "react";
+import { adminClient } from "@/lib/admin-client";
+
+function ProductsPage() {
+  const [selectedIds, setSelectedIds] = useState([]);
+  
+  const {
+    data,
+    loading,
+    error,
+    page,
+    totalPages,
+    setPage,
+    setSearch,
+    refresh,
+  } = useAdminList(adminClient, "product");
+  
+  const { deleteResource, loading: deleting } = useAdminDelete(
+    adminClient,
+    "product",
+    {
+      onSuccess: () => refresh(),
+    }
+  );
+  
+  const { bulkDelete, loading: bulkDeleting } = useAdminBulkDelete(
+    adminClient,
+    "product",
+    {
+      onSuccess: () => {
+        setSelectedIds([]);
+        refresh();
+      },
+    }
+  );
+
+  const handleDelete = async (id) => {
+    if (confirm("Delete this product?")) {
+      await deleteResource(id);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Delete ${selectedIds.length} products?`)) {
+      await bulkDelete(selectedIds);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      <h1>Products</h1>
+      
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search products..."
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <button
+          onClick={handleBulkDelete}
+          disabled={bulkDeleting}
+        >
+          Delete Selected ({selectedIds.length})
+        </button>
+      )}
+
+      {/* List */}
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                checked={selectedIds.length === data.items.length}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedIds(data.items.map(p => p.id));
+                  } else {
+                    setSelectedIds([]);
+                  }
+                }}
+              />
+            </th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data?.items.map((product) => (
+            <tr key={product.id}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(product.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds([...selectedIds, product.id]);
+                    } else {
+                      setSelectedIds(selectedIds.filter(id => id !== product.id));
+                    }
+                  }}
+                />
+              </td>
+              <td>{product.name}</td>
+              <td>${product.price}</td>
+              <td>{product.status}</td>
+              <td>
+                <button onClick={() => handleDelete(product.id)}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Pagination */}
+      <div>
+        <button
+          onClick={() => setPage(page - 1)}
+          disabled={page === 1}
+        >
+          Previous
+        </button>
+        <span>Page {page} of {totalPages}</span>
+        <button
+          onClick={() => setPage(page + 1)}
+          disabled={page === totalPages}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+## Hook Best Practices
+
+### 1. Error Handling
+
+Always handle errors appropriately:
+
+```typescript
+const { data, error } = useAdminList(adminClient, "product");
+
+if (error) {
+  // Show user-friendly error message
+  return <ErrorComponent message={error.message} />;
+}
+```
+
+### 2. Loading States
+
+Show loading indicators:
+
+```typescript
+const { data, loading } = useAdminList(adminClient, "product");
+
+if (loading) {
+  return <LoadingSpinner />;
+}
+```
+
+### 3. Refresh After Mutations
+
+Refresh lists after create/update/delete:
+
+```typescript
+const { refresh } = useAdminList(adminClient, "product");
+const { create } = useAdminCreate(adminClient, "product", {
+  onSuccess: () => refresh(),
+});
+```
+
+### 4. Optimistic Updates
+
+Update UI immediately for better UX:
+
+```typescript
+const { data, setData } = useAdminList(adminClient, "product");
+const { deleteResource } = useAdminDelete(adminClient, "product");
+
+const handleDelete = async (id) => {
+  // Optimistic update
+  setData({
+    ...data,
+    items: data.items.filter(p => p.id !== id),
+  });
+  
+  try {
+    await deleteResource(id);
+  } catch (error) {
+    // Revert on error
+    refresh();
+  }
+};
+```
+
+## Next Steps
+
+- [Customization](/docs/admin/customization) - Customize components and behavior
+- [Permissions](/docs/admin/permissions) - Manage access control
+- [Examples](/docs/admin/examples) - See complete examples

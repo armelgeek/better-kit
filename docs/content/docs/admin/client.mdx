@@ -1,0 +1,438 @@
+---
+title: Client
+description: Set up and use the Better Admin client for frontend operations
+---
+
+The Better Admin client provides a type-safe interface for performing admin operations from your frontend. It wraps the Better Query client with admin-specific functionality.
+
+## Creating the Client
+
+First, create a Better Query client, then wrap it with the admin client:
+
+```typescript
+// lib/admin-client.ts
+"use client";
+import { createQueryClient } from "better-query/client";
+import { createAdminClient } from "better-admin/client";
+
+// Create Better Query client
+const queryClient = createQueryClient({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/query",
+  fetch: fetch, // optional: custom fetch implementation
+});
+
+// Create Admin client
+export const adminClient = createAdminClient(queryClient);
+```
+
+## Client Configuration
+
+The admin client accepts optional configuration:
+
+```typescript
+export const adminClient = createAdminClient(queryClient, {
+  // Default page size for list operations
+  defaultPageSize: 20,
+  
+  // Default sort order
+  defaultSortOrder: "asc",
+  
+  // Error handler
+  onError: (error) => {
+    console.error("Admin operation failed:", error);
+  },
+  
+  // Success handler
+  onSuccess: (operation, data) => {
+    console.log(`${operation} succeeded:`, data);
+  },
+});
+```
+
+## Client Methods
+
+The admin client provides methods for all CRUD operations:
+
+### List Resources
+
+Fetch a paginated list of resources:
+
+```typescript
+const result = await adminClient.list("product", {
+  page: 1,
+  pageSize: 20,
+  sort: "name",
+  order: "asc",
+  search: "laptop",
+  filters: {
+    status: "active",
+    category: "electronics",
+  },
+});
+
+// result.items - Array of resources
+// result.total - Total count
+// result.page - Current page
+// result.pageSize - Items per page
+// result.totalPages - Total number of pages
+```
+
+### Get Single Resource
+
+Fetch a single resource by ID:
+
+```typescript
+const product = await adminClient.get("product", "123");
+```
+
+### Create Resource
+
+Create a new resource:
+
+```typescript
+const newProduct = await adminClient.create("product", {
+  name: "Laptop",
+  price: 999.99,
+  status: "draft",
+});
+```
+
+### Update Resource
+
+Update an existing resource:
+
+```typescript
+const updatedProduct = await adminClient.update("product", "123", {
+  price: 899.99,
+  status: "active",
+});
+```
+
+### Delete Resource
+
+Delete a resource:
+
+```typescript
+await adminClient.delete("product", "123");
+```
+
+### Bulk Delete
+
+Delete multiple resources:
+
+```typescript
+await adminClient.bulkDelete("product", ["123", "456", "789"]);
+```
+
+### Custom Actions
+
+Execute custom actions defined in your admin resources:
+
+```typescript
+await adminClient.customAction("product", "publish", {
+  id: "123",
+});
+```
+
+## Error Handling
+
+The client throws typed errors that you can catch and handle:
+
+```typescript
+try {
+  const product = await adminClient.get("product", "123");
+} catch (error) {
+  if (error.code === "NOT_FOUND") {
+    console.error("Product not found");
+  } else if (error.code === "PERMISSION_DENIED") {
+    console.error("You don't have permission");
+  } else {
+    console.error("Unknown error:", error);
+  }
+}
+```
+
+## Type Safety
+
+The admin client is fully typed based on your Better Query resources:
+
+```typescript
+// TypeScript knows about your resources
+const product = await adminClient.get("product", "123");
+// product.name - string
+// product.price - number
+// product.status - "draft" | "active" | "inactive"
+
+// TypeScript will error on invalid resource names
+const invalid = await adminClient.get("invalid", "123"); // Error!
+
+// TypeScript will error on invalid fields
+await adminClient.create("product", {
+  name: "Laptop",
+  invalidField: "value", // Error!
+});
+```
+
+## Framework Integration
+
+### Next.js
+
+```typescript
+// lib/admin-client.ts
+"use client";
+import { createQueryClient } from "better-query/client";
+import { createAdminClient } from "better-admin/client";
+
+const queryClient = createQueryClient({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api/query",
+});
+
+export const adminClient = createAdminClient(queryClient);
+```
+
+### React
+
+```typescript
+// src/lib/admin-client.ts
+import { createQueryClient } from "better-query/client";
+import { createAdminClient } from "better-admin/client";
+
+const queryClient = createQueryClient({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/query",
+});
+
+export const adminClient = createAdminClient(queryClient);
+```
+
+### Vue
+
+```typescript
+// src/lib/admin-client.ts
+import { createQueryClient } from "better-query/client";
+import { createAdminClient } from "better-admin/client";
+
+const queryClient = createQueryClient({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/query",
+});
+
+export const adminClient = createAdminClient(queryClient);
+```
+
+## Authentication
+
+If you're using Better Auth, the client will automatically include authentication headers:
+
+```typescript
+import { createQueryClient } from "better-query/client";
+import { createAdminClient } from "better-admin/client";
+import { authClient } from "./auth-client";
+
+const queryClient = createQueryClient({
+  baseURL: "/api/query",
+  // Automatically include auth headers
+  plugins: [
+    {
+      name: "auth",
+      async onRequest(request) {
+        const session = await authClient.getSession();
+        if (session?.token) {
+          request.headers.set("Authorization", `Bearer ${session.token}`);
+        }
+        return request;
+      },
+    },
+  ],
+});
+
+export const adminClient = createAdminClient(queryClient);
+```
+
+## Request Interceptors
+
+Add custom logic before requests:
+
+```typescript
+const queryClient = createQueryClient({
+  baseURL: "/api/query",
+  plugins: [
+    {
+      name: "logger",
+      async onRequest(request) {
+        console.log("Request:", request.url);
+        return request;
+      },
+    },
+    {
+      name: "csrf",
+      async onRequest(request) {
+        const token = getCsrfToken();
+        request.headers.set("X-CSRF-Token", token);
+        return request;
+      },
+    },
+  ],
+});
+```
+
+## Response Interceptors
+
+Add custom logic after responses:
+
+```typescript
+const queryClient = createQueryClient({
+  baseURL: "/api/query",
+  plugins: [
+    {
+      name: "logger",
+      async onResponse(response) {
+        console.log("Response:", response.status);
+        return response;
+      },
+    },
+    {
+      name: "errorHandler",
+      async onError(error) {
+        if (error.status === 401) {
+          // Redirect to login
+          window.location.href = "/login";
+        }
+        throw error;
+      },
+    },
+  ],
+});
+```
+
+## Advanced Usage
+
+### Optimistic Updates
+
+Update UI immediately, rollback on error:
+
+```typescript
+// Keep track of current data
+const [products, setProducts] = useState([]);
+
+// Optimistic update
+const handleUpdate = async (id, updates) => {
+  // Save current state
+  const previous = [...products];
+  
+  // Update UI immediately
+  setProducts(products.map(p => 
+    p.id === id ? { ...p, ...updates } : p
+  ));
+  
+  try {
+    // Send update to server
+    await adminClient.update("product", id, updates);
+  } catch (error) {
+    // Rollback on error
+    setProducts(previous);
+    console.error("Update failed:", error);
+  }
+};
+```
+
+### Caching
+
+Implement client-side caching:
+
+```typescript
+class CachedAdminClient {
+  private cache = new Map();
+  
+  async get(resource, id) {
+    const key = `${resource}:${id}`;
+    
+    if (this.cache.has(key)) {
+      return this.cache.get(key);
+    }
+    
+    const data = await adminClient.get(resource, id);
+    this.cache.set(key, data);
+    return data;
+  }
+  
+  clearCache() {
+    this.cache.clear();
+  }
+}
+
+export const cachedAdminClient = new CachedAdminClient();
+```
+
+### Batch Operations
+
+Batch multiple operations:
+
+```typescript
+const results = await Promise.all([
+  adminClient.get("product", "123"),
+  adminClient.get("product", "456"),
+  adminClient.get("product", "789"),
+]);
+```
+
+## Examples
+
+### Complete CRUD Example
+
+```typescript
+// List products
+const { items, total } = await adminClient.list("product", {
+  page: 1,
+  pageSize: 20,
+  sort: "name",
+});
+
+// Get single product
+const product = await adminClient.get("product", items[0].id);
+
+// Create product
+const newProduct = await adminClient.create("product", {
+  name: "New Product",
+  price: 99.99,
+  status: "draft",
+});
+
+// Update product
+await adminClient.update("product", newProduct.id, {
+  status: "active",
+});
+
+// Delete product
+await adminClient.delete("product", newProduct.id);
+```
+
+### Search and Filter
+
+```typescript
+// Search by name
+const searchResults = await adminClient.list("product", {
+  search: "laptop",
+  searchFields: ["name", "description"],
+});
+
+// Filter by status
+const activeProducts = await adminClient.list("product", {
+  filters: {
+    status: "active",
+  },
+});
+
+// Combined search and filter
+const results = await adminClient.list("product", {
+  search: "gaming",
+  filters: {
+    status: "active",
+    category: "electronics",
+  },
+});
+```
+
+## Next Steps
+
+- [Hooks](/docs/admin/hooks) - Use React hooks for easier integration
+- [Customization](/docs/admin/customization) - Customize client behavior
+- [Permissions](/docs/admin/permissions) - Manage access control

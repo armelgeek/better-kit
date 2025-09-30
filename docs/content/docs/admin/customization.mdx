@@ -1,0 +1,618 @@
+---
+title: Customization
+description: Customize Better Admin components, themes, and behavior
+---
+
+Better Admin is designed to be fully customizable. You can override components, customize themes, and adapt the behavior to match your needs.
+
+## Custom Components
+
+Override default components for specific resources or globally:
+
+### Per-Resource Components
+
+```typescript
+import CustomProductList from "./components/CustomProductList";
+import CustomProductForm from "./components/CustomProductForm";
+
+createAdminResource({
+  name: "product",
+  list: {
+    component: CustomProductList,
+  },
+  create: {
+    component: CustomProductForm,
+  },
+  edit: {
+    component: CustomProductForm,
+  },
+  show: {
+    component: CustomProductDetail,
+  },
+})
+```
+
+### Global Component Overrides
+
+```typescript
+export const admin = betterAdmin({
+  query,
+  resources: [/* ... */],
+  config: {
+    components: {
+      Layout: CustomLayout,
+      Navigation: CustomNavigation,
+      Header: CustomHeader,
+      Footer: CustomFooter,
+      ErrorBoundary: CustomErrorBoundary,
+      LoadingIndicator: CustomLoadingIndicator,
+    },
+  },
+});
+```
+
+## Custom List Component
+
+Create a custom list view:
+
+```typescript
+// components/CustomProductList.tsx
+import { useAdminList } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function CustomProductList() {
+  const {
+    data,
+    loading,
+    error,
+    setSearch,
+    setFilters,
+  } = useAdminList(adminClient, "product");
+
+  if (loading) return <CustomLoader />;
+  if (error) return <CustomError error={error} />;
+
+  return (
+    <div className="custom-list">
+      <CustomSearch onSearch={setSearch} />
+      <CustomFilters onFilter={setFilters} />
+      
+      <div className="grid grid-cols-3 gap-4">
+        {data?.items.map((product) => (
+          <CustomProductCard
+            key={product.id}
+            product={product}
+          />
+        ))}
+      </div>
+      
+      <CustomPagination {...data} />
+    </div>
+  );
+}
+```
+
+## Custom Form Component
+
+Create a custom form:
+
+```typescript
+// components/CustomProductForm.tsx
+import { useAdminForm } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function CustomProductForm({ id, mode }) {
+  const {
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+  } = useAdminForm(adminClient, "product", { mode, id });
+
+  return (
+    <form onSubmit={handleSubmit} className="custom-form">
+      <CustomInput
+        name="name"
+        label="Product Name"
+        value={values.name}
+        error={errors.name}
+        onChange={handleChange}
+      />
+      
+      <CustomTextarea
+        name="description"
+        label="Description"
+        value={values.description}
+        onChange={handleChange}
+      />
+      
+      <CustomNumberInput
+        name="price"
+        label="Price"
+        value={values.price}
+        error={errors.price}
+        onChange={handleChange}
+      />
+      
+      <CustomSelect
+        name="status"
+        label="Status"
+        value={values.status}
+        options={[
+          { label: "Draft", value: "draft" },
+          { label: "Active", value: "active" },
+        ]}
+        onChange={handleChange}
+      />
+      
+      <button type="submit">Save</button>
+    </form>
+  );
+}
+```
+
+## Custom Field Renderers
+
+Customize how specific fields are rendered:
+
+```typescript
+fieldMetadata: {
+  price: {
+    label: "Price",
+    inputType: "number",
+    renderInput: (props) => (
+      <PriceInput
+        {...props}
+        currency="USD"
+        showCurrency={true}
+      />
+    ),
+    renderDisplay: (value) => (
+      <PriceDisplay value={value} currency="USD" />
+    ),
+  },
+  image: {
+    label: "Image",
+    inputType: "file",
+    renderInput: (props) => (
+      <ImageUpload
+        {...props}
+        maxSize={5 * 1024 * 1024} // 5MB
+        acceptTypes={["image/jpeg", "image/png"]}
+      />
+    ),
+    renderDisplay: (value) => (
+      <img src={value} alt="Product" className="w-32 h-32 object-cover" />
+    ),
+  },
+  tags: {
+    label: "Tags",
+    inputType: "multiselect",
+    renderDisplay: (value) => (
+      <div className="flex gap-2">
+        {value.map(tag => (
+          <span key={tag} className="badge">{tag}</span>
+        ))}
+      </div>
+    ),
+  },
+}
+```
+
+## Theme Customization
+
+### Using CSS Variables
+
+Better Admin uses CSS variables for theming:
+
+```css
+/* app/globals.css */
+:root {
+  /* Colors */
+  --admin-primary: #3b82f6;
+  --admin-primary-hover: #2563eb;
+  --admin-background: #ffffff;
+  --admin-foreground: #1f2937;
+  --admin-border: #e5e7eb;
+  
+  /* Spacing */
+  --admin-spacing-xs: 0.25rem;
+  --admin-spacing-sm: 0.5rem;
+  --admin-spacing-md: 1rem;
+  --admin-spacing-lg: 1.5rem;
+  --admin-spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --admin-radius-sm: 0.25rem;
+  --admin-radius-md: 0.5rem;
+  --admin-radius-lg: 0.75rem;
+  
+  /* Typography */
+  --admin-font-family: 'Inter', sans-serif;
+  --admin-font-size-sm: 0.875rem;
+  --admin-font-size-md: 1rem;
+  --admin-font-size-lg: 1.125rem;
+}
+
+.dark {
+  --admin-background: #1f2937;
+  --admin-foreground: #f9fafb;
+  --admin-border: #374151;
+}
+```
+
+### Theme Provider
+
+Use a theme provider for dynamic theming:
+
+```typescript
+// components/ThemeProvider.tsx
+import { createContext, useContext, useState } from "react";
+
+const ThemeContext = createContext({
+  theme: "light",
+  setTheme: (theme: string) => {},
+});
+
+export function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState("light");
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <div className={theme}>
+        {children}
+      </div>
+    </ThemeContext.Provider>
+  );
+}
+
+export const useTheme = () => useContext(ThemeContext);
+```
+
+### Custom Theme Configuration
+
+```typescript
+export const admin = betterAdmin({
+  query,
+  resources: [/* ... */],
+  config: {
+    theme: {
+      defaultMode: "light",
+      enableModeToggle: true,
+      colors: {
+        primary: "#3b82f6",
+        secondary: "#8b5cf6",
+        success: "#10b981",
+        warning: "#f59e0b",
+        error: "#ef4444",
+      },
+      borderRadius: "0.5rem",
+      fontFamily: "Inter, system-ui, sans-serif",
+    },
+  },
+});
+```
+
+## Layout Customization
+
+### Custom Admin Layout
+
+```typescript
+// components/CustomAdminLayout.tsx
+import { useAdminResource } from "better-admin/react";
+import CustomSidebar from "./CustomSidebar";
+import CustomHeader from "./CustomHeader";
+
+export default function CustomAdminLayout({ children }) {
+  return (
+    <div className="admin-layout">
+      <CustomHeader />
+      <div className="admin-content">
+        <CustomSidebar />
+        <main className="admin-main">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+### Custom Navigation
+
+```typescript
+// components/CustomNavigation.tsx
+import { useAdminResource } from "better-admin/react";
+import Link from "next/link";
+
+export default function CustomNavigation() {
+  const resources = useAdminResources();
+
+  return (
+    <nav className="navigation">
+      {resources.map((resource) => (
+        <Link
+          key={resource.name}
+          href={`/admin/${resource.name}`}
+          className="nav-item"
+        >
+          <span className="icon">{resource.icon}</span>
+          <span className="label">{resource.labelPlural}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+```
+
+## Action Customization
+
+### Custom Row Actions
+
+```typescript
+list: {
+  fields: ["name", "price", "status"],
+  rowActions: [
+    {
+      name: "view",
+      label: "View",
+      icon: "👁️",
+      handler: (adminClient, record) => {
+        window.location.href = `/admin/product/${record.id}`;
+      },
+    },
+    {
+      name: "duplicate",
+      label: "Duplicate",
+      icon: "📋",
+      handler: async (adminClient, record) => {
+        const { id, ...data } = record;
+        await adminClient.create("product", {
+          ...data,
+          name: `${data.name} (Copy)`,
+        });
+      },
+    },
+    {
+      name: "export",
+      label: "Export",
+      icon: "📥",
+      handler: (adminClient, record) => {
+        downloadJSON(record, `product-${record.id}.json`);
+      },
+    },
+  ],
+}
+```
+
+### Custom Bulk Actions
+
+```typescript
+list: {
+  fields: ["name", "price", "status"],
+  bulkActions: [
+    {
+      name: "export",
+      label: "Export Selected",
+      icon: "📥",
+      handler: async (adminClient, ids) => {
+        const products = await Promise.all(
+          ids.map(id => adminClient.get("product", id))
+        );
+        downloadJSON(products, "products.json");
+      },
+    },
+    {
+      name: "changeStatus",
+      label: "Change Status",
+      icon: "🔄",
+      handler: async (adminClient, ids) => {
+        const status = prompt("Enter new status:");
+        if (status) {
+          await Promise.all(
+            ids.map(id =>
+              adminClient.update("product", id, { status })
+            )
+          );
+        }
+      },
+    },
+  ],
+}
+```
+
+## Validation Customization
+
+### Custom Validators
+
+```typescript
+fieldMetadata: {
+  email: {
+    label: "Email",
+    inputType: "email",
+    validate: async (value, formData) => {
+      // Check if email is unique
+      const exists = await checkEmailExists(value);
+      if (exists) {
+        return "Email already in use";
+      }
+      return true;
+    },
+  },
+  password: {
+    label: "Password",
+    inputType: "password",
+    validate: (value) => {
+      if (value.length < 8) {
+        return "Password must be at least 8 characters";
+      }
+      if (!/[A-Z]/.test(value)) {
+        return "Password must contain uppercase letter";
+      }
+      if (!/[0-9]/.test(value)) {
+        return "Password must contain number";
+      }
+      return true;
+    },
+  },
+  confirmPassword: {
+    label: "Confirm Password",
+    inputType: "password",
+    validate: (value, formData) => {
+      if (value !== formData.password) {
+        return "Passwords do not match";
+      }
+      return true;
+    },
+  },
+}
+```
+
+## Hooks Customization
+
+### Custom Hooks
+
+Create custom hooks for specific operations:
+
+```typescript
+// hooks/useProductOperations.ts
+import { useAdminCreate, useAdminUpdate } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export function useProductOperations() {
+  const { create } = useAdminCreate(adminClient, "product");
+  const { update } = useAdminUpdate(adminClient, "product");
+
+  const publishProduct = async (id: string) => {
+    await update(id, { status: "active", publishedAt: new Date() });
+  };
+
+  const unpublishProduct = async (id: string) => {
+    await update(id, { status: "draft", publishedAt: null });
+  };
+
+  const duplicateProduct = async (id: string) => {
+    const product = await adminClient.get("product", id);
+    const { id: _, ...data } = product;
+    return create({ ...data, name: `${data.name} (Copy)` });
+  };
+
+  return {
+    publishProduct,
+    unpublishProduct,
+    duplicateProduct,
+  };
+}
+```
+
+## Internationalization
+
+### Custom Messages
+
+```typescript
+export const admin = betterAdmin({
+  query,
+  resources: [/* ... */],
+  config: {
+    localization: {
+      locale: "en",
+      messages: {
+        "admin.list.empty": "No items found",
+        "admin.list.loading": "Loading items...",
+        "admin.create.success": "Item created successfully",
+        "admin.update.success": "Item updated successfully",
+        "admin.delete.confirm": "Are you sure you want to delete this item?",
+      },
+    },
+  },
+});
+```
+
+### Multiple Languages
+
+```typescript
+const messages = {
+  en: {
+    "admin.list.empty": "No items found",
+    "admin.create.button": "Create",
+  },
+  fr: {
+    "admin.list.empty": "Aucun élément trouvé",
+    "admin.create.button": "Créer",
+  },
+  es: {
+    "admin.list.empty": "No se encontraron elementos",
+    "admin.create.button": "Crear",
+  },
+};
+
+export const admin = betterAdmin({
+  query,
+  resources: [/* ... */],
+  config: {
+    localization: {
+      locale: "en",
+      messages: messages.en,
+    },
+  },
+});
+```
+
+## Examples
+
+### Complete Custom List
+
+```typescript
+import { useAdminList, useAdminDelete } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function CustomProductList() {
+  const { data, loading, setSearch, refresh } = useAdminList(
+    adminClient,
+    "product"
+  );
+  const { deleteResource } = useAdminDelete(adminClient, "product", {
+    onSuccess: refresh,
+  });
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <button className="btn-primary">Add Product</button>
+      </div>
+
+      <input
+        type="search"
+        placeholder="Search products..."
+        onChange={(e) => setSearch(e.target.value)}
+        className="mb-4"
+      />
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          {data?.items.map((product) => (
+            <div key={product.id} className="card">
+              <img src={product.image} alt={product.name} />
+              <h3>{product.name}</h3>
+              <p>${product.price}</p>
+              <div className="actions">
+                <button onClick={() => deleteResource(product.id)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Next Steps
+
+- [Permissions](/docs/admin/permissions) - Manage access control
+- [Examples](/docs/admin/examples) - See complete examples
