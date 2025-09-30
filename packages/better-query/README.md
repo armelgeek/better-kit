@@ -205,11 +205,11 @@ if (result.error?.code) {
 
 ## Better Auth Integration
 
-Better Query provides native integration with Better Auth for seamless authentication and authorization:
+Better Query integrates with Better Auth through resource permissions and middleware:
 
 ```typescript
 import { betterAuth } from "better-auth";
-import { betterQuery, betterAuth as betterAuthPlugin } from "better-query";
+import { betterQuery, createResource } from "better-query";
 
 // 1. Setup Better Auth
 const auth = betterAuth({
@@ -218,31 +218,29 @@ const auth = betterAuth({
   emailAndPassword: { enabled: true },
 });
 
-// 2. Integrate with Better Query
+// 2. Integrate with Better Query using permissions
 const query = betterQuery({
   basePath: "/api/query",
   database: { provider: "sqlite", url: "data.db", autoMigrate: true },
-  
-  // Enable Better Auth plugin
-  plugins: [
-    betterAuthPlugin({
-      auth,
-      rolePermissions: {
-        admin: {
-          resources: ["*"], // Access to all resources
-          operations: ["create", "read", "update", "delete", "list"],
-        },
-        user: {
-          operations: ["read", "create"],
-        }
-      }
-    })
-  ],
   
   resources: [
     createResource({
       name: "product",
       schema: productSchema,
+      
+      // Add middleware to extract user from Better Auth
+      middlewares: [
+        {
+          handler: async (context) => {
+            const session = await auth.api.getSession({
+              headers: context.request.headers,
+            });
+            if (session) context.user = session.user;
+          }
+        }
+      ],
+      
+      // Use permissions with Better Auth user context
       permissions: {
         create: async (context) => !!context.user, // Authenticated users only
         update: async (context) => {
@@ -256,7 +254,7 @@ const query = betterQuery({
 });
 ```
 
-For detailed Better Auth integration guide, see [Better Auth Integration Documentation](../docs/better-auth-integration.md).
+For detailed Better Auth integration guide, see [Better Auth Integration Documentation](../../documentation/better-auth-integration.md).
 
 ### 3. Framework Integration
 

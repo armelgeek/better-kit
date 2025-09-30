@@ -171,30 +171,46 @@ Use the sign-up form to create new accounts. All new users get the "user" role b
 
 ### Better Auth Integration
 
-The app uses the **Better Auth plugin** for Better Query to provide seamless authentication:
+The app integrates Better Auth through resource permissions and middleware:
 
 ```typescript
 // lib/query.ts
-import { betterAuth as betterAuthPlugin } from "better-query/plugins";
+import { betterQuery, createResource } from "better-query";
 import { auth } from "./auth";
 
 export const query = betterQuery({
-  plugins: [
-    betterAuthPlugin({
-      auth, // Better Auth instance
-      rolePermissions: {
-        admin: {
-          resources: ["*"],
-          operations: ["create", "read", "update", "delete", "list"],
-        },
-        user: {
-          resources: ["todo"],
-          operations: ["create", "read", "update", "delete", "list"],
+  resources: [
+    createResource({
+      name: "todo",
+      schema: todoSchema,
+      middlewares: [
+        {
+          handler: async (context) => {
+            // Extract user from Better Auth session
+            const session = await auth.api.getSession({
+              headers: context.request.headers,
+            });
+            if (session) context.user = session.user;
+          }
         }
-      },
+      ],
+      permissions: {
+        create: async (context) => !!context.user,
+        read: async (context) => !!context.user,
+        update: async (context) => {
+          const user = context.user as { id: string; role?: string };
+          return user?.role === "admin" || 
+                 context.existingData?.userId === user?.id;
+        },
+        delete: async (context) => {
+          const user = context.user as { id: string; role?: string };
+          return user?.role === "admin" || 
+                 context.existingData?.userId === user?.id;
+        },
+        list: async (context) => !!context.user,
+      }
     })
   ],
-  resources: [todoResource],
 });
 ```
 
