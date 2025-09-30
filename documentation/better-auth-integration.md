@@ -1,14 +1,14 @@
 # Better Auth Integration Guide
 
-Better Query now provides native integration with Better Auth for seamless authentication, authorization, and session management.
+Better Query provides type-safe integration with Better Auth for authentication, authorization, and session management through resource permissions and middleware.
 
 ## Features
 
-- 🔐 **Native Better Auth Integration**: Direct integration with Better Auth instances
-- 👤 **Automatic User Context Typing**: Type-safe user context from Better Auth sessions
-- 🛡️ **Role-Based Permissions**: Define permissions based on Better Auth user roles
-- 🔄 **Transparent Session Handling**: Automatic session validation and context passing
-- 📊 **Schema Migration Management**: Handle breaking schema changes with automated migrations
+- 🔐 **Type-Safe User Context**: Access Better Auth user data in permissions with full TypeScript support
+- 👤 **Resource-Level Permissions**: Define granular permissions per resource and operation
+- 🛡️ **Role-Based Access Control**: Implement role-based permissions using Better Auth user roles
+- 🔄 **Session Management**: Automatic session validation through Better Auth
+- 📊 **Custom Middleware**: Add authentication checks and user context extraction
 
 ## Installation
 
@@ -20,10 +20,11 @@ npm install better-query better-auth
 
 ```typescript
 import { betterAuth } from "better-auth";
-import { betterQuery, betterAuth as betterAuthPlugin } from "better-query";
+import { betterQuery, createResource } from "better-query";
+import { z } from "zod";
 
 // 1. Setup Better Auth
-const auth = betterAuth({
+export const auth = betterAuth({
   database: {
     provider: "sqlite",
     url: "auth.db",
@@ -34,8 +35,8 @@ const auth = betterAuth({
   },
 });
 
-// 2. Setup Better Query with Better Auth integration
-const query = betterQuery({
+// 2. Setup Better Query with authentication
+export const query = betterQuery({
   basePath: "/api/query",
   database: {
     provider: "sqlite",
@@ -43,26 +44,43 @@ const query = betterQuery({
     autoMigrate: true,
   },
   
-  // Enable Better Auth plugin
-  plugins: [
-    betterAuthPlugin({
-      auth,
-      rolePermissions: {
-        admin: {
-          resources: ["*"], // Access to all resources
-          operations: ["create", "read", "update", "delete", "list"],
-          scopes: ["admin", "write", "read"]
+  resources: [
+    createResource({
+      name: "product",
+      schema: z.object({
+        id: z.string(),
+        name: z.string(),
+        price: z.number(),
+        createdBy: z.string().optional(),
+      }),
+      
+      // Integrate Better Auth through permissions
+      permissions: {
+        // Only authenticated users can create
+        create: async (context) => !!context.user,
+        
+        // Everyone can read
+        read: async () => true,
+        
+        // Only admin or owner can update
+        update: async (context) => {
+          const user = context.user as { id: string; role?: string };
+          if (!user) return false;
+          
+          if (user.role === "admin") return true;
+          return context.existingData?.createdBy === user.id;
         },
-        user: {
-          operations: ["read", "create"],
-          scopes: ["read"]
-        }
+        
+        // Only admin can delete
+        delete: async (context) => {
+          const user = context.user as { role?: string };
+          return user?.role === "admin";
+        },
+        
+        // Everyone can list
+        list: async () => true,
       }
     })
-  ],
-  
-  resources: [
-    // Your resources here...
   ]
 });
 ```
@@ -79,22 +97,47 @@ interface CustomUser {
   role: "admin" | "user" | "moderator";
   orgId?: string;
 }
+## Type-Safe User Context
 
-// Use in permission functions with full type safety
+Define your user interface that extends Better Auth for full type safety:
+
+```typescript
+// Define your custom user interface
+interface CustomUser {
+  id: string;
+  email: string;
+  role: "admin" | "user" | "moderator";
+  orgId?: string;
+}
+
+// Use type-safe helper for user operations
+import { createBetterAuthIntegration } from "better-query";
+
+const authHelper = createBetterAuthIntegration(auth);
+
+// Use in resource permissions with full type safety
 createResource({
   name: "product",
   schema: productSchema,
   permissions: {
     create: async (context) => {
-      const user = context.user as CustomUser;
+      const user = authHelper.getUser(context) as CustomUser;
       return user?.role === "admin";
     },
     
     update: async (context) => {
-      const user = context.user as CustomUser;
-      // Admins can update anything, users can update their own
-      return user?.role === "admin" || 
-             context.existingData?.createdBy === user?.id;
+      const user = authHelper.getUser(context) as CustomUser;
+      
+      // Check if user has admin role
+      if (authHelper.hasRole(context, "admin")) return true;
+      
+      // Check if user owns the resource
+      return context.existingData?.createdBy === user?.id;
+    },
+    
+    delete: async (context) => {
+      // Check if user has any of these roles
+      return authHelper.hasAnyRole(context, ["admin", "moderator"]);
     }
   }
 });
@@ -102,37 +145,80 @@ createResource({
 
 ## Role-Based Permissions
 
-Configure role-based access control:
+Implement role-based access control directly in your resource permissions:
 
 ```typescript
-betterAuthPlugin({
-  auth,
-  rolePermissions: {
-    // Super admin with full access
-    admin: {
-      resources: ["*"],
-      operations: ["create", "read", "update", "delete", "list"],
-      scopes: ["admin", "write", "read"]
+createResource({
+  name: "product",
+  schema: productSchema,
+  permissions: {
+    // Admin has full access
+    create: async (context) => {
+      const user = context.user as { role?: string };
+      return user?.role === "admin" || user?.role === "moderator";
     },
     
-    // Moderator with limited admin access
-    moderator: {
-      resources: ["product", "category", "review"],
-      operations: ["read", "update", "list"],
-      scopes: ["moderate", "read"]
+    // Check specific roles for update
+    update: async (context) => {
+      const user = context.user as { id: string; role?: string };
+      
+      // Admin and moderator can update any product
+      if (user?.role === "admin" || user?.role === "moderator") {
+        return true;
+      }
+      
+      // Regular users can only update their own products
+      return context.existingData?.createdBy === user?.id;
     },
     
-    // Regular user with basic access
-    user: {
-      resources: ["product", "review"],
-      operations: ["read", "create"],
-      scopes: ["read"]
-    }
+    // Only admin can delete
+    delete: async (context) => {
+      const user = context.user as { role?: string };
+      return user?.role === "admin";
+    },
+    
+    // Everyone can read and list
+    read: async () => true,
+    list: async () => true,
   }
-})
+});
 ```
 
-## Schema Migration Management
+## Custom Middleware
+
+Add custom middleware to extract Better Auth user context:
+
+## Custom Middleware
+
+Add custom middleware to extract Better Auth user context:
+
+```typescript
+import type { QueryMiddlewareContext } from "better-query";
+
+createResource({
+  name: "product",
+  schema: productSchema,
+  middlewares: [
+    {
+      handler: async (context: QueryMiddlewareContext) => {
+        // Extract session from Better Auth
+        const session = await auth.api.getSession({
+          headers: context.request.headers,
+        });
+        
+        if (session) {
+          // Attach user to context
+          context.user = session.user;
+        }
+      }
+    }
+  ],
+  permissions: {
+    create: async (context) => !!context.user,
+    // ... other permissions
+  }
+});
+```
 
 Handle breaking schema changes with automated migrations:
 
@@ -175,35 +261,46 @@ if (migrations.length > 0) {
 
 ## Helper Functions
 
-Use the provided helper functions for common operations:
+Better Query provides type-safe helper functions for Better Auth integration:
 
 ```typescript
-import { createBetterAuthContext } from "better-query";
+import { createBetterAuthIntegration } from "better-query";
 
-const authContext = createBetterAuthContext<CustomUser>();
+// Define your custom user type
+interface CustomUser {
+  id: string;
+  email: string;
+  role?: string;
+  orgId?: string;
+  scopes?: string[];
+}
+
+// Create the helper
+const authHelper = createBetterAuthIntegration(auth);
 
 // In your permission functions
 permissions: {
   delete: async (context) => {
-    const user = authContext.getUser(context);
+    // Get user with type safety
+    const user = authHelper.getUser(context) as CustomUser;
     
     // Check role
-    if (authContext.hasRole(context, "admin")) {
+    if (authHelper.hasRole(context, "admin")) {
       return true;
     }
     
     // Check multiple roles
-    if (authContext.hasAnyRole(context, ["admin", "moderator"])) {
+    if (authHelper.hasAnyRole(context, ["admin", "moderator"])) {
       return true;
     }
     
     // Check organization membership
-    if (authContext.belongsToOrg(context, "my-org-123")) {
+    if (authHelper.belongsToOrg(context, "my-org-123")) {
       return true;
     }
     
     // Check scopes
-    if (authContext.hasScopes(context, ["delete", "admin"])) {
+    if (authHelper.hasScopes(context, ["delete", "admin"])) {
       return true;
     }
     
@@ -214,106 +311,225 @@ permissions: {
 
 ## Session Handling
 
-Better Auth sessions are automatically validated and attached to the request context:
+You can extract and validate Better Auth sessions in your resources:
 
 ```typescript
-// The plugin automatically:
-// 1. Extracts session from request headers
-// 2. Validates the session with Better Auth
-// 3. Attaches user to context.user
-// 4. Adds role-based scopes to user.scopes
-
-// In your hooks, the user is always available:
-hooks: {
-  beforeCreate: async (context) => {
-    if (context.user) {
-      // User is authenticated, set metadata
-      context.data.createdBy = context.user.id;
-      context.data.createdAt = new Date();
+createResource({
+  name: "product",
+  schema: productSchema,
+  middlewares: [
+    {
+      handler: async (context: QueryMiddlewareContext) => {
+        // Extract and validate session from Better Auth
+        const session = await auth.api.getSession({
+          headers: context.request.headers,
+        });
+        
+        if (session) {
+          // Attach user to context for use in permissions
+          context.user = session.user;
+        }
+      }
+    }
+  ],
+  hooks: {
+    beforeCreate: async (context) => {
+      if (context.user) {
+        // User is authenticated, set metadata
+        context.data.createdBy = context.user.id;
+        context.data.createdAt = new Date();
+      }
     }
   }
-}
+});
 ```
 
-## Advanced Configuration
+## Advanced Patterns
 
-### Custom User Extraction
+### Global Authentication Middleware
+
+Create a reusable middleware for all resources:
+
+## Advanced Patterns
+
+### Global Authentication Middleware
+
+Create a reusable middleware for all resources:
 
 ```typescript
-betterAuthPlugin({
-  // Custom user extraction logic
-  getUserFromRequest: async (request) => {
-    // Extract user from custom header or token
-    const token = request.headers.authorization;
-    if (token) {
-      return await validateCustomToken(token);
+import type { QueryMiddlewareContext } from "better-query";
+
+// Create a shared auth middleware
+const authMiddleware = {
+  handler: async (context: QueryMiddlewareContext) => {
+    const session = await auth.api.getSession({
+      headers: context.request.headers,
+    });
+    
+    if (session) {
+      context.user = session.user;
     }
-    return null;
   }
-})
+};
+
+// Use in all resources
+const resources = [
+  createResource({
+    name: "product",
+    schema: productSchema,
+    middlewares: [authMiddleware],
+    permissions: { /* ... */ }
+  }),
+  createResource({
+    name: "category",
+    schema: categorySchema,
+    middlewares: [authMiddleware],
+    permissions: { /* ... */ }
+  }),
+];
 ```
 
-### Session Validation
+### Organization-Based Access
 
 ```typescript
-betterAuthPlugin({
-  session: {
-    autoValidate: true, // Automatically validate sessions
-    validate: async (session) => {
-      // Custom session validation logic
-      return session.expiresAt > new Date();
+createResource({
+  name: "project",
+  schema: projectSchema,
+  permissions: {
+    // Users can only see projects in their organization
+    list: async (context) => {
+      const user = context.user as { orgId?: string };
+      if (!user) return false;
+      
+      // Filter by organization
+      context.query = {
+        ...context.query,
+        where: {
+          ...context.query?.where,
+          orgId: user.orgId
+        }
+      };
+      return true;
+    },
+    
+    // Similar for other operations
+    read: async (context) => {
+      const user = context.user as { orgId?: string };
+      return context.existingData?.orgId === user?.orgId;
     }
   }
-})
+});
 ```
 
 ## Integration with Next.js
 
-```typescript
-// pages/api/auth/[...all].ts
-export { auth as GET, auth as POST } from "../../lib/auth-config";
+Example Next.js App Router integration:
 
-// pages/api/query/[...all].ts
-export const handler = query.handler;
-export { handler as GET, handler as POST };
+```typescript
+// app/lib/auth.ts
+import { betterAuth } from "better-auth";
+
+export const auth = betterAuth({
+  database: {
+    provider: "sqlite",
+    url: "auth.db",
+  },
+  secret: process.env.BETTER_AUTH_SECRET!,
+  emailAndPassword: {
+    enabled: true,
+  },
+});
+
+// app/lib/query.ts
+import { betterQuery, createResource } from "better-query";
+import { auth } from "./auth";
+
+export const query = betterQuery({
+  basePath: "/api/query",
+  database: {
+    provider: "sqlite",
+    url: "data.db",
+    autoMigrate: true,
+  },
+  resources: [
+    createResource({
+      name: "product",
+      schema: productSchema,
+      middlewares: [
+        {
+          handler: async (context) => {
+            const session = await auth.api.getSession({
+              headers: context.request.headers,
+            });
+            if (session) context.user = session.user;
+          }
+        }
+      ],
+      permissions: {
+        create: async (context) => !!context.user,
+        // ... other permissions
+      }
+    })
+  ]
+});
+
+// app/api/auth/[...all]/route.ts
+export { auth as GET, auth as POST } from "../../../lib/auth";
+
+// app/api/query/[...all]/route.ts
+import { query } from "../../../lib/query";
+
+export const GET = query.handler;
+export const POST = query.handler;
 ```
 
 ## Error Handling
 
-The integration provides detailed error messages for authorization failures:
+Better Query provides clear error messages for authorization failures:
 
 ```typescript
-// Role-based error: "Role 'user' does not have access to resource 'admin-panel'"
-// Operation error: "Role 'user' does not have permission to delete on resource 'product'"
-// Authentication error: "Authentication required"
+// Authentication errors
+// "Authentication required"
+
+// Permission errors  
+// "Permission denied for operation 'delete' on resource 'product'"
+
+// Role-based errors
+// "User with role 'user' does not have permission to perform this action"
 ```
 
-## Migration Best Practices
+## Best Practices
 
-1. **Test migrations in development** before applying to production
-2. **Backup your database** before running migrations
-3. **Use gradual rollouts** for breaking changes
-4. **Monitor application logs** during migration deployment
-5. **Have rollback procedures** ready
+1. **Use middleware for authentication**: Extract user context in middleware for reusability
+2. **Check permissions at resource level**: Define clear permissions for each operation
+3. **Type your user context**: Use TypeScript interfaces for type-safe user operations
+4. **Use helper functions**: Leverage the provided helpers for common authorization patterns
+5. **Handle errors gracefully**: Provide clear error messages for authentication and authorization failures
 
 ## TypeScript Integration
 
 Better Query with Better Auth provides full TypeScript support:
 
 ```typescript
-// Types are automatically inferred from your Better Auth instance
-type User = typeof auth.$inferredTypes.User;
+// Define your user type based on Better Auth
+interface User {
+  id: string;
+  email: string;
+  role?: string;
+  orgId?: string;
+}
 
-// Context helpers are fully typed
-const user: User | null = authContext.getUser(context);
-
-// Permission functions have typed context
+// Use in permissions with type safety
 permissions: {
-  create: async (context: BetterAuthPermissionContext<User>) => {
-    // context.user is properly typed as User
-    return context.user?.role === "admin";
+  create: async (context) => {
+    const user = context.user as User;
+    return user?.role === "admin";
   }
 }
+
+// Type-safe helper usage
+const authHelper = createBetterAuthIntegration(auth);
+const user = authHelper.getUser(context) as User;
 ```
 
-This integration makes Better Auth and Better Query work seamlessly together, providing type-safe authentication, authorization, and session management for your applications.
+This integration approach provides flexible, type-safe authentication and authorization for your Better Query resources while maintaining full control over your authentication logic.

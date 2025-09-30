@@ -16,8 +16,7 @@ export function queryConfigTemplate(withAuth: boolean, database: string): string
 	}
 	
 	const authImports = withAuth ? `
-import { betterAuth } from "better-auth";
-import { betterAuth as betterAuthPlugin } from "better-query";` : "";
+import { betterAuth } from "better-auth";` : "";
 
 	const authSetup = withAuth ? `
 // Better Auth configuration
@@ -32,20 +31,8 @@ export const auth = betterAuth({
 });` : "";
 
 	const authPlugin = withAuth ? `
-  plugins: [
-    betterAuthPlugin({
-      auth,
-      rolePermissions: {
-        admin: {
-          resources: ["*"],
-          operations: ["create", "read", "update", "delete", "list"],
-        },
-        user: {
-          operations: ["read", "create"],
-        }
-      }
-    })
-  ],` : "";
+  // Note: Better Auth integration is done through resource permissions
+  // See the permissions configuration in resources below` : "";
 
 	return `import { betterQuery, createResource } from "better-query";${authImports}
 import type { QueryMiddlewareContext } from "better-query";

@@ -20,7 +20,7 @@ A modern, full-stack todo application demonstrating the power of **Better Query*
 - **Better Query** for type-safe CRUD operations
 - **Plugin System** with audit, cache, and validation plugins
 - **Custom Plugins** for extending functionality
-- **Better Auth Plugin** for seamless auth integration
+- **Better Auth Integration** through permissions and middleware
 - **Zod Validation** with React Hook Form
 - **Permission-based Filtering** at the database level
 - **Auto-generated API Endpoints** with authentication middleware
@@ -137,7 +137,7 @@ To enable complete authentication functionality:
 2. **Uncomment Integration Code**
    - In `lib/auth.ts`: Replace mock implementation with real Better Auth
    - In `lib/auth-client.ts`: Use real Better Auth React client
-   - In `lib/query.ts`: Enable the Better Auth plugin
+   - In `lib/query.ts`: Enable Better Auth middleware integration
    - In `components/TodoApp.tsx`: Enable authentication checks
 
 3. **Environment Setup**
@@ -171,30 +171,46 @@ Use the sign-up form to create new accounts. All new users get the "user" role b
 
 ### Better Auth Integration
 
-The app uses the **Better Auth plugin** for Better Query to provide seamless authentication:
+The app integrates Better Auth through resource permissions and middleware:
 
 ```typescript
 // lib/query.ts
-import { betterAuth as betterAuthPlugin } from "better-query/plugins";
+import { betterQuery, createResource } from "better-query";
 import { auth } from "./auth";
 
 export const query = betterQuery({
-  plugins: [
-    betterAuthPlugin({
-      auth, // Better Auth instance
-      rolePermissions: {
-        admin: {
-          resources: ["*"],
-          operations: ["create", "read", "update", "delete", "list"],
-        },
-        user: {
-          resources: ["todo"],
-          operations: ["create", "read", "update", "delete", "list"],
+  resources: [
+    createResource({
+      name: "todo",
+      schema: todoSchema,
+      middlewares: [
+        {
+          handler: async (context) => {
+            // Extract user from Better Auth session
+            const session = await auth.api.getSession({
+              headers: context.request.headers,
+            });
+            if (session) context.user = session.user;
+          }
         }
-      },
+      ],
+      permissions: {
+        create: async (context) => !!context.user,
+        read: async (context) => !!context.user,
+        update: async (context) => {
+          const user = context.user as { id: string; role?: string };
+          return user?.role === "admin" || 
+                 context.existingData?.userId === user?.id;
+        },
+        delete: async (context) => {
+          const user = context.user as { id: string; role?: string };
+          return user?.role === "admin" || 
+                 context.existingData?.userId === user?.id;
+        },
+        list: async (context) => !!context.user,
+      }
     })
   ],
-  resources: [todoResource],
 });
 ```
 
@@ -338,4 +354,4 @@ This example demonstrates core authentication concepts. You can extend it with:
 
 - [Better Query Documentation](https://armelgeek.github.io/better-kit)
 - [Better Auth Documentation](https://better-auth.com)
-- [Better Auth Plugin Guide](https://armelgeek.github.io/better-kit/docs/plugins/better-auth)
+- [Plugin System Guide](https://armelgeek.github.io/better-kit/docs/concepts/plugins)

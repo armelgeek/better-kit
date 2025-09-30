@@ -7,7 +7,6 @@ Plugins are a key part of Better Query, they let you extend the base CRUD functi
 
 Better Query comes with several built-in plugins ready to use:
 
-- **Better Auth Plugin**: Seamless integration with Better Auth for authentication and role-based permissions
 - **Audit Plugin**: Comprehensive audit logging for all CRUD operations
 - **Cache Plugin**: High-performance caching with configurable TTL
 - **Validation Plugin**: Enhanced data validation beyond Zod schemas
@@ -23,7 +22,7 @@ To add a plugin on the server, include it in the `plugins` array in your query c
 
 ```ts title="server.ts"
 import { betterQuery } from "better-query";
-import { auditPlugin, cachePlugin } from "better-call";
+import { auditPlugin, cachePlugin } from "better-query/plugins";
 
 export const query = betterQuery({
     plugins: [
@@ -64,121 +63,6 @@ We recommend keeping the query-client and your normal query instance in separate
 ## Built-in Plugins
 
 Better Query provides several powerful built-in plugins to enhance your application with common functionality.
-
-### Better Auth Plugin
-
-The Better Auth plugin provides seamless integration with Better Auth, offering authentication, user context, and role-based permissions.
-
-```ts title="lib/query.ts"
-import { betterQuery } from "better-query";
-import { betterAuth } from "better-query/plugins";
-import { auth } from "./auth"; // Your Better Auth instance
-
-export const query = betterQuery({
-  basePath: "/api/query",
-  database: {
-    provider: "sqlite",
-    url: "app.db",
-    autoMigrate: true,
-  },
-  plugins: [
-    betterAuth({
-      auth, // Pass your Better Auth instance
-      rolePermissions: {
-        admin: {
-          resources: ["*"], // Access to all resources
-          operations: ["create", "read", "update", "delete", "list"],
-          scopes: ["admin", "write", "read"]
-        },
-        moderator: {
-          resources: ["post", "comment", "user"],
-          operations: ["read", "update", "list"],
-          scopes: ["moderate", "read"]
-        },
-        user: {
-          resources: ["post", "comment"],
-          operations: ["read", "create"],
-          scopes: ["read"]
-        }
-      },
-      defaultRole: "user",
-      session: {
-        autoValidate: true,
-      }
-    })
-  ],
-  resources: [
-    createResource({
-      name: "post",
-      schema: postSchema,
-      permissions: {
-        create: async (context) => !!context.user,
-        update: async (context) => {
-          const user = context.user;
-          if (!user) return false;
-          
-          // Admins can update any post
-          if (user.role === "admin") return true;
-          
-          // Users can update their own posts
-          return context.existingData?.userId === user.id;
-        },
-        delete: async (context) => context.user?.role === "admin",
-        read: async () => true,
-        list: async () => true,
-      }
-    })
-  ]
-});
-```
-
-**Features:**
-- Automatic user context extraction from Better Auth sessions
-- Role-based permissions with resource and operation filtering
-- Type-safe user context in permission functions
-- Support for custom user extraction functions
-- Session validation and management
-
-**Helper Functions:**
-
-Use the `createBetterAuthContext` helper for type-safe user operations:
-
-```ts
-import { createBetterAuthContext } from "better-query/plugins";
-
-interface CustomUser {
-  id: string;
-  email: string;
-  role: "admin" | "user" | "moderator";
-  orgId?: string;
-}
-
-const authContext = createBetterAuthContext<CustomUser>();
-
-// In your resource permissions
-permissions: {
-  delete: async (context) => {
-    const user = authContext.getUser(context);
-    
-    // Check role
-    if (authContext.hasRole(context, "admin")) {
-      return true;
-    }
-    
-    // Check multiple roles
-    if (authContext.hasAnyRole(context, ["admin", "moderator"])) {
-      return true;
-    }
-    
-    // Check organization membership
-    if (authContext.belongsToOrg(context, "my-org-123")) {
-      return true;
-    }
-    
-    return false;
-  }
-}
-```
 
 ### Audit Plugin
 
@@ -360,18 +244,18 @@ Server plugins are the backbone of all plugins, and client plugins are there to 
 
 ## Create a Server plugin
 
-To create a server plugin you need to pass an object that satisfies the `BetterAuthPlugin` interface.
+To create a server plugin you need to pass an object that satisfies the `Plugin` interface.
 
 The only required property is `id`, which is a unique identifier for the plugin.
 Both server and client plugins can use the same `id`.
 
 ```ts title="plugin.ts"
-import type { BetterAuthPlugin } from "better-query";
+import type { Plugin } from "better-query";
 
 export const myPlugin = ()=>{
     return {
         id: "my-plugin",
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 <Callout>
@@ -493,7 +377,7 @@ const myPlugin = (opts: PluginOptions)=>{
                 disableMigration: opts.storage.provider !== "database", // [!code highlight]
             },
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -513,7 +397,7 @@ const myPlugin = ()=>{
                 },
             },
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -580,7 +464,7 @@ const myPlugin = ()=>{
                 })
             }
         ]
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -606,7 +490,7 @@ const myPlugin = ()=> {
         onRequest: async (request, context) => {
             //do something
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -626,7 +510,7 @@ const myPlugin = ()=>{
         onResponse: async (response, context) => {
             //do something
         },
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -647,7 +531,7 @@ const myPlugin = ()=>{
                 window: 60,
             }
         ]
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 
@@ -704,7 +588,7 @@ const myPlugin = ()=>{
                 })
             })
         }
-    } satisfies BetterAuthPlugin
+    } satisfies Plugin
 }
 ```
 

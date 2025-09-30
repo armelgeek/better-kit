@@ -467,19 +467,37 @@ export function AuditLogViewer() {
 
 ## Integration with Better Auth
 
-When using the Better Query audit plugin with Better Auth integration, user information is automatically captured:
+When using the audit plugin with Better Auth, user information is automatically captured from the context:
 
 ```ts title="query.ts"
-import { betterQuery } from "better-query"
-import { auditPlugin, betterAuth } from "better-query/plugins"
+import { betterQuery, createResource } from "better-query"
+import { auditPlugin } from "better-query/plugins"
+import { auth } from "./auth" // Your Better Auth instance
 
 export const query = betterQuery({
     plugins: [
-        betterAuth({ auth }), // Better Auth integration
         auditPlugin({
             enabled: true,
             operations: ["create", "update", "delete"],
             includeData: true,
+        })
+    ],
+    resources: [
+        createResource({
+            name: "product",
+            schema: productSchema,
+            middlewares: [
+                {
+                    handler: async (context) => {
+                        // Extract user from Better Auth session
+                        const session = await auth.api.getSession({
+                            headers: context.request.headers,
+                        });
+                        if (session) context.user = session.user;
+                    }
+                }
+            ],
+            permissions: { /* ... */ }
         })
     ]
 })
@@ -487,6 +505,5 @@ export const query = betterQuery({
 
 With this setup, audit logs will automatically include:
 - User ID from the authenticated session
-- User email and name for better reporting
-- User roles and permissions context
+- User email and other user information
 - IP address and user agent from the request

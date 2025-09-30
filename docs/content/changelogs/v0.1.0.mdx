@@ -16,7 +16,6 @@ Initial release of Better Query - a type-safe CRUD API generator following the a
 - **Framework integrations** for Next.js, Hono, and Express
 - **Plugin system** for extensibility and custom business logic
 - **Client libraries** for React and Vanilla JS with type safety
-- **Better Auth integration** for seamless authentication and authorization
 - **Role-based permissions** and organization-level access control
 - **Pagination, filtering, and search** built-in support
 - **Real-time updates** and optimistic updates support
@@ -81,10 +80,10 @@ const query = betterQuery({
 
 Better Query includes a powerful plugin system for extending functionality:
 
-- **Better Auth Plugin**: Native authentication integration
-- **Validation Plugin**: Custom validation rules and middleware  
-- **Logging Plugin**: Request/response logging and monitoring
-- **Cache Plugin**: Response caching and optimization
+- **Audit Plugin**: Comprehensive audit logging for all CRUD operations
+- **Cache Plugin**: High-performance caching with configurable TTL
+- **Validation Plugin**: Enhanced data validation beyond Zod schemas
+- **OpenAPI Plugin**: Automatic OpenAPI documentation generation
 
 ## Breaking Changes
 

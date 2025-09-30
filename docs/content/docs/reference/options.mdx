@@ -233,18 +233,21 @@ export const query = betterQuery({
 
 ## `plugins`
 
-List of Better Auth plugins.
+List of Better Query plugins.
 
 ```ts
 import { betterQuery } from "better-query";
-import { emailOTP } from "better-query/plugins";
+import { auditPlugin, cachePlugin } from "better-query/plugins";
 
 export const query = betterQuery({
 	plugins: [
-		emailOTP({
-			sendVerificationOTP: async ({ email, otp, type }) => {
-				// Send OTP to user's email
-			}
+		auditPlugin({
+			enabled: true,
+			operations: ["create", "update", "delete"],
+		}),
+		cachePlugin({
+			enabled: true,
+			defaultTTL: 300,
 		})
 	],
 })
