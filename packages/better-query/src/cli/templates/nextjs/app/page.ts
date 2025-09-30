@@ -20,13 +20,13 @@ import { auth } from "@/lib/query";` : "";
     );
   }` : "";
 
-	return `"use client";
-
-import { useState, useEffect } from "react";
-import { queryClient } from "@/lib/client";
-import type { Product, Category } from "@/lib/schemas";${authImports}
-
-export default function HomePage() {${authSection}
+	// Build the template as separate strings to avoid React imports being processed
+	const clientDirective = '"use client";';
+	const reactImports = 'import { useState, useEffect } from "react";';
+	const clientImport = 'import { queryClient } from "@/lib/client";';
+	const typeImports = 'import type { Product, Category } from "@/lib/schemas";';
+	
+	const functionBody = `export default function HomePage() {${authSection}
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export default function HomePage() {${authSection}
               <div key={index} className="p-4 border rounded">
                 <h3 className="font-medium">{product.name}</h3>
                 <p className="text-gray-600">{product.description}</p>
-                <p className="font-semibold">$\{product.price}</p>
+                <p className="font-semibold">$\\{product.price}</p>
               </div>
             ))}
           </div>
@@ -117,4 +117,14 @@ export default function HomePage() {${authSection}
     </main>
   );
 }`;
+
+	return [
+		clientDirective,
+		'',
+		reactImports,
+		clientImport,
+		typeImports + authImports,
+		'',
+		functionBody
+	].join('\n');
 }

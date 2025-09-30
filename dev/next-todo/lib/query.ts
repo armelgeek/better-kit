@@ -19,7 +19,7 @@ export const todoSchema = withId({
 const todoResource = createResource({
   name: "todo",
   schema: todoSchema,
-  middleware: [
+  middlewares: [
     {
       handler: async (context) => {
         console.log('Todo resource middleware triggered', context);
@@ -33,20 +33,20 @@ const todoResource = createResource({
   ],
   permissions: {
     create: async (context) => {
-      console.log('Create context user:', context.user);
+      
       return !!context.user;
     },
     read: async (context) => {
-      return true;
+      return !!context.user;
     },
     update: async (context) => {
-      return true;
+      return !!context.user;
     },
     delete: async (context) => {
-      return true;
+      return !!context.user;
     },
     list: async (context) => {
-      return true;
+      return !!context.user;
     },
   },
   hooks: {
