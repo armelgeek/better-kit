@@ -1,15 +1,14 @@
-
 import Navbar from "../../components/Navbar";
 
 export default function BaseLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <>
-  <Navbar />
-        {children}
-    </>
-  );
+	return (
+		<>
+			<Navbar />
+			{children}
+		</>
+	);
 }

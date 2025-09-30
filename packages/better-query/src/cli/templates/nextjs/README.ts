@@ -1,5 +1,6 @@
 export function readmeTemplate(withAuth: boolean): string {
-	const authSection = withAuth ? `
+	const authSection = withAuth
+		? `
 
 ## Authentication
 
@@ -22,7 +23,8 @@ BETTER_AUTH_SECRET=your-secret-key-here
 - \`/api/auth/signin\` - Sign in page
 - \`/api/auth/signup\` - Sign up page
 - \`/api/auth/signout\` - Sign out
-` : "";
+`
+		: "";
 
 	return `# Better Query App
 

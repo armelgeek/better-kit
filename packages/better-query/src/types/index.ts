@@ -215,7 +215,9 @@ export interface QueryOptions {
 			rules: SanitizationRule[];
 		};
 		/** Global permission checks */
-		globalPermissions?: (context: QueryPermissionContext) => Promise<boolean> | boolean;
+		globalPermissions?: (
+			context: QueryPermissionContext,
+		) => Promise<boolean> | boolean;
 	};
 	/** Audit logging configuration */
 	audit?: {
@@ -240,7 +242,9 @@ export interface QueryDatabaseConfig {
 /**
  * Database configuration can be either a provider config or a direct adapter
  */
-export type QueryDatabaseOptions = QueryDatabaseConfig | { adapter: QueryAdapter };
+export type QueryDatabaseOptions =
+	| QueryDatabaseConfig
+	| { adapter: QueryAdapter };
 
 // Legacy aliases
 export type CrudDatabaseConfig = QueryDatabaseConfig;
@@ -306,9 +310,19 @@ export interface FieldAttribute {
 		/** The field on the referenced model */
 		field: string;
 		/** Action to perform when the reference is deleted */
-		onDelete?: "cascade" | "restrict" | "set null" | "set default" | "no action";
+		onDelete?:
+			| "cascade"
+			| "restrict"
+			| "set null"
+			| "set default"
+			| "no action";
 		/** Action to perform when the reference is updated */
-		onUpdate?: "cascade" | "restrict" | "set null" | "set default" | "no action";
+		onUpdate?:
+			| "cascade"
+			| "restrict"
+			| "set null"
+			| "set default"
+			| "no action";
 	};
 }
 
@@ -340,16 +354,34 @@ export interface QueryParams extends PaginationParams {
 	/** Filter by related data and advanced conditions */
 	where?: Record<string, any>;
 	/** Order by fields in current or related models */
-	orderBy?: Array<{ field: string; direction: "asc" | "desc"; relation?: string }>;
+	orderBy?: Array<{
+		field: string;
+		direction: "asc" | "desc";
+		relation?: string;
+	}>;
 	/** Advanced search query */
 	q?: string;
 	/** Search in specific fields */
 	searchFields?: string[];
 	/** Filter operators for advanced filtering */
-	filters?: Record<string, {
-		operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "notin" | "like" | "ilike" | "between";
-		value: any;
-	}>;
+	filters?: Record<
+		string,
+		{
+			operator:
+				| "eq"
+				| "ne"
+				| "gt"
+				| "gte"
+				| "lt"
+				| "lte"
+				| "in"
+				| "notin"
+				| "like"
+				| "ilike"
+				| "between";
+			value: any;
+		}
+	>;
 	/** Date range filters */
 	dateRange?: {
 		field: string;

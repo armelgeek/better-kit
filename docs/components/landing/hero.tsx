@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import useMeasure from "react-use-measure";
-import Link from "next/link";
-import clsx from "clsx";
 import { Button } from "@/components/ui/button";
+import clsx from "clsx";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { Check, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 import { Highlight, themes } from "prism-react-renderer";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { useEffect, useId, useState } from "react";
+import useMeasure from "react-use-measure";
 import { Builder } from "../builder";
-import { Spotlight } from "./spotlight";
 import { GradientBG } from "./gradient-bg";
+import { Spotlight } from "./spotlight";
 const tabs: { name: "query.ts" | "client.ts"; code: string }[] = [
 	{
 		name: "query.ts",

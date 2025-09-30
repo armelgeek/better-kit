@@ -1,11 +1,15 @@
 export function layoutTemplate(withAuth: boolean): string {
-	const authProviders = withAuth ? `
-import { AuthProvider } from "@/components/auth-provider";` : "";
+	const authProviders = withAuth
+		? `
+import { AuthProvider } from "@/components/auth-provider";`
+		: "";
 
-	const authWrapper = withAuth ? `
+	const authWrapper = withAuth
+		? `
       <AuthProvider>
         {children}
-      </AuthProvider>` : "        {children}";
+      </AuthProvider>`
+		: "        {children}";
 
 	return `import type { Metadata } from "next";
 import "./globals.css";${authProviders}

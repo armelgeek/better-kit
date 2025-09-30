@@ -1,35 +1,41 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import type { ReactQueryClient } from "./index";
+import { useCallback, useEffect, useState } from "react";
 import type { BetterQuery } from "../../query";
+import type { ReactQueryClient } from "./index";
 
 /**
  * Generic hook for CRUD operations with loading and error states
  */
 export function useQuery<T extends BetterQuery = BetterQuery>(
-	client: ReactQueryClient<T>
+	client: ReactQueryClient<T>,
 ) {
 	return {
 		useCreate: (resourceName: string) => {
 			const [loading, setLoading] = useState(false);
 			const [error, setError] = useState<any>(null);
 
-			const create = useCallback(async (data: any, options?: any) => {
-				setLoading(true);
-				setError(null);
-				try {
-					const result = await (client as any)[resourceName].create(data, options);
-					if (result.error) {
-						setError(result.error);
+			const create = useCallback(
+				async (data: any, options?: any) => {
+					setLoading(true);
+					setError(null);
+					try {
+						const result = await (client as any)[resourceName].create(
+							data,
+							options,
+						);
+						if (result.error) {
+							setError(result.error);
+						}
+						return result;
+					} catch (err) {
+						setError(err);
+						return { data: null, error: err };
+					} finally {
+						setLoading(false);
 					}
-					return result;
-				} catch (err) {
-					setError(err);
-					return { data: null, error: err };
-				} finally {
-					setLoading(false);
-				}
-			}, [resourceName]);
+				},
+				[resourceName],
+			);
 
 			return { create, loading, error };
 		},
@@ -39,27 +45,34 @@ export function useQuery<T extends BetterQuery = BetterQuery>(
 			const [loading, setLoading] = useState(false);
 			const [error, setError] = useState<any>(null);
 
-			const read = useCallback(async (readId?: string, options?: any) => {
-				const targetId = readId || id;
-				if (!targetId) return { data: null, error: { message: "ID is required" } };
+			const read = useCallback(
+				async (readId?: string, options?: any) => {
+					const targetId = readId || id;
+					if (!targetId)
+						return { data: null, error: { message: "ID is required" } };
 
-				setLoading(true);
-				setError(null);
-				try {
-					const result = await (client as any)[resourceName].read(targetId, options);
-					if (result.error) {
-						setError(result.error);
-					} else {
-						setData(result.data);
+					setLoading(true);
+					setError(null);
+					try {
+						const result = await (client as any)[resourceName].read(
+							targetId,
+							options,
+						);
+						if (result.error) {
+							setError(result.error);
+						} else {
+							setData(result.data);
+						}
+						return result;
+					} catch (err) {
+						setError(err);
+						return { data: null, error: err };
+					} finally {
+						setLoading(false);
 					}
-					return result;
-				} catch (err) {
-					setError(err);
-					return { data: null, error: err };
-				} finally {
-					setLoading(false);
-				}
-			}, [resourceName, id]);
+				},
+				[resourceName, id],
+			);
 
 			// Auto-fetch if ID is provided
 			useEffect(() => {
@@ -75,22 +88,29 @@ export function useQuery<T extends BetterQuery = BetterQuery>(
 			const [loading, setLoading] = useState(false);
 			const [error, setError] = useState<any>(null);
 
-			const update = useCallback(async (id: string, data: any, options?: any) => {
-				setLoading(true);
-				setError(null);
-				try {
-					const result = await (client as any)[resourceName].update(id, data, options);
-					if (result.error) {
-						setError(result.error);
+			const update = useCallback(
+				async (id: string, data: any, options?: any) => {
+					setLoading(true);
+					setError(null);
+					try {
+						const result = await (client as any)[resourceName].update(
+							id,
+							data,
+							options,
+						);
+						if (result.error) {
+							setError(result.error);
+						}
+						return result;
+					} catch (err) {
+						setError(err);
+						return { data: null, error: err };
+					} finally {
+						setLoading(false);
 					}
-					return result;
-				} catch (err) {
-					setError(err);
-					return { data: null, error: err };
-				} finally {
-					setLoading(false);
-				}
-			}, [resourceName]);
+				},
+				[resourceName],
+			);
 
 			return { update, loading, error };
 		},
@@ -99,22 +119,28 @@ export function useQuery<T extends BetterQuery = BetterQuery>(
 			const [loading, setLoading] = useState(false);
 			const [error, setError] = useState<any>(null);
 
-			const deleteItem = useCallback(async (id: string, options?: any) => {
-				setLoading(true);
-				setError(null);
-				try {
-					const result = await (client as any)[resourceName].delete(id, options);
-					if (result.error) {
-						setError(result.error);
+			const deleteItem = useCallback(
+				async (id: string, options?: any) => {
+					setLoading(true);
+					setError(null);
+					try {
+						const result = await (client as any)[resourceName].delete(
+							id,
+							options,
+						);
+						if (result.error) {
+							setError(result.error);
+						}
+						return result;
+					} catch (err) {
+						setError(err);
+						return { data: null, error: err };
+					} finally {
+						setLoading(false);
 					}
-					return result;
-				} catch (err) {
-					setError(err);
-					return { data: null, error: err };
-				} finally {
-					setLoading(false);
-				}
-			}, [resourceName]);
+				},
+				[resourceName],
+			);
 
 			return { delete: deleteItem, loading, error };
 		},
@@ -124,25 +150,31 @@ export function useQuery<T extends BetterQuery = BetterQuery>(
 			const [loading, setLoading] = useState(false);
 			const [error, setError] = useState<any>(null);
 
-			const list = useCallback(async (listParams?: any, options?: any) => {
-				const targetParams = listParams || params;
-				setLoading(true);
-				setError(null);
-				try {
-					const result = await (client as any)[resourceName].list(targetParams, options);
-					if (result.error) {
-						setError(result.error);
-					} else {
-						setData(result.data);
+			const list = useCallback(
+				async (listParams?: any, options?: any) => {
+					const targetParams = listParams || params;
+					setLoading(true);
+					setError(null);
+					try {
+						const result = await (client as any)[resourceName].list(
+							targetParams,
+							options,
+						);
+						if (result.error) {
+							setError(result.error);
+						} else {
+							setData(result.data);
+						}
+						return result;
+					} catch (err) {
+						setError(err);
+						return { data: null, error: err };
+					} finally {
+						setLoading(false);
 					}
-					return result;
-				} catch (err) {
-					setError(err);
-					return { data: null, error: err };
-				} finally {
-					setLoading(false);
-				}
-			}, [resourceName, params]);
+				},
+				[resourceName, params],
+			);
 
 			// Auto-fetch on mount
 			useEffect(() => {
@@ -159,10 +191,10 @@ export function useQuery<T extends BetterQuery = BetterQuery>(
  */
 export function useResource<T extends BetterQuery = BetterQuery>(
 	client: ReactQueryClient<T>,
-	resourceName: string
+	resourceName: string,
 ) {
 	const hooks = useQuery(client);
-	
+
 	return {
 		useCreate: () => hooks.useCreate(resourceName),
 		useRead: (id?: string) => hooks.useRead(resourceName, id),

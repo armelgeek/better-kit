@@ -1,4 +1,4 @@
-import { CrudHookContext, CrudOperation, AuditEvent } from "../types";
+import { AuditEvent, CrudHookContext, CrudOperation } from "../types";
 
 /**
  * Hook executor that runs lifecycle hooks for CRUD operations
@@ -9,7 +9,7 @@ export class HookExecutor {
 	 */
 	static async executeHook(
 		hookFn: ((context: CrudHookContext) => Promise<void> | void) | undefined,
-		context: CrudHookContext
+		context: CrudHookContext,
 	): Promise<void> {
 		if (hookFn) {
 			await hookFn(context);
@@ -21,13 +21,13 @@ export class HookExecutor {
 	 */
 	static async executeBefore(
 		hooks: Record<string, any> | undefined,
-		context: CrudHookContext
+		context: CrudHookContext,
 	): Promise<void> {
 		// Execute plugin hooks first
 		if (context.adapter?.context?.pluginManager) {
 			const pluginManager = context.adapter.context.pluginManager;
 			const { operation } = context;
-			
+
 			let hookName: keyof any;
 			switch (operation) {
 				case "create":
@@ -48,7 +48,7 @@ export class HookExecutor {
 				default:
 					return;
 			}
-			
+
 			await pluginManager.executeHook(hookName, context);
 		}
 
@@ -81,7 +81,7 @@ export class HookExecutor {
 	 */
 	static async executeAfter(
 		hooks: Record<string, any> | undefined,
-		context: CrudHookContext
+		context: CrudHookContext,
 	): Promise<void> {
 		// Execute resource-specific hooks first
 		if (hooks) {
@@ -113,7 +113,7 @@ export class HookExecutor {
 		if (context.adapter?.context?.pluginManager) {
 			const pluginManager = context.adapter.context.pluginManager;
 			const { operation } = context;
-			
+
 			let hookName: keyof any;
 			switch (operation) {
 				case "create":
@@ -134,7 +134,7 @@ export class HookExecutor {
 				default:
 					return;
 			}
-			
+
 			await pluginManager.executeHook(hookName, context);
 		}
 	}
@@ -149,7 +149,7 @@ export class AuditLogger {
 
 	constructor(
 		auditFn?: (event: AuditEvent) => Promise<void> | void,
-		enabledOperations: CrudOperation[] = ["create", "update", "delete"]
+		enabledOperations: CrudOperation[] = ["create", "update", "delete"],
 	) {
 		this.auditFn = auditFn;
 		this.enabledOperations = enabledOperations;
@@ -181,7 +181,7 @@ export class AuditLogger {
 	async logFromContext(
 		context: CrudHookContext,
 		dataBefore?: any,
-		dataAfter?: any
+		dataAfter?: any,
 	): Promise<void> {
 		const { user, resource, operation, id, request } = context;
 
@@ -192,11 +192,11 @@ export class AuditLogger {
 			recordId: id,
 			dataBefore,
 			dataAfter,
-			ipAddress: request?.ip || request?.headers?.['x-forwarded-for'],
-			userAgent: request?.headers?.['user-agent'],
+			ipAddress: request?.ip || request?.headers?.["x-forwarded-for"],
+			userAgent: request?.headers?.["user-agent"],
 			metadata: {
 				timestamp: new Date().toISOString(),
-				userAgent: request?.headers?.['user-agent'],
+				userAgent: request?.headers?.["user-agent"],
 				requestId: request?.id,
 			},
 		});
@@ -207,11 +207,16 @@ export class AuditLogger {
  * Default audit logger implementation (console logging)
  */
 export const defaultAuditLogger = (event: AuditEvent): void => {
-	console.log(`[AUDIT] ${event.timestamp.toISOString()} - ${event.operation.toUpperCase()} on ${event.resource}`, {
-		user: event.user?.id || event.user?.email || "anonymous",
-		recordId: event.recordId,
-		ipAddress: event.ipAddress,
-	});
+	console.log(
+		`[AUDIT] ${event.timestamp.toISOString()} - ${event.operation.toUpperCase()} on ${
+			event.resource
+		}`,
+		{
+			user: event.user?.id || event.user?.email || "anonymous",
+			recordId: event.recordId,
+			ipAddress: event.ipAddress,
+		},
+	);
 };
 
 /**
@@ -219,13 +224,13 @@ export const defaultAuditLogger = (event: AuditEvent): void => {
  */
 export function createHookMiddleware(
 	hooks?: Record<string, any>,
-	auditLogger?: AuditLogger
+	auditLogger?: AuditLogger,
 ) {
 	return async (context: any, next: () => Promise<void>) => {
 		// Store hooks and audit logger in context for later use
 		context.hooks = hooks;
 		context.auditLogger = auditLogger;
-		
+
 		await next();
 	};
 }
@@ -253,11 +258,13 @@ export const HookUtils = {
 	/**
 	 * User tracking hook - adds user ID to data
 	 */
-	userTrackingHook: (userField = "userId") => async (context: CrudHookContext): Promise<void> => {
-		if (context.operation === "create" && context.user && context.data) {
-			context.data[userField] = context.user.id || context.user.userId;
-		}
-	},
+	userTrackingHook:
+		(userField = "userId") =>
+		async (context: CrudHookContext): Promise<void> => {
+			if (context.operation === "create" && context.user && context.data) {
+				context.data[userField] = context.user.id || context.user.userId;
+			}
+		},
 
 	/**
 	 * Soft delete hook - marks records as deleted instead of removing them
@@ -279,9 +286,13 @@ export const HookUtils = {
 	/**
 	 * Validation hook - additional custom validation
 	 */
-	validationHook: (validationFn: (data: any) => Promise<boolean> | boolean) => 
+	validationHook:
+		(validationFn: (data: any) => Promise<boolean> | boolean) =>
 		async (context: CrudHookContext): Promise<void> => {
-			if ((context.operation === "create" || context.operation === "update") && context.data) {
+			if (
+				(context.operation === "create" || context.operation === "update") &&
+				context.data
+			) {
 				const isValid = await validationFn(context.data);
 				if (!isValid) {
 					throw new Error("Custom validation failed");
@@ -292,7 +303,8 @@ export const HookUtils = {
 	/**
 	 * Notification hook - send notifications on changes
 	 */
-	notificationHook: (notifyFn: (context: CrudHookContext) => Promise<void> | void) => 
+	notificationHook:
+		(notifyFn: (context: CrudHookContext) => Promise<void> | void) =>
 		async (context: CrudHookContext): Promise<void> => {
 			await notifyFn(context);
 		},

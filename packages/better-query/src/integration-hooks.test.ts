@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { createResource } from "./utils/schema";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createResource } from "./utils/schema";
 
 // Simple product schema for testing
 const productSchema = z.object({
@@ -8,9 +8,11 @@ const productSchema = z.object({
 	name: z.string(),
 	price: z.number(),
 	status: z.string().optional(),
-	seo: z.object({
-		slug: z.string().optional(),
-	}).optional(),
+	seo: z
+		.object({
+			slug: z.string().optional(),
+		})
+		.optional(),
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional(),
 });
@@ -39,11 +41,11 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 					if (!context.data.seo?.slug && context.data.name) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
-					
+
 					// Set default status if not provided
 					if (!context.data.status) {
 						context.data.status = "draft";
@@ -52,18 +54,23 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 				beforeUpdate: async (context) => {
 					// Always update the updatedAt field
 					context.data.updatedAt = new Date();
-					
+
 					// Update slug if name changed
-					if (context.data.name && context.existingData?.name !== context.data.name) {
+					if (
+						context.data.name &&
+						context.existingData?.name !== context.data.name
+					) {
 						const slug = context.data.name
 							.toLowerCase()
-							.replace(/[^a-z0-9]+/g, '-')
-							.replace(/(^-|-$)/g, '');
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/(^-|-$)/g, "");
 						context.data.seo = { ...context.data.seo, slug };
 					}
 				},
 				afterCreate: async (context) => {
-					console.log(`Product created: ${context.result.name} (ID: ${context.result.id})`);
+					console.log(
+						`Product created: ${context.result.name} (ID: ${context.result.id})`,
+					);
 				},
 			},
 			endpoints: {
@@ -98,11 +105,11 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 			if (!context.data.seo?.slug && context.data.name) {
 				const slug = context.data.name
 					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-')
-					.replace(/(^-|-$)/g, '');
+					.replace(/[^a-z0-9]+/g, "-")
+					.replace(/(^-|-$)/g, "");
 				context.data.seo = { ...context.data.seo, slug };
 			}
-			
+
 			// Set default status if not provided
 			if (!context.data.status) {
 				context.data.status = "draft";
@@ -122,9 +129,9 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 			user: { id: "user123" },
 			resource: "product",
 			operation: "create" as const,
-			data: { 
+			data: {
 				name: "Test Product With Spaces",
-				price: 99.99 
+				price: 99.99,
 			},
 			adapter: {} as any,
 		};
@@ -133,7 +140,9 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 
 		// Verify the hook was called and modified the data
 		expect(beforeCreateHook).toHaveBeenCalledWith(mockContext);
-		expect((mockContext.data as any).seo?.slug).toBe("test-product-with-spaces");
+		expect((mockContext.data as any).seo?.slug).toBe(
+			"test-product-with-spaces",
+		);
 		expect((mockContext.data as any).status).toBe("draft");
 	});
 
@@ -141,13 +150,16 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 		const beforeUpdateHook = vi.fn(async (context) => {
 			// Always update the updatedAt field
 			context.data.updatedAt = new Date();
-			
+
 			// Update slug if name changed
-			if (context.data.name && context.existingData?.name !== context.data.name) {
+			if (
+				context.data.name &&
+				context.existingData?.name !== context.data.name
+			) {
 				const slug = context.data.name
 					.toLowerCase()
-					.replace(/[^a-z0-9]+/g, '-')
-					.replace(/(^-|-$)/g, '');
+					.replace(/[^a-z0-9]+/g, "-")
+					.replace(/(^-|-$)/g, "");
 				context.data.seo = { ...context.data.seo, slug };
 			}
 		});
@@ -165,9 +177,9 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 			user: { id: "user123" },
 			resource: "product",
 			operation: "update" as const,
-			data: { 
+			data: {
 				name: "Updated Product Name",
-				price: 149.99 
+				price: 149.99,
 			},
 			existingData: {
 				name: "Old Product Name",
@@ -186,7 +198,9 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 
 	it("should support afterCreate hook for side effects", async () => {
 		const afterCreateHook = vi.fn(async (context) => {
-			console.log(`Product created: ${context.result.name} (ID: ${context.result.id})`);
+			console.log(
+				`Product created: ${context.result.name} (ID: ${context.result.id})`,
+			);
 		});
 
 		const resource = createResource({
@@ -202,10 +216,10 @@ describe("User Example - CRUD Resource Hooks Integration", () => {
 			user: { id: "user123" },
 			resource: "product",
 			operation: "create" as const,
-			result: { 
+			result: {
 				id: "prod123",
 				name: "New Product",
-				price: 99.99 
+				price: 99.99,
 			},
 			adapter: {} as any,
 		};

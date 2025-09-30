@@ -1,6 +1,11 @@
 import { Kysely, sql } from "kysely";
-import { QueryAdapter, QueryAdapterConfig, QueryWhere, QueryOrderBy } from "../types/adapter";
 import { FieldAttribute, IncludeOptions } from "../types";
+import {
+	QueryAdapter,
+	QueryAdapterConfig,
+	QueryOrderBy,
+	QueryWhere,
+} from "../types/adapter";
 import { RelationshipManager } from "../utils/relationships";
 
 /**
@@ -45,17 +50,28 @@ function transformFromData(data: Record<string, any>): Record<string, any> {
  */
 function mapOperatorToKysely(operator?: string): string {
 	switch (operator) {
-		case "eq": return "=";
-		case "ne": return "!=";
-		case "lt": return "<";
-		case "lte": return "<=";
-		case "gt": return ">";
-		case "gte": return ">=";
-		case "in": return "in";
-		case "notIn": return "not in";
-		case "like": return "like";
-		case "notLike": return "not like";
-		default: return "=";
+		case "eq":
+			return "=";
+		case "ne":
+			return "!=";
+		case "lt":
+			return "<";
+		case "lte":
+			return "<=";
+		case "gt":
+			return ">";
+		case "gte":
+			return ">=";
+		case "in":
+			return "in";
+		case "notIn":
+			return "not in";
+		case "like":
+			return "like";
+		case "notLike":
+			return "not like";
+		default:
+			return "=";
 	}
 }
 
@@ -119,7 +135,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		this.relationshipManager = manager;
 	}
 
-	async create(params: { model: string; data: Record<string, any>; include?: IncludeOptions }) {
+	async create(params: {
+		model: string;
+		data: Record<string, any>;
+		include?: IncludeOptions;
+	}) {
 		const { model, data, include } = params;
 
 		// Add timestamps if they don't exist
@@ -171,7 +191,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		}
 
 		// Use relationship-aware query
-		const results = await this.findWithRelations(model, { where, include, limit: 1 });
+		const results = await this.findWithRelations(model, {
+			where,
+			include,
+			limit: 1,
+		});
 		return results.length > 0 ? results[0] : null;
 	}
 
@@ -184,7 +208,15 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		include?: IncludeOptions;
 		select?: string[];
 	}) {
-		const { model, where = [], limit, offset, orderBy = [], include, select } = params;
+		const {
+			model,
+			where = [],
+			limit,
+			offset,
+			orderBy = [],
+			include,
+			select,
+		} = params;
 
 		// If no includes, use simple query
 		if (!include || !this.relationshipManager) {
@@ -213,7 +245,13 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		}
 
 		// Use relationship-aware query
-		return await this.findWithRelations(model, { where, limit, offset, orderBy, include });
+		return await this.findWithRelations(model, {
+			where,
+			limit,
+			offset,
+			orderBy,
+			include,
+		});
 	}
 
 	async update(params: {
@@ -238,7 +276,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		}
 
 		const result = await query.returningAll().executeTakeFirst();
-		
+
 		if (!result) return result;
 
 		// Transform result back to proper types
@@ -304,7 +342,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			// Create main record
 			const adapter = new KyselyQueryAdapter(trx);
 			adapter.setRelationshipManager(this.relationshipManager!);
-			
+
 			const mainRecord = await adapter.create({ model, data });
 
 			// Create related records if any
@@ -335,7 +373,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			// Update main record
 			const adapter = new KyselyQueryAdapter(trx);
 			adapter.setRelationshipManager(this.relationshipManager!);
-			
+
 			const mainRecord = await adapter.update({ model, where, data });
 
 			// Update related records if any
@@ -370,15 +408,17 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		return { valid: errors.length === 0, errors };
 	}
 
-	async createSchema(data: { model: string; fields: Record<string, FieldAttribute> }[]): Promise<void> {
+	async createSchema(
+		data: { model: string; fields: Record<string, FieldAttribute> }[],
+	): Promise<void> {
 		try {
 			for (const { model, fields } of data) {
 				// Get provider from config or default to sqlite
 				const provider = this.config?.provider || "sqlite";
-				
+
 				// Generate and execute CREATE TABLE SQL
 				const createTableSQL = generateCreateTableSQL(model, fields, provider);
-				
+
 				// Execute the SQL using Kysely's sql template literal
 				await sql`${sql.raw(createTableSQL)}`.execute(this.db);
 			}
@@ -396,65 +436,79 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			offset?: number;
 			orderBy?: QueryOrderBy[];
 			include: IncludeOptions;
-		}
+		},
 	): Promise<any[]> {
 		if (!this.relationshipManager) return [];
 
 		const { where = [], limit, offset, orderBy = [], include } = params;
-		
+
 		// Resolve includes
-		const resolvedIncludes = this.relationshipManager.resolveIncludes(model, include);
-		
+		const resolvedIncludes = this.relationshipManager.resolveIncludes(
+			model,
+			include,
+		);
+
 		if (resolvedIncludes.length === 0) {
 			// Fall back to simple query
 			return await this.findMany({ model, where, limit, offset, orderBy });
 		}
 
 		// Generate joins
-		const joins = this.relationshipManager.generateJoins(model, resolvedIncludes, "main");
-		
+		const joins = this.relationshipManager.generateJoins(
+			model,
+			resolvedIncludes,
+			"main",
+		);
+
 		// Build complex query with joins
 		let query = this.db.selectFrom(`${model} as main`);
-		
+
 		// Select main table fields explicitly
-		const mainSchema = this.relationshipManager.relationshipContext.schemas.get(model);
+		const mainSchema =
+			this.relationshipManager.relationshipContext.schemas.get(model);
 		if (mainSchema) {
 			for (const fieldName of Object.keys(mainSchema.fields)) {
 				query = query.select(`main.${fieldName} as ${fieldName}`);
 			}
 		}
-		
+
 		// Add join selects
 		for (const include of resolvedIncludes) {
 			const alias = `main_${include.relationName}`;
-			const targetSchema = this.relationshipManager.relationshipContext.schemas.get(include.relation.target);
+			const targetSchema =
+				this.relationshipManager.relationshipContext.schemas.get(
+					include.relation.target,
+				);
 			if (targetSchema) {
 				for (const fieldName of Object.keys(targetSchema.fields)) {
-					query = query.select(`${alias}.${fieldName} as ${alias}_${fieldName}`);
+					query = query.select(
+						`${alias}.${fieldName} as ${alias}_${fieldName}`,
+					);
 				}
 			}
 		}
 
 		// Apply joins
 		for (const join of joins) {
-			query = query.leftJoin(
-				`${join.table} as ${join.alias}`,
-				(builder) => {
-					const parts = join.condition.split(" = ");
-					const left = parts[0]?.trim();
-					const right = parts[1]?.trim();
-					if (left && right) {
-						return builder.onRef(left, "=", right);
-					}
-					return builder;
+			query = query.leftJoin(`${join.table} as ${join.alias}`, (builder) => {
+				const parts = join.condition.split(" = ");
+				const left = parts[0]?.trim();
+				const right = parts[1]?.trim();
+				if (left && right) {
+					return builder.onRef(left, "=", right);
 				}
-			);
+				return builder;
+			});
 		}
 
 		// Apply where conditions
 		for (const condition of where) {
 			const operator = mapOperatorToKysely(condition.operator);
-			query = query.where(`main.${condition.field}`, operator as any, condition.value);
+			query = query.where(
+				`main.${condition.field}`,
+				operator as any,
+				condition.value,
+			);
 		}
 
 		// Apply ordering
@@ -464,8 +518,10 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 		// Apply pagination - but be careful with many-to-many relationships
 		// For many-to-many, we need to get all rows first then group, then limit
-		const hasManyToMany = resolvedIncludes.some(include => include.relation.type === "belongsToMany");
-		
+		const hasManyToMany = resolvedIncludes.some(
+			(include) => include.relation.type === "belongsToMany",
+		);
+
 		if (limit && !hasManyToMany) {
 			query = query.limit(limit);
 		}
@@ -480,7 +536,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		const nestedResults = this.relationshipManager.transformJoinedResults(
 			transformedResults,
 			resolvedIncludes,
-			model
+			model,
 		);
 
 		// Apply limit after grouping for many-to-many relationships
@@ -494,22 +550,30 @@ export class KyselyQueryAdapter implements QueryAdapter {
 	private async includeRelatedData(
 		model: string,
 		record: any,
-		include: IncludeOptions
+		include: IncludeOptions,
 	): Promise<any> {
 		if (!this.relationshipManager) return record;
 
-		const resolvedIncludes = this.relationshipManager.resolveIncludes(model, include);
-		
+		const resolvedIncludes = this.relationshipManager.resolveIncludes(
+			model,
+			include,
+		);
+
 		for (const resolvedInclude of resolvedIncludes) {
 			const { relationName, relation } = resolvedInclude;
-			
+
 			// Load related data based on relationship type
 			switch (relation.type) {
 				case "belongsTo":
 					if (record[relation.foreignKey || `${relation.target}Id`]) {
 						const related = await this.findFirst({
 							model: relation.target,
-							where: [{ field: "id", value: record[relation.foreignKey || `${relation.target}Id`] }],
+							where: [
+								{
+									field: "id",
+									value: record[relation.foreignKey || `${relation.target}Id`],
+								},
+							],
 						});
 						record[relationName] = related;
 					}
@@ -517,28 +581,38 @@ export class KyselyQueryAdapter implements QueryAdapter {
 				case "hasOne":
 					const relatedOne = await this.findFirst({
 						model: relation.target,
-						where: [{ field: relation.foreignKey || `${model}Id`, value: record.id }],
+						where: [
+							{ field: relation.foreignKey || `${model}Id`, value: record.id },
+						],
 					});
 					record[relationName] = relatedOne;
 					break;
 				case "hasMany":
 					const relatedMany = await this.findMany({
 						model: relation.target,
-						where: [{ field: relation.foreignKey || `${model}Id`, value: record.id }],
+						where: [
+							{ field: relation.foreignKey || `${model}Id`, value: record.id },
+						],
 					});
 					record[relationName] = relatedMany;
 					break;
 				case "belongsToMany":
-					if (relation.through && relation.sourceKey && relation.targetForeignKey) {
+					if (
+						relation.through &&
+						relation.sourceKey &&
+						relation.targetForeignKey
+					) {
 						// Query through junction table
 						const junctionQuery = this.db
 							.selectFrom(relation.through)
 							.select(relation.targetForeignKey)
 							.where(relation.sourceKey, "=", record.id);
-						
+
 						const junctionResults = await junctionQuery.execute();
-						const targetIds = junctionResults.map((row: any) => row[relation.targetForeignKey!]);
-						
+						const targetIds = junctionResults.map(
+							(row: any) => row[relation.targetForeignKey!],
+						);
+
 						if (targetIds.length > 0) {
 							// Query target records
 							const relatedManyToMany = await this.findMany({
@@ -550,7 +624,9 @@ export class KyselyQueryAdapter implements QueryAdapter {
 							record[relationName] = [];
 						}
 					} else {
-						console.warn(`Incomplete many-to-many configuration for ${relationName}. Required: through, sourceKey, targetForeignKey`);
+						console.warn(
+							`Incomplete many-to-many configuration for ${relationName}. Required: through, sourceKey, targetForeignKey`,
+						);
 						record[relationName] = [];
 					}
 					break;
@@ -562,7 +638,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 	private async handleCascadeDelete(
 		model: string,
-		where: QueryWhere[]
+		where: QueryWhere[],
 	): Promise<void> {
 		// TODO: Implement cascade delete logic
 		// This would find all related records that should be deleted
@@ -573,7 +649,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		mainRecord: any,
 		relations: Record<string, any>,
 		model: string,
-		trx: Kysely<any>
+		trx: Kysely<any>,
 	): Promise<void> {
 		// TODO: Implement relation creation logic
 		// This would create related records and update foreign keys
@@ -583,7 +659,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 		mainRecord: any,
 		relations: Record<string, any>,
 		model: string,
-		trx: Kysely<any>
+		trx: Kysely<any>,
 	): Promise<void> {
 		// TODO: Implement relation update logic
 		// This would update/create/delete related records as needed
@@ -603,15 +679,25 @@ export class KyselyQueryAdapter implements QueryAdapter {
 			throw new Error("Relationship manager not available");
 		}
 
-		const relationships = this.relationshipManager.getRelationships(params.sourceModel);
+		const relationships = this.relationshipManager.getRelationships(
+			params.sourceModel,
+		);
 		const relation = relationships[params.relationName];
 
 		if (!relation || relation.type !== "belongsToMany") {
-			throw new Error(`Invalid many-to-many relationship: ${params.relationName}`);
+			throw new Error(
+				`Invalid many-to-many relationship: ${params.relationName}`,
+			);
 		}
 
-		if (!relation.through || !relation.sourceKey || !relation.targetForeignKey) {
-			throw new Error(`Incomplete many-to-many configuration for ${params.relationName}`);
+		if (
+			!relation.through ||
+			!relation.sourceKey ||
+			!relation.targetForeignKey
+		) {
+			throw new Error(
+				`Incomplete many-to-many configuration for ${params.relationName}`,
+			);
 		}
 
 		const junctionTable = relation.through;
@@ -628,7 +714,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 				// Add new relationships
 				if (params.targetIds.length > 0) {
-					const junctionData = params.targetIds.map(targetId => ({
+					const junctionData = params.targetIds.map((targetId) => ({
 						[sourceKey]: params.sourceId,
 						[targetKey]: targetId,
 						created_at: new Date().toISOString(),
@@ -651,10 +737,12 @@ export class KyselyQueryAdapter implements QueryAdapter {
 
 				const existing = await existingQuery.execute();
 				const existingTargetIds = existing.map((row: any) => row[targetKey]);
-				const newTargetIds = params.targetIds.filter(id => !existingTargetIds.includes(id));
+				const newTargetIds = params.targetIds.filter(
+					(id) => !existingTargetIds.includes(id),
+				);
 
 				if (newTargetIds.length > 0) {
-					const junctionData = newTargetIds.map(targetId => ({
+					const junctionData = newTargetIds.map((targetId) => ({
 						[sourceKey]: params.sourceId,
 						[targetKey]: targetId,
 						created_at: new Date().toISOString(),
@@ -692,7 +780,7 @@ export class KyselyQueryAdapter implements QueryAdapter {
 	}): Promise<void> {
 		const provider = this.config?.provider || "sqlite";
 		const createTableSQL = generateJunctionTableSQL(params, provider);
-		
+
 		await sql`${sql.raw(createTableSQL)}`.execute(this.db);
 	}
 }
@@ -700,7 +788,11 @@ export class KyselyQueryAdapter implements QueryAdapter {
 /**
  * Creates a Kysely database instance based on the configuration
  */
-export function createKyselyDatabase(config: { provider: string; url: string; autoMigrate?: boolean }): Kysely<any> {
+export function createKyselyDatabase(config: {
+	provider: string;
+	url: string;
+	autoMigrate?: boolean;
+}): Kysely<any> {
 	// This is a simplified implementation
 	// In a real scenario, you'd handle different database providers
 	if (config.provider === "sqlite") {
@@ -859,12 +951,20 @@ export function generateCreateTableSQL(
 		if (field.references) {
 			if (provider === "postgres") {
 				foreignKeys.push(
-					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${
+						field.references.field
+					}) ON DELETE ${
+						field.references.onDelete?.toUpperCase() || "CASCADE"
+					}`,
 				);
 			} else {
 				// For SQLite, add foreign key constraint separately
 				foreignKeys.push(
-					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${field.references.field}) ON DELETE ${field.references.onDelete?.toUpperCase() || "CASCADE"}`
+					`FOREIGN KEY (${fieldName}) REFERENCES ${field.references.model}(${
+						field.references.field
+					}) ON DELETE ${
+						field.references.onDelete?.toUpperCase() || "CASCADE"
+					}`,
 				);
 			}
 		}
@@ -873,7 +973,8 @@ export function generateCreateTableSQL(
 	}
 
 	// Add standard timestamps if not present
-	if (!fields.createdAt) {
+	// Check both camelCase and snake_case variants to avoid duplicates
+	if (!fields.createdAt && !fields.created_at) {
 		if (provider === "postgres") {
 			columns.push("created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
 		} else {
@@ -881,7 +982,7 @@ export function generateCreateTableSQL(
 		}
 	}
 
-	if (!fields.updatedAt) {
+	if (!fields.updatedAt && !fields.updated_at) {
 		if (provider === "postgres") {
 			columns.push("updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
 		} else {
@@ -911,19 +1012,19 @@ export function generateJunctionTableSQL(
 	provider: string = "sqlite",
 ): string {
 	const { tableName, sourceKey, targetKey, sourceTable, targetTable } = params;
-	
+
 	const columns: string[] = [];
 	const foreignKeys: string[] = [];
-	
+
 	if (provider === "postgres") {
 		columns.push(`${sourceKey} VARCHAR(255) NOT NULL`);
 		columns.push(`${targetKey} VARCHAR(255) NOT NULL`);
 		columns.push("created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
 		columns.push(`PRIMARY KEY (${sourceKey}, ${targetKey})`);
-		
+
 		foreignKeys.push(
 			`FOREIGN KEY (${sourceKey}) REFERENCES ${sourceTable}(id) ON DELETE CASCADE`,
-			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`
+			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`,
 		);
 	} else {
 		// SQLite/MySQL
@@ -931,15 +1032,15 @@ export function generateJunctionTableSQL(
 		columns.push(`${targetKey} TEXT NOT NULL`);
 		columns.push("created_at TEXT DEFAULT CURRENT_TIMESTAMP");
 		columns.push(`PRIMARY KEY (${sourceKey}, ${targetKey})`);
-		
+
 		foreignKeys.push(
 			`FOREIGN KEY (${sourceKey}) REFERENCES ${sourceTable}(id) ON DELETE CASCADE`,
-			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`
+			`FOREIGN KEY (${targetKey}) REFERENCES ${targetTable}(id) ON DELETE CASCADE`,
 		);
 	}
-	
+
 	const allConstraints = [...columns, ...foreignKeys];
-	
+
 	return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${allConstraints.join(
 		",\n  ",
 	)}\n)`;
@@ -948,11 +1049,13 @@ export function generateJunctionTableSQL(
 /**
  * Creates a Kysely adapter instance (for use with provider config)
  */
-export function createKyselyAdapter(options: { database: { provider: string; url: string; autoMigrate?: boolean } }): Kysely<any> | null {
+export function createKyselyAdapter(options: {
+	database: { provider: string; url: string; autoMigrate?: boolean };
+}): Kysely<any> | null {
 	if (!("provider" in options.database)) {
 		return null;
 	}
-	
+
 	return createKyselyDatabase(options.database as any);
 }
 
@@ -964,7 +1067,7 @@ export function kyselyQueryAdapter(
 	config?: QueryAdapterConfig,
 ): QueryAdapter {
 	const adapter = new KyselyQueryAdapter(db);
-	
+
 	// Set configuration
 	if (config) {
 		adapter.config = {
@@ -975,7 +1078,7 @@ export function kyselyQueryAdapter(
 			},
 		};
 	}
-	
+
 	return adapter;
 }
 

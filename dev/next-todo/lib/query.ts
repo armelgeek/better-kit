@@ -11,7 +11,7 @@ import { timestampPlugin } from "./plugins";
 
 export const todoSchema = withId({
 	title: z.string().min(1, "Title is required"),
-	completed: z.boolean().default(false)
+	completed: z.boolean().default(false),
 });
 
 const todoResource = createResource({
@@ -108,7 +108,7 @@ export const query = betterQuery({
 		}),**/
 
 		// Custom plugin: Automatic timestamps
-	//	timestampPlugin,
+		//	timestampPlugin,
 	],
 	resources: [todoResource],
 });

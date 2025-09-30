@@ -1,13 +1,13 @@
 import { createRouter } from "better-call";
 import { sql } from "kysely";
+import type { UnionToIntersection } from "type-fest";
 import { getQueryAdapter } from "./adapters/utils";
 import { createQueryEndpoints } from "./endpoints";
-import { QueryContext, QueryOptions } from "./types";
-import { zodSchemaToFields } from "./utils/schema";
-import { RelationshipManager } from "./utils/relationships";
 import { PluginManager, shimPluginContext } from "./plugins/manager";
+import { QueryContext, QueryOptions } from "./types";
 import { PluginInitContext } from "./types/plugins";
-import type { UnionToIntersection } from "type-fest";
+import { RelationshipManager } from "./utils/relationships";
+import { zodSchemaToFields } from "./utils/schema";
 
 /**
  * Initialize Query context similar to better-auth's init function
@@ -33,7 +33,7 @@ function initQuery(options: QueryOptions): QueryContext {
 
 	// Create relationship manager and attach to adapter if it's a Kysely adapter
 	const relationshipManager = new RelationshipManager(context);
-	if ('setRelationshipManager' in adapter) {
+	if ("setRelationshipManager" in adapter) {
 		(adapter as any).setRelationshipManager(relationshipManager);
 	}
 
@@ -64,7 +64,10 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 		// Register relationships
 		if (resourceConfig.relationships) {
 			const relationshipManager = new RelationshipManager(queryContext);
-			relationshipManager.registerRelationships(resourceConfig.name, resourceConfig.relationships);
+			relationshipManager.registerRelationships(
+				resourceConfig.name,
+				resourceConfig.relationships,
+			);
 		}
 
 		// Generate Query endpoints for this resource
@@ -93,14 +96,19 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 	const relationshipManager = new RelationshipManager(queryContext);
 	for (const resourceConfig of allResources) {
 		if (resourceConfig.relationships) {
-			for (const [relationName, relationConfig] of Object.entries(resourceConfig.relationships)) {
+			for (const [relationName, relationConfig] of Object.entries(
+				resourceConfig.relationships,
+			)) {
 				const errors = relationshipManager.validateRelationship(
 					resourceConfig.name,
 					relationName,
-					relationConfig
+					relationConfig,
 				);
 				if (errors.length > 0) {
-					console.warn(`Relationship validation errors for ${resourceConfig.name}.${relationName}:`, errors);
+					console.warn(
+						`Relationship validation errors for ${resourceConfig.name}.${relationName}:`,
+						errors,
+					);
 				}
 			}
 		}
@@ -131,7 +139,7 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 
 	// Initialize plugins
 	const pluginInitContext: PluginInitContext = {
-		resources: new Map(allResources.map(r => [r.name, r])),
+		resources: new Map(allResources.map((r) => [r.name, r])),
 		schemas: queryContext.schemas,
 		relationships: queryContext.relationships,
 		adapter: queryContext.adapter,
@@ -139,7 +147,9 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 	};
 
 	// Initialize plugins asynchronously
-	queryContext.pluginManager!.initializePlugins(pluginInitContext).catch(console.error);
+	queryContext
+		.pluginManager!.initializePlugins(pluginInitContext)
+		.catch(console.error);
 
 	// Create router using better-call
 	const { handler, endpoints } = createRouter(api, {
@@ -151,7 +161,8 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 	});
 
 	// Auto-migrate tables if enabled
-	const shouldAutoMigrate = "autoMigrate" in options.database ? options.database.autoMigrate : false;
+	const shouldAutoMigrate =
+		"autoMigrate" in options.database ? options.database.autoMigrate : false;
 	if (shouldAutoMigrate) {
 		initTables(queryContext, schema).catch(console.error);
 	}
@@ -178,7 +189,11 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 			if (!queryContext.adapter.executeCustomOperation) {
 				throw new Error(`Adapter does not support custom operations`);
 			}
-			return await queryContext.adapter.executeCustomOperation(operationName, params, queryContext);
+			return await queryContext.adapter.executeCustomOperation(
+				operationName,
+				params,
+				queryContext,
+			);
 		},
 		// Get available custom operations
 		getCustomOperations: () => {
@@ -186,7 +201,10 @@ export function betterQuery<O extends QueryOptions>(options: O) {
 		},
 		// Check if custom operation exists
 		hasCustomOperation: (operationName: string) => {
-			return !!(queryContext.adapter.customOperations && queryContext.adapter.customOperations[operationName]);
+			return !!(
+				queryContext.adapter.customOperations &&
+				queryContext.adapter.customOperations[operationName]
+			);
 		},
 	};
 }
@@ -219,17 +237,21 @@ async function initTables(
 ) {
 	try {
 		// Prepare schema data for the adapter
-		const schemaData = Object.entries(schema).map(([resourceName, resourceSchema]) => ({
-			model: resourceName,
-			fields: resourceSchema.fields,
-		}));
+		const schemaData = Object.entries(schema).map(
+			([resourceName, resourceSchema]) => ({
+				model: resourceName,
+				fields: resourceSchema.fields,
+			}),
+		);
 
 		// Use adapter's createSchema method if available
 		if (context.adapter.createSchema) {
 			await context.adapter.createSchema(schemaData);
 		} else {
 			// Fallback for adapters that don't support createSchema
-			console.warn("Adapter does not support createSchema method. Auto-migration skipped.");
+			console.warn(
+				"Adapter does not support createSchema method. Auto-migration skipped.",
+			);
 		}
 	} catch (error) {
 		console.error("Error initializing tables:", error);
@@ -255,7 +277,10 @@ export type BetterQuery<
 	/** Execute a custom operation defined in the adapter */
 	customOperation: (operationName: string, params: any) => Promise<any>;
 	/** Get all available custom operations from the adapter */
-	getCustomOperations: () => Record<string, (params: any, context?: any) => Promise<any>>;
+	getCustomOperations: () => Record<
+		string,
+		(params: any, context?: any) => Promise<any>
+	>;
 	/** Check if a custom operation exists */
 	hasCustomOperation: (operationName: string) => boolean;
 };

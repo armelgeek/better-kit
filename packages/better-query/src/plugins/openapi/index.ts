@@ -1,8 +1,8 @@
-import { generator } from "./generator";
-import { logo } from "./logo";
+import { createCrudEndpoint } from "../../endpoints/crud-endpoint";
 import type { Plugin } from "../../types/plugins";
 import type { LiteralString } from "../../types/plugins";
-import { createCrudEndpoint } from "../../endpoints/crud-endpoint";
+import { generator } from "./generator";
+import { logo } from "./logo";
 
 type ScalarTheme =
 	| "alternate"
@@ -18,10 +18,7 @@ type ScalarTheme =
 	| "laserwave"
 	| "none";
 
-const getHTML = (
-	apiReference: Record<string, any>,
-	theme?: ScalarTheme,
-) => `<!doctype html>
+const getHTML = (apiReference: Record<string, any>, theme?: ScalarTheme) => `<!doctype html>
 <html>
   <head>
     <title>Better CRUD API Reference</title>
@@ -76,7 +73,7 @@ export interface OpenAPIOptions {
 
 export const openApiPlugin = <O extends OpenAPIOptions>(options?: O) => {
 	const path = (options?.path ?? "/reference") as "/reference";
-	
+
 	return {
 		id: "openapi",
 		endpoints: {
@@ -97,7 +94,10 @@ export const openApiPlugin = <O extends OpenAPIOptions>(options?: O) => {
 				},
 				async (ctx) => {
 					if (options?.disableDefaultReference) {
-						return ctx.json({ error: "Reference UI disabled" }, { status: 404 });
+						return ctx.json(
+							{ error: "Reference UI disabled" },
+							{ status: 404 },
+						);
 					}
 					const schema = await generator(ctx.context);
 					return new Response(getHTML(schema, options?.theme), {

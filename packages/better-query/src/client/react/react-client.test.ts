@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createReactQueryClient } from "./index";
 
 // Mock @better-fetch/fetch
@@ -106,7 +106,14 @@ describe("React Query Client", () => {
 		mockFetch.mockResolvedValueOnce({
 			data: {
 				items: [{ id: "test-id", name: "test-product", price: 29.99 }],
-				pagination: { page: 1, limit: 10, total: 1, totalPages: 1, hasNext: false, hasPrev: false },
+				pagination: {
+					page: 1,
+					limit: 10,
+					total: 1,
+					totalPages: 1,
+					hasNext: false,
+					hasPrev: false,
+				},
 			},
 			error: null,
 		});
@@ -161,13 +168,13 @@ describe("React Query Client", () => {
 
 		await client.product.create(
 			{ name: "test" },
-			{ headers: { "Authorization": "Bearer token" } }
+			{ headers: { Authorization: "Bearer token" } },
 		);
 
 		expect(mockFetch).toHaveBeenCalledWith("/product", {
 			method: "POST",
 			body: { name: "test" },
-			headers: { "Authorization": "Bearer token" },
+			headers: { Authorization: "Bearer token" },
 		});
 	});
 

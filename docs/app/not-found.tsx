@@ -1,6 +1,6 @@
 import Section from "@/components/landing/section";
-import Link from "next/link";
 import { Logo } from "@/components/logo";
+import Link from "next/link";
 export default function NotFound() {
 	return (
 		<div className="h-full relative overflow-hidden">

@@ -1,5 +1,11 @@
-import { adiemus, auditPlugin, validationPlugin, cachePlugin, createPlugin } from "../src/index";
 import { z } from "zod";
+import {
+	adiemus,
+	auditPlugin,
+	cachePlugin,
+	createPlugin,
+	validationPlugin,
+} from "../src/index";
 
 // Create a CRUD instance with plugins
 const crud = adiemus({
@@ -25,7 +31,7 @@ const crud = adiemus({
 			operations: ["create", "update", "delete"],
 			includeRequestData: true,
 		}),
-		
+
 		// Validation plugin - adds extra validation
 		validationPlugin({
 			strict: true,
@@ -34,7 +40,7 @@ const crud = adiemus({
 				validateEmails: true,
 			},
 		}),
-		
+
 		// Cache plugin - caches read operations
 		cachePlugin({
 			enabled: true,
@@ -47,7 +53,7 @@ const crud = adiemus({
 				},
 			},
 		}),
-		
+
 		// Custom plugin example
 		createPlugin({
 			id: "timestamp",
@@ -65,15 +71,21 @@ const crud = adiemus({
 console.log("✅ CRUD instance created with plugins:");
 console.log("- Audit plugin:", !!crud.api.getAuditLogs);
 console.log("- Cache plugin:", !!crud.api.getCacheStats);
-console.log("- Validation plugin:", !!crud.context.pluginManager?.getPlugin("validation"));
-console.log("- Custom timestamp plugin:", !!crud.context.pluginManager?.getPlugin("timestamp"));
+console.log(
+	"- Validation plugin:",
+	!!crud.context.pluginManager?.getPlugin("validation"),
+);
+console.log(
+	"- Custom timestamp plugin:",
+	!!crud.context.pluginManager?.getPlugin("timestamp"),
+);
 
 // Available endpoints include:
 // - All standard CRUD endpoints: createUser, getUser, updateUser, deleteUser, listUsers
 // - Plugin endpoints: getAuditLogs, getCacheStats, clearCache
 
 console.log("\n📝 Available API endpoints:");
-Object.keys(crud.api).forEach(endpoint => {
+Object.keys(crud.api).forEach((endpoint) => {
 	console.log(`- ${endpoint}`);
 });
 

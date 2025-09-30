@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Highlight } from "prism-react-renderer";
-import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Check, Copy } from "lucide-react";
+import { Highlight } from "prism-react-renderer";
+import { useState } from "react";
 import theme from "./theme";
 
 interface CodeEditorProps {

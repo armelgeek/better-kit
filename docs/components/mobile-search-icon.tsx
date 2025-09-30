@@ -1,9 +1,9 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { useSearchContext } from "fumadocs-ui/provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSearchContext } from "fumadocs-ui/provider";
+import { Search } from "lucide-react";
 
 interface MobileSearchIconProps {
 	className?: string;

@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { 
-	sanitizeData, 
-	applySanitizationRule, 
-	hasRequiredScopes, 
-	checkOwnership, 
-	validateAndSanitizeInput,
-	rateLimiter 
-} from "../utils/security";
 import { SanitizationRule } from "../types";
+import {
+	applySanitizationRule,
+	checkOwnership,
+	hasRequiredScopes,
+	rateLimiter,
+	sanitizeData,
+	validateAndSanitizeInput,
+} from "../utils/security";
 
 describe("Security Utils", () => {
 	describe("sanitizeData", () => {
@@ -21,13 +21,15 @@ describe("Security Utils", () => {
 		it("should escape HTML characters", () => {
 			const rules: SanitizationRule[] = [{ type: "escape" }];
 			const result = sanitizeData("<script>alert('xss')</script>", rules);
-			expect(result).toBe("&lt;script&gt;alert(&#039;xss&#039;)&lt;/script&gt;");
+			expect(result).toBe(
+				"&lt;script&gt;alert(&#039;xss&#039;)&lt;/script&gt;",
+			);
 		});
 
 		it("should apply multiple rules", () => {
 			const rules: SanitizationRule[] = [
 				{ type: "trim" },
-				{ type: "lowercase" }
+				{ type: "lowercase" },
 			];
 			const result = sanitizeData("  HELLO WORLD  ", rules);
 			expect(result).toBe("hello world");
@@ -35,10 +37,10 @@ describe("Security Utils", () => {
 
 		it("should handle custom sanitization", () => {
 			const rules: SanitizationRule[] = [
-				{ 
-					type: "custom", 
-					customFn: (value: string) => value.replace(/\d/g, "X") 
-				}
+				{
+					type: "custom",
+					customFn: (value: string) => value.replace(/\d/g, "X"),
+				},
 			];
 			const result = sanitizeData("abc123def", rules);
 			expect(result).toBe("abcXXXdef");
@@ -49,8 +51,8 @@ describe("Security Utils", () => {
 			const data = {
 				name: "  John  ",
 				profile: {
-					bio: "  Software Engineer  "
-				}
+					bio: "  Software Engineer  ",
+				},
 			};
 			const result = sanitizeData(data, rules);
 			expect(result.name).toBe("John");
@@ -108,7 +110,9 @@ describe("Security Utils", () => {
 		it("should deny non-admin, non-owner access (flexible)", () => {
 			const regularUser = { id: "user456", roles: ["user"] };
 			const otherData = { userId: "user123", title: "Other Document" };
-			expect(checkOwnership(regularUser, otherData, "userId", "flexible")).toBe(false);
+			expect(checkOwnership(regularUser, otherData, "userId", "flexible")).toBe(
+				false,
+			);
 		});
 	});
 
@@ -123,12 +127,12 @@ describe("Security Utils", () => {
 			const input = {
 				name: "  John Doe  ",
 				email: "john@example.com",
-				age: 30
+				age: 30,
 			};
 			const sanitizationRules: SanitizationRule[] = [{ type: "trim" }];
-			
+
 			const result = validateAndSanitizeInput(schema, input, sanitizationRules);
-			
+
 			expect(result.success).toBe(true);
 			expect(result.data?.name).toBe("John Doe");
 			expect(result.data?.email).toBe("john@example.com");
@@ -139,9 +143,9 @@ describe("Security Utils", () => {
 				name: "John Doe",
 				email: "invalid-email",
 			};
-			
+
 			const result = validateAndSanitizeInput(schema, input);
-			
+
 			expect(result.success).toBe(false);
 			expect(result.errors).toBeDefined();
 		});
@@ -186,7 +190,7 @@ describe("Security Utils", () => {
 			expect(rateLimiter.isAllowed("key2", windowMs, maxRequests)).toBe(true);
 			expect(rateLimiter.isAllowed("key1", windowMs, maxRequests)).toBe(true);
 			expect(rateLimiter.isAllowed("key2", windowMs, maxRequests)).toBe(true);
-			
+
 			// Third request for each key should be denied
 			expect(rateLimiter.isAllowed("key1", windowMs, maxRequests)).toBe(false);
 			expect(rateLimiter.isAllowed("key2", windowMs, maxRequests)).toBe(false);

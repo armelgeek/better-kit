@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { createResource } from "./schema";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createResource } from "./schema";
 
 describe("createResource with hooks", () => {
 	const testSchema = z.object({
@@ -11,7 +11,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept beforeCreate hook", () => {
 		const beforeCreateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -25,7 +25,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept beforeUpdate hook", () => {
 		const beforeUpdateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -39,7 +39,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept beforeDelete hook", () => {
 		const beforeDeleteHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -53,7 +53,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept afterCreate hook", () => {
 		const afterCreateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -67,7 +67,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept afterUpdate hook", () => {
 		const afterUpdateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -81,7 +81,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept afterDelete hook", () => {
 		const afterDeleteHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -95,7 +95,7 @@ describe("createResource with hooks", () => {
 
 	it("should accept legacy onCreate hook", () => {
 		const onCreateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -111,7 +111,7 @@ describe("createResource with hooks", () => {
 		const beforeCreateHook = vi.fn();
 		const afterCreateHook = vi.fn();
 		const beforeUpdateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,
@@ -129,7 +129,7 @@ describe("createResource with hooks", () => {
 
 	it("should pass through all config properties", () => {
 		const beforeCreateHook = vi.fn();
-		
+
 		const resource = createResource({
 			name: "product",
 			schema: testSchema,

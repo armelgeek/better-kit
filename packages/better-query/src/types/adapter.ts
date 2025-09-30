@@ -6,7 +6,17 @@ import { FieldAttribute, IncludeOptions } from ".";
 export interface QueryWhere {
 	field: string;
 	value: any;
-	operator?: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "notIn" | "like" | "notLike";
+	operator?:
+		| "eq"
+		| "ne"
+		| "lt"
+		| "lte"
+		| "gt"
+		| "gte"
+		| "in"
+		| "notIn"
+		| "like"
+		| "notLike";
 }
 
 // Legacy alias
@@ -91,7 +101,11 @@ export interface QueryAdapter {
 	customOperations?: CustomOperations;
 
 	/** Execute a custom operation */
-	executeCustomOperation?(operationName: string, params: any, context?: any): Promise<any>;
+	executeCustomOperation?(
+		operationName: string,
+		params: any,
+		context?: any,
+	): Promise<any>;
 
 	/** Create records with related data atomically */
 	createWithRelations?(params: {
@@ -118,10 +132,12 @@ export interface QueryAdapter {
 	}): Promise<{ valid: boolean; errors: string[] }>;
 
 	/** Create database schema (for auto-migration) */
-	createSchema?(data: {
-		model: string;
-		fields: Record<string, FieldAttribute>;
-	}[]): Promise<void>;
+	createSchema?(
+		data: {
+			model: string;
+			fields: Record<string, FieldAttribute>;
+		}[],
+	): Promise<void>;
 
 	/** Manage many-to-many relationships through junction tables */
 	manageManyToMany?(params: {

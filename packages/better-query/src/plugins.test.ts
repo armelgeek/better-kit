@@ -1,6 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { adiemus, createPlugin, auditPlugin, validationPlugin, cachePlugin } from "../src/index";
+import {
+	adiemus,
+	auditPlugin,
+	cachePlugin,
+	createPlugin,
+	validationPlugin,
+} from "../src/index";
 
 describe("Plugin System", () => {
 	let crudInstance: any;
@@ -38,7 +44,9 @@ describe("Plugin System", () => {
 		});
 
 		expect(crudInstance.context.pluginManager).toBeDefined();
-		expect(crudInstance.context.pluginManager.getPlugin("test-plugin")).toBeDefined();
+		expect(
+			crudInstance.context.pluginManager.getPlugin("test-plugin"),
+		).toBeDefined();
 	});
 
 	it("should merge plugin endpoints with CRUD endpoints", () => {
@@ -129,7 +137,9 @@ describe("Plugin System", () => {
 			plugins: [validation],
 		});
 
-		expect(crudInstance.context.pluginManager.getPlugin("validation")).toBeDefined();
+		expect(
+			crudInstance.context.pluginManager.getPlugin("validation"),
+		).toBeDefined();
 	});
 
 	it("should support cache plugin", () => {
@@ -186,7 +196,9 @@ describe("Plugin System", () => {
 
 		expect(crudInstance.context.pluginManager.getPlugins()).toHaveLength(3);
 		expect(crudInstance.context.pluginManager.getPlugin("audit")).toBeDefined();
-		expect(crudInstance.context.pluginManager.getPlugin("validation")).toBeDefined();
+		expect(
+			crudInstance.context.pluginManager.getPlugin("validation"),
+		).toBeDefined();
 		expect(crudInstance.context.pluginManager.getPlugin("cache")).toBeDefined();
 	});
 

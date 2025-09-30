@@ -4,7 +4,12 @@
  */
 
 import { z } from "zod";
-import { betterQuery, createPlugin, createQueryClient, createQueryEndpoint } from "../src";
+import {
+	betterQuery,
+	createPlugin,
+	createQueryClient,
+	createQueryEndpoint,
+} from "../src";
 import type { BetterQueryClientPlugin } from "../src/types/client-plugins";
 
 console.log("🚀 Better Query Client Plugin Example");
@@ -137,7 +142,7 @@ console.log("📦 Example: Plugin with Reactive State (Atoms)");
 console.log("===============================================\n");
 
 // Simple atom implementation
-const createAtom = <T,>(initialValue: T) => {
+const createAtom = <T>(initialValue: T) => {
 	let value = initialValue;
 	const listeners = new Set<(value: T) => void>();
 
@@ -195,7 +200,9 @@ const counterClient = (() => {
 	console.log("     baseURL: 'http://localhost:3000/api',");
 	console.log("     queryPlugins: [counterClientPlugin()],");
 	console.log("   });");
-	return { /* client object */ };
+	return {
+		/* client object */
+	};
 })();
 
 console.log("✅ Counter client created with reactive state");
@@ -219,6 +226,8 @@ console.log("📚 For more information, see:");
 console.log("   - CLIENT_PLUGINS.md (comprehensive guide)");
 console.log("   - examples/client-plugin-example.ts (detailed examples)");
 console.log("   - src/client/client-plugins.test.ts (unit tests)");
-console.log("   - src/client/client-plugins.integration.test.ts (integration tests)");
+console.log(
+	"   - src/client/client-plugins.integration.test.ts (integration tests)",
+);
 console.log();
 console.log("✨ Happy coding!");

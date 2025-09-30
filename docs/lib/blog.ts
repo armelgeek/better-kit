@@ -1,6 +1,6 @@
+import { join } from "path";
 import { readFile, readdir } from "fs/promises";
 import matter from "gray-matter";
-import { join } from "path";
 import { cache } from "react";
 
 export interface BlogPost {

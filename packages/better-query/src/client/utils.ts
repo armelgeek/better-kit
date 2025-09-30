@@ -6,7 +6,7 @@ export function inferBaseURL(): string {
 	// Check if we're in a browser environment
 	if (typeof window !== "undefined") {
 		// In browser, try to get URL from environment variables that are available client-side
-		const url = 
+		const url =
 			(window as any).__NEXT_DATA__?.env?.NEXT_PUBLIC_CRUD_URL ||
 			(window as any).__NEXT_DATA__?.env?.NEXT_PUBLIC_API_URL ||
 			process.env.NEXT_PUBLIC_CRUD_URL ||

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { createQueryEndpoints } from "../endpoints";
-import { QueryResourceConfig, QueryMiddlewareContext } from "../types";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createQueryEndpoints } from "../endpoints";
+import { QueryMiddlewareContext, QueryResourceConfig } from "../types";
 
 describe("Middleware System", () => {
 	const mockAdapter = {
@@ -37,7 +37,10 @@ describe("Middleware System", () => {
 
 		// Mock permission function that checks user
 		const permissionCheck = async (context: any) => {
-			permissionCheckCalls.push({ operation: "permission", user: context.user });
+			permissionCheckCalls.push({
+				operation: "permission",
+				user: context.user,
+			});
 			return !!context.user; // Only allow if user exists
 		};
 
@@ -67,17 +70,20 @@ describe("Middleware System", () => {
 		// Verify execution order
 		expect(middlewareCalls).toHaveLength(1);
 		expect(permissionCheckCalls).toHaveLength(1);
-		
+
 		// Middleware should have been called with no user
 		expect(middlewareCalls[0].user).toBeNull();
-		
+
 		// Permission check should have been called with user injected by middleware
-		expect(permissionCheckCalls[0].user).toEqual({ id: "user123", name: "Test User" });
+		expect(permissionCheckCalls[0].user).toEqual({
+			id: "user123",
+			name: "Test User",
+		});
 
 		// Should succeed because middleware injected user
 		expect(requestContext.json).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "test-id", title: "Test Todo" }),
-			{ status: 201 }
+			{ status: 201 },
 		);
 	});
 
@@ -111,7 +117,7 @@ describe("Middleware System", () => {
 		// Should fail with 403 Forbidden
 		expect(requestContext.json).toHaveBeenCalledWith(
 			{ error: "Forbidden" },
-			{ status: 403 }
+			{ status: 403 },
 		);
 	});
 
@@ -144,7 +150,7 @@ describe("Middleware System", () => {
 		// Should fail with 500 error
 		expect(requestContext.json).toHaveBeenCalledWith(
 			{ error: "Middleware execution failed", details: "Middleware failed" },
-			{ status: 500 }
+			{ status: 500 },
 		);
 	});
 
@@ -171,10 +177,7 @@ describe("Middleware System", () => {
 		const resourceConfig: QueryResourceConfig = {
 			name: "todo",
 			schema: todoSchema,
-			middleware: [
-				{ handler: middleware1 },
-				{ handler: middleware2 }
-			],
+			middleware: [{ handler: middleware1 }, { handler: middleware2 }],
 			permissions: {
 				create: permissionCheck,
 			},
@@ -198,7 +201,7 @@ describe("Middleware System", () => {
 		// Should succeed
 		expect(requestContext.json).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "test-id", title: "Test Todo" }),
-			{ status: 201 }
+			{ status: 201 },
 		);
 	});
 
@@ -241,7 +244,7 @@ describe("Middleware System", () => {
 		// Should succeed because middleware added required scope
 		expect(requestContext.json).toHaveBeenCalledWith(
 			expect.objectContaining({ id: "test-id", title: "Test Todo" }),
-			{ status: 201 }
+			{ status: 201 },
 		);
 	});
 });

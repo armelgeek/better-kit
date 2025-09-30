@@ -9,7 +9,7 @@ import type { ReactQueryClientOptions } from "./types";
  */
 export function createQueryProxy(
 	$fetch: BetterFetch,
-	options?: ReactQueryClientOptions
+	options?: ReactQueryClientOptions,
 ) {
 	// Create resource proxies
 	const resources: Record<string, any> = {};
@@ -19,92 +19,113 @@ export function createQueryProxy(
 			if (resourceName in target) {
 				return target[resourceName];
 			}
-			
+
 			// Handle special properties
 			if (resourceName === "$fetch") {
 				return $fetch;
 			}
-			
+
 			if (resourceName === "$ERROR_CODES") {
 				return QUERY_ERROR_CODES;
 			}
-			
-			if (resourceName.startsWith('$')) {
+
+			if (resourceName.startsWith("$")) {
 				return undefined;
 			}
 
 			// Create resource-specific methods
 			const resourceMethods = {
-				create: async (data: any, requestOptions?: { headers?: Record<string, string> }) => {
+				create: async (
+					data: any,
+					requestOptions?: { headers?: Record<string, string> },
+				) => {
 					try {
 						const response = await $fetch(`/${resourceName}`, {
 							method: "POST",
 							body: data,
-							...(requestOptions?.headers && { headers: requestOptions.headers }),
+							...(requestOptions?.headers && {
+								headers: requestOptions.headers,
+							}),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
-						return { 
-							data: null, 
-							error: { 
-								message: error.message || "Failed to create", 
-								code: error.code || "INTERNAL_ERROR" 
-							} 
+						return {
+							data: null,
+							error: {
+								message: error.message || "Failed to create",
+								code: error.code || "INTERNAL_ERROR",
+							},
 						};
 					}
 				},
 
-				read: async (id: string, requestOptions?: { headers?: Record<string, string> }) => {
+				read: async (
+					id: string,
+					requestOptions?: { headers?: Record<string, string> },
+				) => {
 					try {
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "GET",
-							...(requestOptions?.headers && { headers: requestOptions.headers }),
+							...(requestOptions?.headers && {
+								headers: requestOptions.headers,
+							}),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
-						return { 
-							data: null, 
-							error: { 
-								message: error.message || "Failed to read", 
-								code: error.code || "INTERNAL_ERROR" 
-							} 
+						return {
+							data: null,
+							error: {
+								message: error.message || "Failed to read",
+								code: error.code || "INTERNAL_ERROR",
+							},
 						};
 					}
 				},
 
-				update: async (id: string, data: any, requestOptions?: { headers?: Record<string, string> }) => {
+				update: async (
+					id: string,
+					data: any,
+					requestOptions?: { headers?: Record<string, string> },
+				) => {
 					try {
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "PATCH",
 							body: data,
-							...(requestOptions?.headers && { headers: requestOptions.headers }),
+							...(requestOptions?.headers && {
+								headers: requestOptions.headers,
+							}),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
-						return { 
-							data: null, 
-							error: { 
-								message: error.message || "Failed to update", 
-								code: error.code || "INTERNAL_ERROR" 
-							} 
+						return {
+							data: null,
+							error: {
+								message: error.message || "Failed to update",
+								code: error.code || "INTERNAL_ERROR",
+							},
 						};
 					}
 				},
 
-				delete: async (id: string, requestOptions?: { headers?: Record<string, string> }) => {
+				delete: async (
+					id: string,
+					requestOptions?: { headers?: Record<string, string> },
+				) => {
 					try {
 						const response = await $fetch(`/${resourceName}/${id}`, {
 							method: "DELETE",
-							...(requestOptions?.headers && { headers: requestOptions.headers }),
+							...(requestOptions?.headers && {
+								headers: requestOptions.headers,
+							}),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
-						return { 
-							data: null, 
-							error: { 
-								message: error.message || "Failed to delete", 
-								code: error.code || "INTERNAL_ERROR" 
-							} 
+						return {
+							data: null,
+							error: {
+								message: error.message || "Failed to delete",
+								code: error.code || "INTERNAL_ERROR",
+							},
 						};
 					}
 				},
@@ -120,22 +141,24 @@ export function createQueryProxy(
 						where?: Record<string, any>;
 						filters?: Record<string, any>;
 					},
-					requestOptions?: { headers?: Record<string, string> }
+					requestOptions?: { headers?: Record<string, string> },
 				) => {
 					try {
 						const response = await $fetch(`/${resourceName}s`, {
 							method: "GET",
 							query: params,
-							...(requestOptions?.headers && { headers: requestOptions.headers }),
+							...(requestOptions?.headers && {
+								headers: requestOptions.headers,
+							}),
 						});
 						return { data: response.data, error: response.error };
 					} catch (error: any) {
-						return { 
-							data: null, 
-							error: { 
-								message: error.message || "Failed to list", 
-								code: error.code || "INTERNAL_ERROR" 
-							} 
+						return {
+							data: null,
+							error: {
+								message: error.message || "Failed to list",
+								code: error.code || "INTERNAL_ERROR",
+							},
 						};
 					}
 				},

@@ -30,7 +30,9 @@ export interface BetterQueryClientPlugin {
 	 * @param $fetch - The fetch function from better-fetch
 	 * @returns Object with custom methods
 	 */
-	getActions?: ($fetch: any) => Record<string, (...args: any[]) => Promise<any>>;
+	getActions?: (
+		$fetch: any,
+	) => Record<string, (...args: any[]) => Promise<any>>;
 
 	/**
 	 * Nanostores atoms for reactive state management
@@ -73,15 +75,17 @@ export type InferPluginEndpoints<T extends Plugin> = T extends {
  * Convert kebab-case path to camelCase object path
  * Example: "/my-plugin/hello-world" -> "myPlugin.helloWorld"
  */
-export type PathToCamelCase<T extends string> = T extends `/${infer First}/${infer Rest}`
-	? `${CamelCase<First>}.${PathToCamelCase<`/${Rest}`>}`
-	: T extends `/${infer Single}`
-		? CamelCase<Single>
-		: never;
+export type PathToCamelCase<T extends string> =
+	T extends `/${infer First}/${infer Rest}`
+		? `${CamelCase<First>}.${PathToCamelCase<`/${Rest}`>}`
+		: T extends `/${infer Single}`
+			? CamelCase<Single>
+			: never;
 
-type CamelCase<S extends string> = S extends `${infer P1}-${infer P2}${infer P3}`
-	? `${Lowercase<P1>}${Uppercase<P2>}${CamelCase<P3>}`
-	: Lowercase<S>;
+type CamelCase<S extends string> =
+	S extends `${infer P1}-${infer P2}${infer P3}`
+		? `${Lowercase<P1>}${Uppercase<P2>}${CamelCase<P3>}`
+		: Lowercase<S>;
 
 /**
  * Infer client methods from plugin endpoints
@@ -92,8 +96,5 @@ export type InferClientMethods<T extends BetterQueryClientPlugin> =
 /**
  * Infer client atoms from plugin
  */
-export type InferClientAtoms<T extends BetterQueryClientPlugin> = T["getAtoms"] extends (
-	...args: any[]
-) => infer R
-	? R
-	: {};
+export type InferClientAtoms<T extends BetterQueryClientPlugin> =
+	T["getAtoms"] extends (...args: any[]) => infer R ? R : {};

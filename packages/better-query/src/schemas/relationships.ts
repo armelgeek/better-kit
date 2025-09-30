@@ -9,7 +9,11 @@ import { RelationshipConfig } from "../types";
 /**
  * Create a belongsTo relationship configuration
  */
-export function belongsTo(target: string, foreignKey: string, targetKey = "id"): RelationshipConfig {
+export function belongsTo(
+	target: string,
+	foreignKey: string,
+	targetKey = "id",
+): RelationshipConfig {
 	return {
 		type: "belongsTo",
 		target,
@@ -21,7 +25,11 @@ export function belongsTo(target: string, foreignKey: string, targetKey = "id"):
 /**
  * Create a hasMany relationship configuration
  */
-export function hasMany(target: string, foreignKey: string, targetKey = "id"): RelationshipConfig {
+export function hasMany(
+	target: string,
+	foreignKey: string,
+	targetKey = "id",
+): RelationshipConfig {
 	return {
 		type: "hasMany",
 		target,

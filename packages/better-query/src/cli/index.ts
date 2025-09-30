@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { program } from "commander";
-import { initCommand } from "./commands/init.js";
 import { generateCommand } from "./commands/generate.js";
+import { initCommand } from "./commands/init.js";
 
 program
 	.name("better-query")

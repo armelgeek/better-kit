@@ -5,18 +5,18 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
 	// Enable static export for GitHub Pages
-	output: 'export',
-	basePath: process.env.NODE_ENV === 'production' ? '/better-kit' : '',
+	output: "export",
+	basePath: process.env.NODE_ENV === "production" ? "/better-kit" : "",
 	trailingSlash: true,
-	
+
 	// Set output file tracing root for monorepo
-	outputFileTracingRoot: '..',
-	
+	outputFileTracingRoot: "..",
+
 	// Skip dynamic routes that won't work with static export
 	generateBuildId: async () => {
-		return 'gh-pages-build'
+		return "gh-pages-build";
 	},
-	
+
 	serverExternalPackages: [
 		"ts-morph",
 		"typescript",

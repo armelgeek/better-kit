@@ -1,8 +1,11 @@
 export function pageTemplate(withAuth: boolean): string {
-	const authImports = withAuth ? `
-import { auth } from "@/lib/query";` : "";
+	const authImports = withAuth
+		? `
+import { auth } from "@/lib/query";`
+		: "";
 
-	const authSection = withAuth ? `
+	const authSection = withAuth
+		? `
   const session = await auth.api.getSession();
   
   if (!session) {
@@ -18,14 +21,15 @@ import { auth } from "@/lib/query";` : "";
         </a>
       </main>
     );
-  }` : "";
+  }`
+		: "";
 
 	// Build the template as separate strings to avoid React imports being processed
 	const clientDirective = '"use client";';
 	const reactImports = 'import { useState, useEffect } from "react";';
 	const clientImport = 'import { queryClient } from "@/lib/client";';
 	const typeImports = 'import type { Product, Category } from "@/lib/schemas";';
-	
+
 	const functionBody = `export default function HomePage() {${authSection}
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -120,11 +124,11 @@ import { auth } from "@/lib/query";` : "";
 
 	return [
 		clientDirective,
-		'',
+		"",
 		reactImports,
 		clientImport,
 		typeImports + authImports,
-		'',
-		functionBody
-	].join('\n');
+		"",
+		functionBody,
+	].join("\n");
 }

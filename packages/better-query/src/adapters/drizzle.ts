@@ -1,17 +1,22 @@
-import { CrudAdapter, CrudWhere, CrudOrderBy, CustomOperations } from "../types/adapter";
-import { IncludeOptions, FieldAttribute } from "../types";
+import { FieldAttribute, IncludeOptions } from "../types";
+import {
+	CrudAdapter,
+	CrudOrderBy,
+	CrudWhere,
+	CustomOperations,
+} from "../types/adapter";
 
 /**
  * Drizzle ORM adapter for adiemus
- * 
+ *
  * Usage:
  * ```typescript
  * import { drizzle } from 'drizzle-orm/better-sqlite3';
  * import Database from 'better-sqlite3';
- * 
+ *
  * const sqlite = new Database('sqlite.db');
  * const db = drizzle(sqlite);
- * 
+ *
  * const crud = betterCrud({
  *   resources: [...],
  *   database: {
@@ -40,30 +45,36 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 			},
 
 			// Batch operations for better performance
-			batchInsert: async (params: { model: string; data: Record<string, any>[] }) => {
+			batchInsert: async (params: {
+				model: string;
+				data: Record<string, any>[];
+			}) => {
 				const { model, data } = params;
 				const table = this.schema[model];
 				if (!table) {
 					throw new Error(`Table ${model} not found in schema`);
 				}
-				
+
 				// Add timestamps to all records
 				const now = new Date();
-				const dataWithTimestamps = data.map(item => ({
+				const dataWithTimestamps = data.map((item) => ({
 					...item,
 					createdAt: item.createdAt || now,
 					updatedAt: item.updatedAt || now,
 				}));
-				
-				return await this.db.insert(table).values(dataWithTimestamps).returning();
+
+				return await this.db
+					.insert(table)
+					.values(dataWithTimestamps)
+					.returning();
 			},
 
 			// Upsert operation (insert or update on conflict)
-			upsert: async (params: { 
-				model: string; 
-				data: Record<string, any>; 
+			upsert: async (params: {
+				model: string;
+				data: Record<string, any>;
 				conflictColumns: string[];
-				updateColumns?: string[] 
+				updateColumns?: string[];
 			}) => {
 				const { model, data, conflictColumns, updateColumns } = params;
 				const table = this.schema[model];
@@ -76,13 +87,17 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 				if (!data.createdAt) data.createdAt = now;
 
 				let query = this.db.insert(table).values(data);
-				
+
 				// Handle conflict resolution
-				const conflictCols = conflictColumns.map(col => table[col]).filter(Boolean);
+				const conflictCols = conflictColumns
+					.map((col) => table[col])
+					.filter(Boolean);
 				if (conflictCols.length > 0) {
 					const updateData: Record<string, any> = {};
-					const columnsToUpdate = updateColumns || Object.keys(data).filter(key => !conflictColumns.includes(key));
-					
+					const columnsToUpdate =
+						updateColumns ||
+						Object.keys(data).filter((key) => !conflictColumns.includes(key));
+
 					for (const col of columnsToUpdate) {
 						if (table[col]) {
 							updateData[col] = data[col];
@@ -95,14 +110,17 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 						set: updateData,
 					});
 				}
-				
+
 				return await query.returning();
 			},
 
 			// Advanced aggregations
 			aggregate: async (params: {
 				model: string;
-				aggregations: { field: string; operation: 'sum' | 'avg' | 'min' | 'max' | 'count' }[];
+				aggregations: {
+					field: string;
+					operation: "sum" | "avg" | "min" | "max" | "count";
+				}[];
 				where?: CrudWhere[];
 				groupBy?: string[];
 			}) => {
@@ -113,25 +131,25 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 				}
 
 				const selectObj: Record<string, any> = {};
-				
+
 				// Build aggregation select
 				for (const agg of aggregations) {
 					const column = table[agg.field];
 					if (column) {
 						switch (agg.operation) {
-							case 'sum':
+							case "sum":
 								selectObj[`${agg.field}_sum`] = this.db.sum(column);
 								break;
-							case 'avg':
+							case "avg":
 								selectObj[`${agg.field}_avg`] = this.db.avg(column);
 								break;
-							case 'min':
+							case "min":
 								selectObj[`${agg.field}_min`] = this.db.min(column);
 								break;
-							case 'max':
+							case "max":
 								selectObj[`${agg.field}_max`] = this.db.max(column);
 								break;
-							case 'count':
+							case "count":
 								selectObj[`${agg.field}_count`] = this.db.count(column);
 								break;
 						}
@@ -139,7 +157,7 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 				}
 
 				let query = this.db.select(selectObj).from(table);
-				
+
 				// Apply where conditions
 				for (const condition of where) {
 					const column = table[condition.field];
@@ -150,7 +168,9 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 
 				// Apply group by
 				if (groupBy.length > 0) {
-					const groupColumns = groupBy.map(field => table[field]).filter(Boolean);
+					const groupColumns = groupBy
+						.map((field) => table[field])
+						.filter(Boolean);
 					if (groupColumns.length > 0) {
 						query = query.groupBy(...groupColumns);
 					}
@@ -164,7 +184,7 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 				baseModel: string;
 				joins: Array<{
 					model: string;
-					type: 'inner' | 'left' | 'right';
+					type: "inner" | "left" | "right";
 					on: { left: string; right: string };
 				}>;
 				select?: Record<string, string[]>;
@@ -203,17 +223,26 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 
 					const leftCol = baseTable[join.on.left];
 					const rightCol = joinTable[join.on.right];
-					
+
 					if (leftCol && rightCol) {
 						switch (join.type) {
-							case 'inner':
-								query = query.innerJoin(joinTable, this.db.eq(leftCol, rightCol));
+							case "inner":
+								query = query.innerJoin(
+									joinTable,
+									this.db.eq(leftCol, rightCol),
+								);
 								break;
-							case 'left':
-								query = query.leftJoin(joinTable, this.db.eq(leftCol, rightCol));
+							case "left":
+								query = query.leftJoin(
+									joinTable,
+									this.db.eq(leftCol, rightCol),
+								);
 								break;
-							case 'right':
-								query = query.rightJoin(joinTable, this.db.eq(leftCol, rightCol));
+							case "right":
+								query = query.rightJoin(
+									joinTable,
+									this.db.eq(leftCol, rightCol),
+								);
 								break;
 						}
 					}
@@ -239,10 +268,16 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 		};
 	}
 
-	async executeCustomOperation(operationName: string, params: any, context?: any): Promise<any> {
+	async executeCustomOperation(
+		operationName: string,
+		params: any,
+		context?: any,
+	): Promise<any> {
 		const operation = this.customOperations[operationName];
 		if (!operation) {
-			throw new Error(`Custom operation '${operationName}' not found in DrizzleCrudAdapter`);
+			throw new Error(
+				`Custom operation '${operationName}' not found in DrizzleCrudAdapter`,
+			);
 		}
 		return await operation(params, context);
 	}
@@ -254,7 +289,7 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<any> {
 		const { model, data } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
@@ -276,13 +311,13 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<any | null> {
 		const { model, where = [] } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
 
 		let query = this.db.select().from(table);
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const column = table[condition.field];
@@ -306,13 +341,13 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<any[]> {
 		const { model, where = [], limit, offset, orderBy = [] } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
 
 		let query = this.db.select().from(table);
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const column = table[condition.field];
@@ -352,7 +387,7 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<any> {
 		const { model, where, data } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
@@ -361,7 +396,7 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 		data.updatedAt = new Date();
 
 		let query = this.db.update(table).set(data);
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const column = table[condition.field];
@@ -381,13 +416,13 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<void> {
 		const { model, where } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
 
 		let query = this.db.delete(table);
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const column = table[condition.field];
@@ -405,13 +440,13 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 	}): Promise<number> {
 		const { model, where = [] } = params;
 		const table = this.schema[model];
-		
+
 		if (!table) {
 			throw new Error(`Table ${model} not found in schema`);
 		}
 
 		let query = this.db.select({ count: this.db.count() }).from(table);
-		
+
 		// Apply where conditions
 		for (const condition of where) {
 			const column = table[condition.field];
@@ -424,15 +459,23 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 		return result.count;
 	}
 
-	async createSchema(data: { model: string; fields: Record<string, FieldAttribute> }[]): Promise<void> {
+	async createSchema(
+		data: { model: string; fields: Record<string, FieldAttribute> }[],
+	): Promise<void> {
 		// Note: Drizzle schema is typically defined at compile time
 		// This method could be used for runtime schema validation or migration
-		console.warn("Drizzle schema is typically defined at compile time. Auto-migration not supported.");
+		console.warn(
+			"Drizzle schema is typically defined at compile time. Auto-migration not supported.",
+		);
 	}
 
-	private applyWhereCondition(query: any, column: any, condition: CrudWhere): any {
+	private applyWhereCondition(
+		query: any,
+		column: any,
+		condition: CrudWhere,
+	): any {
 		const { operator = "eq", value } = condition;
-		
+
 		switch (operator) {
 			case "eq":
 				return query.where(this.db.eq(column, value));
@@ -459,12 +502,20 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 		}
 	}
 
-	private applyUpdateWhereCondition(query: any, column: any, condition: CrudWhere): any {
+	private applyUpdateWhereCondition(
+		query: any,
+		column: any,
+		condition: CrudWhere,
+	): any {
 		// Similar to applyWhereCondition but for update queries
 		return this.applyWhereCondition(query, column, condition);
 	}
 
-	private applyDeleteWhereCondition(query: any, column: any, condition: CrudWhere): any {
+	private applyDeleteWhereCondition(
+		query: any,
+		column: any,
+		condition: CrudWhere,
+	): any {
 		// Similar to applyWhereCondition but for delete queries
 		return this.applyWhereCondition(query, column, condition);
 	}
@@ -473,6 +524,9 @@ export class DrizzleCrudAdapter implements CrudAdapter {
 /**
  * Helper function to create Drizzle adapter with automatic schema inference
  */
-export function createDrizzleAdapter(db: any, schema: Record<string, any>): DrizzleCrudAdapter {
+export function createDrizzleAdapter(
+	db: any,
+	schema: Record<string, any>,
+): DrizzleCrudAdapter {
 	return new DrizzleCrudAdapter(db, schema);
 }

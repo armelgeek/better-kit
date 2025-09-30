@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 // Test to validate our flexible schema function works correctly
@@ -20,16 +20,18 @@ describe("Flexible Schema Date Handling", () => {
 	function createFlexibleSchema(schema: z.ZodObject<any>, isPartial = false) {
 		const shape = schema.shape;
 		const flexibleShape: Record<string, any> = {};
-		
+
 		for (const [key, fieldSchema] of Object.entries(shape)) {
 			const fieldSchemaAny = fieldSchema as any;
-			
+
 			// Check if this field is a date or optional date
-			if (fieldSchemaAny._def?.typeName === 'ZodDate') {
+			if (fieldSchemaAny._def?.typeName === "ZodDate") {
 				// Replace date with union of string or date
 				flexibleShape[key] = z.union([z.string(), z.date()]);
-			} else if (fieldSchemaAny._def?.typeName === 'ZodOptional' && 
-					   fieldSchemaAny._def?.innerType?._def?.typeName === 'ZodDate') {
+			} else if (
+				fieldSchemaAny._def?.typeName === "ZodOptional" &&
+				fieldSchemaAny._def?.innerType?._def?.typeName === "ZodDate"
+			) {
 				// Replace optional date with optional union of string or date
 				flexibleShape[key] = z.union([z.string(), z.date()]).optional();
 			} else {
@@ -37,7 +39,7 @@ describe("Flexible Schema Date Handling", () => {
 				flexibleShape[key] = fieldSchemaAny;
 			}
 		}
-		
+
 		const flexibleSchema = z.object(flexibleShape);
 		return isPartial ? flexibleSchema.partial() : flexibleSchema;
 	}
@@ -127,7 +129,10 @@ describe("Flexible Schema Date Handling", () => {
 
 		// Step 2: Hook transforms the string to Date (simulated)
 		const hookTransformed = { ...flexibleResult };
-		if (hookTransformed.dueDate && typeof hookTransformed.dueDate === 'string') {
+		if (
+			hookTransformed.dueDate &&
+			typeof hookTransformed.dueDate === "string"
+		) {
 			hookTransformed.dueDate = new Date(hookTransformed.dueDate);
 		}
 		hookTransformed.createdAt = new Date();
@@ -141,6 +146,8 @@ describe("Flexible Schema Date Handling", () => {
 		expect(strictResult.updatedAt).toBeInstanceOf(Date);
 
 		// Verify the date was correctly parsed
-		expect(strictResult.dueDate?.getTime()).toBe(new Date("2024-03-15").getTime());
+		expect(strictResult.dueDate?.getTime()).toBe(
+			new Date("2024-03-15").getTime(),
+		);
 	});
 });

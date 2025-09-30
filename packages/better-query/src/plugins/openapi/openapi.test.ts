@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { adiemus } from "../../crud";
 import { openApiPlugin } from "./index";
-import { z } from "zod";
 
 describe("OpenAPI Plugin", () => {
 	let crud: any;
@@ -30,7 +30,7 @@ describe("OpenAPI Plugin", () => {
 					schema: userSchema,
 				},
 				{
-					name: "product", 
+					name: "product",
 					schema: productSchema,
 				},
 			],

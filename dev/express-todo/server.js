@@ -1,8 +1,8 @@
-import express from "express";
-import cors from "cors";
-import { createQuery } from "./query.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import cors from "cors";
+import express from "express";
+import { createQuery } from "./query.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,111 +11,126 @@ const app = express();
 const port = 3000;
 
 // Configure CORS
-app.use(cors({
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-  credentials: true,
-}));
+app.use(
+	cors({
+		origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+		credentials: true,
+	}),
+);
 
 // Convert Request/Response for Better Query
 /**
  * @param {(request: Request) => Promise<Response>} handler
  */
 const toNodeHandler = (handler) => {
-  /**
-   * @param {import('express').Request} req
-   * @param {import('express').Response} res
-   */
-  return async (req, res) => {
-    try {
-      const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
-      // Convert Express request headers to a Fetch-compatible Headers object
-      const headersInit = new Headers();
-      for (const [k, v] of Object.entries(req.headers)) {
-        if (v == null) continue;
-        if (Array.isArray(v)) {
-          headersInit.set(k, v.join(', '));
-        } else {
-          headersInit.set(k, String(v));
-        }
-      }
+	/**
+	 * @param {import('express').Request} req
+	 * @param {import('express').Response} res
+	 */
+	return async (req, res) => {
+		try {
+			const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+			// Convert Express request headers to a Fetch-compatible Headers object
+			const headersInit = new Headers();
+			for (const [k, v] of Object.entries(req.headers)) {
+				if (v == null) continue;
+				if (Array.isArray(v)) {
+					headersInit.set(k, v.join(", "));
+				} else {
+					headersInit.set(k, String(v));
+				}
+			}
 
-      const request = new Request(url, {
-        method: req.method,
-        headers: headersInit,
-        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
-      });
+			const request = new Request(url, {
+				method: req.method,
+				headers: headersInit,
+				body:
+					req.method !== "GET" && req.method !== "HEAD"
+						? JSON.stringify(req.body)
+						: undefined,
+			});
 
-      const response = await handler(request);
-      
-      // Copy response headers
-      for (const [key, value] of response.headers.entries()) {
-        res.setHeader(key, value);
-      }
-      
-      // Set status and send response
-      res.status(response.status);
-      
-      if (response.body) {
-        const text = await response.text();
-        try {
-          const data = JSON.parse(text);
-          res.json(data);
-        } catch {
-          res.send(text);
-        }
-      } else {
-        res.end();
-      }
-    } catch (error) {
-      console.error("Handler error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  };
+			const response = await handler(request);
+
+			// Copy response headers
+			for (const [key, value] of response.headers.entries()) {
+				res.setHeader(key, value);
+			}
+
+			// Set status and send response
+			res.status(response.status);
+
+			if (response.body) {
+				const text = await response.text();
+				try {
+					const data = JSON.parse(text);
+					res.json(data);
+				} catch {
+					res.send(text);
+				}
+			} else {
+				res.end();
+			}
+		} catch (error) {
+			console.error("Handler error:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	};
 };
 
 // Initialize Better Query and mount handler
 let query;
 try {
-  query = createQuery();
+	query = createQuery();
 } catch (err) {
-  /** @type {any} */
-  const _err = err;
-  console.error('\n\n🚨 Failed to initialize Better Query:');
-  console.error(_err.message || _err);
-  console.error('\nActions you can take:');
-  console.error('  * Ensure workspace dependencies are installed: pnpm install (from repo root)');
-  console.error('  * Install system build tools for SQLite native module:');
-  console.error('      sudo apt-get update && sudo apt-get install -y build-essential python3 libsqlite3-dev pkg-config');
-  console.error('  * Or install the package locally in this example: cd dev/express-todo && pnpm add better-sqlite3');
-  console.error('  * If you use npm instead of pnpm: npm install better-sqlite3');
-  console.error('  * Consider using Node LTS (18 or 20) via nvm when prebuilt binaries are not available');
-  console.error('\nExiting. After fixing the issue, restart the dev server.\n');
-  process.exit(1);
+	/** @type {any} */
+	const _err = err;
+	console.error("\n\n🚨 Failed to initialize Better Query:");
+	console.error(_err.message || _err);
+	console.error("\nActions you can take:");
+	console.error(
+		"  * Ensure workspace dependencies are installed: pnpm install (from repo root)",
+	);
+	console.error("  * Install system build tools for SQLite native module:");
+	console.error(
+		"      sudo apt-get update && sudo apt-get install -y build-essential python3 libsqlite3-dev pkg-config",
+	);
+	console.error(
+		"  * Or install the package locally in this example: cd dev/express-todo && pnpm add better-sqlite3",
+	);
+	console.error(
+		"  * If you use npm instead of pnpm: npm install better-sqlite3",
+	);
+	console.error(
+		"  * Consider using Node LTS (18 or 20) via nvm when prebuilt binaries are not available",
+	);
+	console.error("\nExiting. After fixing the issue, restart the dev server.\n");
+	process.exit(1);
 }
 // Mount Better Query handler for all CRUD operations
 app.all("/api/query/*", toNodeHandler(query.handler));
 
 // Use express.json() only for non-Better Query routes
 app.use((req, res, next) => {
-  if (!req.path.startsWith('/api/query/')) {
-    express.json()(req, res, next);
-  } else {
-    next();
-  }
+	if (!req.path.startsWith("/api/query/")) {
+		express.json()(req, res, next);
+	} else {
+		next();
+	}
 });
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    message: "Express Todo API is running!",
-    timestamp: new Date().toISOString()
-  });
+	res.json({
+		status: "ok",
+		message: "Express Todo API is running!",
+		timestamp: new Date().toISOString(),
+	});
 });
 
 // Serve static HTML for the todo interface
 app.get("/", (req, res) => {
-  res.send(`<!DOCTYPE html>
+	res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -428,7 +443,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Express Todo App running on http://localhost:${port}`);
-  console.log(`📚 API docs: http://localhost:${port}/api/query/`);
-  console.log(`🔧 Health check: http://localhost:${port}/api/health`);
+	console.log(`🚀 Express Todo App running on http://localhost:${port}`);
+	console.log(`📚 API docs: http://localhost:${port}/api/query/`);
+	console.log(`🔧 Health check: http://localhost:${port}/api/health`);
 });

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { HookExecutor, AuditLogger, HookUtils } from "../utils/hooks";
-import { CrudHookContext, AuditEvent } from "../types";
+import { describe, expect, it, vi } from "vitest";
+import { AuditEvent, CrudHookContext } from "../types";
+import { AuditLogger, HookExecutor, HookUtils } from "../utils/hooks";
 
 describe("Hooks Utils", () => {
 	describe("HookExecutor", () => {
@@ -27,14 +27,16 @@ describe("Hooks Utils", () => {
 				adapter: {} as any,
 			};
 
-			await expect(HookExecutor.executeHook(undefined, context)).resolves.not.toThrow();
+			await expect(
+				HookExecutor.executeHook(undefined, context),
+			).resolves.not.toThrow();
 		});
 
 		it("should execute correct before hook based on operation", async () => {
 			const onCreate = vi.fn();
 			const onUpdate = vi.fn();
 			const onDelete = vi.fn();
-			
+
 			const hooks = { onCreate, onUpdate, onDelete };
 
 			const createContext: CrudHookContext = {
@@ -55,7 +57,7 @@ describe("Hooks Utils", () => {
 			const beforeCreate = vi.fn();
 			const beforeUpdate = vi.fn();
 			const beforeDelete = vi.fn();
-			
+
 			const hooks = { beforeCreate, beforeUpdate, beforeDelete };
 
 			const createContext: CrudHookContext = {
@@ -75,7 +77,7 @@ describe("Hooks Utils", () => {
 		it("should prioritize onCreate over beforeCreate when both are present", async () => {
 			const onCreate = vi.fn();
 			const beforeCreate = vi.fn();
-			
+
 			const hooks = { onCreate, beforeCreate };
 
 			const createContext: CrudHookContext = {
@@ -93,7 +95,7 @@ describe("Hooks Utils", () => {
 
 		it("should execute beforeUpdate hook for update operations", async () => {
 			const beforeUpdate = vi.fn();
-			
+
 			const hooks = { beforeUpdate };
 
 			const updateContext: CrudHookContext = {
@@ -110,7 +112,7 @@ describe("Hooks Utils", () => {
 
 		it("should execute beforeDelete hook for delete operations", async () => {
 			const beforeDelete = vi.fn();
-			
+
 			const hooks = { beforeDelete };
 
 			const deleteContext: CrudHookContext = {
@@ -129,7 +131,7 @@ describe("Hooks Utils", () => {
 			const afterCreate = vi.fn();
 			const afterUpdate = vi.fn();
 			const afterDelete = vi.fn();
-			
+
 			const hooks = { afterCreate, afterUpdate, afterDelete };
 
 			const updateContext: CrudHookContext = {
@@ -162,7 +164,7 @@ describe("Hooks Utils", () => {
 			};
 
 			await logger.log(event);
-			
+
 			expect(mockAuditFn).toHaveBeenCalledWith({
 				...event,
 				timestamp: expect.any(Date),
@@ -187,7 +189,9 @@ describe("Hooks Utils", () => {
 		it("should handle errors in audit function", async () => {
 			const errorAuditFn = vi.fn().mockRejectedValue(new Error("Audit failed"));
 			const logger = new AuditLogger(errorAuditFn);
-			const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			const consoleSpy = vi
+				.spyOn(console, "error")
+				.mockImplementation(() => {});
 
 			const event = {
 				user: { id: "user123" },
@@ -197,8 +201,11 @@ describe("Hooks Utils", () => {
 			};
 
 			await logger.log(event);
-			expect(consoleSpy).toHaveBeenCalledWith("Failed to log audit event:", expect.any(Error));
-			
+			expect(consoleSpy).toHaveBeenCalledWith(
+				"Failed to log audit event:",
+				expect.any(Error),
+			);
+
 			consoleSpy.mockRestore();
 		});
 
@@ -311,7 +318,7 @@ describe("Hooks Utils", () => {
 			it("should pass when validation succeeds", async () => {
 				const validationFn = vi.fn().mockReturnValue(true);
 				const hook = HookUtils.validationHook(validationFn);
-				
+
 				const context: CrudHookContext = {
 					user: { id: "user123" },
 					resource: "product",
@@ -327,7 +334,7 @@ describe("Hooks Utils", () => {
 			it("should throw when validation fails", async () => {
 				const validationFn = vi.fn().mockReturnValue(false);
 				const hook = HookUtils.validationHook(validationFn);
-				
+
 				const context: CrudHookContext = {
 					user: { id: "user123" },
 					resource: "product",

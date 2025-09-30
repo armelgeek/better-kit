@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import clsx from "clsx";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
+import clsx from "clsx";
 
 function BookIcon(props: React.ComponentPropsWithoutRef<"svg">) {
 	return (

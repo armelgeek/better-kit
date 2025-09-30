@@ -1,5 +1,5 @@
-import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
 
 interface ResourceCardProps {
 	title: string;

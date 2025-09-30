@@ -1,5 +1,5 @@
-import { Plugin, PluginInitContext, PluginHooks } from "../types/plugins";
 import { CrudContext, CrudHookContext } from "../types";
+import { Plugin, PluginHooks, PluginInitContext } from "../types/plugins";
 
 /**
  * Plugin manager handles plugin registration, initialization, and lifecycle
@@ -16,9 +16,9 @@ export class PluginManager {
 		if (this.plugins.has(plugin.id)) {
 			throw new Error(`Plugin with id '${plugin.id}' is already registered`);
 		}
-		
+
 		this.plugins.set(plugin.id, plugin);
-		
+
 		// Merge global hooks
 		if (plugin.hooks) {
 			this.mergeHooks(plugin.hooks);
@@ -75,13 +75,13 @@ export class PluginManager {
 	 */
 	getPluginEndpoints(): Record<string, any> {
 		const endpoints: Record<string, any> = {};
-		
+
 		for (const plugin of this.plugins.values()) {
 			if (plugin.endpoints) {
 				Object.assign(endpoints, plugin.endpoints);
 			}
 		}
-		
+
 		return endpoints;
 	}
 
@@ -90,13 +90,13 @@ export class PluginManager {
 	 */
 	getPluginSchemas(): Record<string, any> {
 		const schemas: Record<string, any> = {};
-		
+
 		for (const plugin of this.plugins.values()) {
 			if (plugin.schema) {
 				Object.assign(schemas, plugin.schema);
 			}
 		}
-		
+
 		return schemas;
 	}
 
@@ -105,13 +105,13 @@ export class PluginManager {
 	 */
 	getPluginResources() {
 		const resources: any[] = [];
-		
+
 		for (const plugin of this.plugins.values()) {
 			if (plugin.resources) {
 				resources.push(...plugin.resources);
 			}
 		}
-		
+
 		return resources;
 	}
 
@@ -120,20 +120,23 @@ export class PluginManager {
 	 */
 	getPluginMiddleware() {
 		const middleware: any[] = [];
-		
+
 		for (const plugin of this.plugins.values()) {
 			if (plugin.middleware) {
 				middleware.push(...plugin.middleware);
 			}
 		}
-		
+
 		return middleware;
 	}
 
 	/**
 	 * Execute a lifecycle hook
 	 */
-	async executeHook(hookName: keyof PluginHooks, context: CrudHookContext): Promise<void> {
+	async executeHook(
+		hookName: keyof PluginHooks,
+		context: CrudHookContext,
+	): Promise<void> {
 		const hook = this.globalHooks[hookName];
 		if (hook) {
 			try {
@@ -158,7 +161,7 @@ export class PluginManager {
 				console.error(`Failed to destroy plugin '${id}':`, error);
 			}
 		}
-		
+
 		this.plugins.clear();
 		this.globalHooks = {};
 		this.initialized = false;
@@ -170,7 +173,7 @@ export class PluginManager {
 	private mergeHooks(pluginHooks: PluginHooks): void {
 		for (const [hookName, hookFn] of Object.entries(pluginHooks)) {
 			const existingHook = this.globalHooks[hookName as keyof PluginHooks];
-			
+
 			if (existingHook && hookFn) {
 				// Chain hooks - execute existing first, then new
 				const combinedHook = async (context: CrudHookContext) => {
@@ -193,7 +196,7 @@ export function shimPluginContext<T extends Record<string, any>>(
 	context: Record<string, any>,
 ): T {
 	const shimmedEndpoints: Record<string, any> = {};
-	
+
 	for (const [key, endpoint] of Object.entries(endpoints)) {
 		shimmedEndpoints[key] = (ctx: Record<string, any>) => {
 			return endpoint({
@@ -204,14 +207,14 @@ export function shimPluginContext<T extends Record<string, any>>(
 				},
 			});
 		};
-		
+
 		// Preserve endpoint metadata
 		shimmedEndpoints[key].path = endpoint.path;
 		shimmedEndpoints[key].method = endpoint.method;
 		shimmedEndpoints[key].options = endpoint.options;
 		shimmedEndpoints[key].headers = endpoint.headers;
 	}
-	
+
 	return shimmedEndpoints as T;
 }
 

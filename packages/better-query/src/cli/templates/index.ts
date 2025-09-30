@@ -1,5 +1,5 @@
-import fs from "fs/promises";
 import path from "path";
+import fs from "fs/promises";
 import { ensureDir, writeFile } from "../utils/fs.js";
 import { nextjsTemplate } from "./nextjs/index.js";
 
@@ -27,12 +27,12 @@ class TemplateManager {
 				throw new Error(`Unknown framework: ${config.framework}`);
 		}
 	}
-	
+
 	private async generateExpress(config: ProjectConfig): Promise<void> {
 		// TODO: Implement Express template
 		console.log("Express template not yet implemented");
 	}
-	
+
 	private async generateHono(config: ProjectConfig): Promise<void> {
 		// TODO: Implement Hono template
 		console.log("Hono template not yet implemented");

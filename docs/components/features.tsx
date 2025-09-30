@@ -1,5 +1,6 @@
 "use client";
 
+import { LockClosedIcon } from "@radix-ui/react-icons";
 import {
 	Globe2Icon,
 	PlugIcon,
@@ -9,13 +10,12 @@ import {
 	ShieldCheckIcon,
 	Webhook,
 } from "lucide-react";
-import { LockClosedIcon } from "@radix-ui/react-icons";
 
-import { TechStackDisplay } from "./display-techstack";
-import { Ripple } from "./ripple";
-import { GithubStat } from "./github-stat";
 import { cn } from "@/lib/utils";
+import { TechStackDisplay } from "./display-techstack";
+import { GithubStat } from "./github-stat";
 import { Testimonial } from "./landing/testimonials";
+import { Ripple } from "./ripple";
 const features = [
 	{
 		id: 1,
@@ -111,7 +111,7 @@ export default function Features({ stars }: { stars: string | null }) {
 						</div>
 					))}
 				</div>
-				
+
 				<div className="relative col-span-3 border-t-[1.2px] border-l-[1.2px] md:border-b-[1.2px] dark:border-b-0  h-full py-20">
 					<div className="w-full h-full p-16 pt-10 md:px-10 2xl:px-16">
 						<div className="flex flex-col items-center justify-center w-full h-full gap-3">
@@ -122,16 +122,12 @@ export default function Features({ stars }: { stars: string | null }) {
 								</p>
 							</div>
 							<p className="max-w-md mx-auto mt-4 text-4xl font-normal tracking-tighter text-center md:text-4xl">
-								<strong>Build powerful APIs with type safety in minutes!</strong>
+								<strong>
+									Build powerful APIs with type safety in minutes!
+								</strong>
 							</p>
 							<div className="flex mt-[10px] z-20 justify-center items-start">
-								<TechStackDisplay
-									skills={[
-										"nextJs",
-										"react",
-										"hono"
-									]}
-								/>
+								<TechStackDisplay skills={["nextJs", "react", "hono"]} />
 							</div>
 							<div className="flex items-center gap-2">
 								<GithubStat stars={stars} />

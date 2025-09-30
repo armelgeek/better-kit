@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Base schema helper with common fields that users can extend
  * Example usage:
- * 
+ *
  * const mySchema = z.object({
  *   id: z.string().optional(),
  *   name: z.string().min(1),
