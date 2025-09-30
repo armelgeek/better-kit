@@ -18,6 +18,8 @@ A modern, full-stack todo application demonstrating the power of **Better Query*
 
 ### 🏗️ Architecture Highlights
 - **Better Query** for type-safe CRUD operations
+- **Plugin System** with audit, cache, and validation plugins
+- **Custom Plugins** for extending functionality
 - **Better Auth Plugin** for seamless auth integration
 - **Zod Validation** with React Hook Form
 - **Permission-based Filtering** at the database level
@@ -49,6 +51,60 @@ A modern, full-stack todo application demonstrating the power of **Better Query*
 
 4. **Open Application**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🔌 Plugin System
+
+This application demonstrates the **Better Query plugin system** with both built-in and custom plugins.
+
+### Included Plugins
+
+1. **Audit Plugin** - Logs all CRUD operations (create, update, delete) for debugging and tracking
+2. **Cache Plugin** - In-memory caching for read operations to improve performance
+3. **Validation Plugin** - Enhanced validation with automatic string trimming and email validation
+4. **Timestamp Plugin** (Custom) - Automatically adds `createdAt` and `updatedAt` timestamps
+
+### Plugin Configuration
+
+See `lib/query.ts` for the complete plugin configuration:
+
+```typescript
+plugins: [
+  auditPlugin({ enabled: true, operations: ["create", "update", "delete"] }),
+  cachePlugin({ enabled: true, defaultTTL: 300 }),
+  validationPlugin({ strict: true }),
+  timestampPlugin, // Custom plugin
+]
+```
+
+### Creating Custom Plugins
+
+Check out `lib/plugins/timestamp-plugin.ts` for a simple example of creating a custom plugin:
+
+```typescript
+import { createPlugin } from "better-query/plugins";
+
+export const timestampPlugin = createPlugin({
+  id: "timestamp",
+  hooks: {
+    beforeCreate: async (context) => {
+      context.data.createdAt = new Date();
+      context.data.updatedAt = new Date();
+    },
+  },
+});
+```
+
+### Plugin Documentation
+
+- **[PLUGINS.md](PLUGINS.md)** - Comprehensive guide to the plugin system
+- **[lib/plugins/README.md](lib/plugins/README.md)** - Quick reference for plugin usage
+- **[lib/plugins/example-usage.ts](lib/plugins/example-usage.ts)** - Standalone example demonstrating plugin usage
+
+### Plugin API Endpoints
+
+The cache plugin adds these endpoints:
+- `GET /api/query/cache/stats` - View cache statistics
+- `DELETE /api/query/cache/clear` - Clear the entire cache
 
 ## Demo vs. Production Setup
 
