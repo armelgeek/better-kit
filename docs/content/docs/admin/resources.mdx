@@ -1,0 +1,508 @@
+---
+title: Resources
+description: Learn about admin resources and their features
+---
+
+Admin resources extend Better Query resources with UI-specific configuration. This guide covers everything you need to know about creating and managing admin resources.
+
+## What is an Admin Resource?
+
+An admin resource is a Better Query resource enhanced with UI metadata. It defines:
+
+- How data should be displayed (list, detail, forms)
+- Which fields to show in different views
+- How fields should be rendered and validated
+- User interface elements (icons, labels, descriptions)
+
+## Creating a Resource
+
+Use `createAdminResource()` to create an admin resource:
+
+```typescript
+import { createAdminResource } from "better-admin";
+
+const productAdmin = createAdminResource({
+  name: "product",
+  label: "Product",
+  labelPlural: "Products",
+  icon: "📦",
+  description: "Manage your products",
+  list: {
+    fields: ["name", "price", "status"],
+  },
+  fieldMetadata: {
+    name: { label: "Product Name", inputType: "text" },
+    price: { label: "Price", inputType: "number" },
+  },
+});
+```
+
+## Resource Properties
+
+### Basic Properties
+
+```typescript
+{
+  name: "product",              // Must match Better Query resource name
+  label: "Product",             // Singular label
+  labelPlural: "Products",      // Plural label
+  icon: "📦",                   // Icon (emoji or component)
+  description: "Manage products", // Resource description
+}
+```
+
+### List View Configuration
+
+The list view shows a table or grid of resources:
+
+```typescript
+list: {
+  // Fields to display in the list
+  fields: ["name", "email", "role", "createdAt"],
+  
+  // Default sorting
+  defaultSort: "createdAt",
+  defaultSortOrder: "desc", // "asc" or "desc"
+  
+  // Search configuration
+  searchFields: ["name", "email"],
+  searchPlaceholder: "Search users...",
+  
+  // Filtering
+  filterFields: ["role", "status"],
+  
+  // Pagination
+  pageSize: 20,
+  
+  // Bulk actions
+  enableBulkActions: true,
+  bulkActions: [
+    {
+      name: "delete",
+      label: "Delete Selected",
+      icon: "🗑️",
+      confirm: true,
+      confirmMessage: "Are you sure you want to delete the selected items?",
+    },
+    {
+      name: "export",
+      label: "Export Selected",
+      icon: "📥",
+    },
+  ],
+  
+  // Row actions
+  rowActions: [
+    {
+      name: "view",
+      label: "View",
+      icon: "👁️",
+    },
+    {
+      name: "edit",
+      label: "Edit",
+      icon: "✏️",
+    },
+    {
+      name: "delete",
+      label: "Delete",
+      icon: "🗑️",
+      confirm: true,
+    },
+  ],
+}
+```
+
+### Show View Configuration
+
+The show view displays detailed information about a single resource:
+
+```typescript
+show: {
+  // Fields to display
+  fields: [
+    "id",
+    "name",
+    "email",
+    "role",
+    "status",
+    "createdAt",
+    "updatedAt",
+  ],
+  
+  // Layout mode
+  layout: "default", // "default" | "tabs" | "sections"
+  
+  // Sections (when layout is "sections")
+  sections: [
+    {
+      title: "Basic Information",
+      fields: ["name", "email", "phone"],
+    },
+    {
+      title: "Account Details",
+      fields: ["role", "status", "lastLogin"],
+    },
+    {
+      title: "Metadata",
+      fields: ["createdAt", "updatedAt"],
+      collapsible: true,
+      defaultCollapsed: true,
+    },
+  ],
+  
+  // Tabs (when layout is "tabs")
+  tabs: [
+    {
+      title: "Overview",
+      fields: ["name", "email", "role"],
+    },
+    {
+      title: "Activity",
+      component: CustomActivityTab,
+    },
+  ],
+  
+  // Actions
+  actions: [
+    {
+      name: "edit",
+      label: "Edit",
+      icon: "✏️",
+      primary: true,
+    },
+    {
+      name: "delete",
+      label: "Delete",
+      icon: "🗑️",
+      confirm: true,
+      variant: "danger",
+    },
+  ],
+}
+```
+
+### Create Form Configuration
+
+The create form is used to create new resources:
+
+```typescript
+create: {
+  // Fields to include in the form
+  fields: ["name", "email", "password", "role", "status"],
+  
+  // Layout mode
+  layout: "default", // "default" | "tabs" | "sections"
+  
+  // Default values
+  defaultValues: {
+    role: "user",
+    status: "active",
+  },
+  
+  // Sections (when layout is "sections")
+  sections: [
+    {
+      title: "Basic Information",
+      fields: ["name", "email"],
+    },
+    {
+      title: "Account Settings",
+      fields: ["password", "role", "status"],
+    },
+  ],
+  
+  // Submit button text
+  submitLabel: "Create Product",
+  
+  // Success message
+  successMessage: "Product created successfully!",
+  
+  // Redirect after create
+  redirectAfterCreate: true,
+  redirectPath: "/admin/products/:id", // :id will be replaced with new resource id
+}
+```
+
+### Edit Form Configuration
+
+The edit form is used to update existing resources:
+
+```typescript
+edit: {
+  // Fields to include in the form
+  fields: ["name", "email", "role", "status"],
+  
+  // Read-only fields
+  readOnlyFields: ["email", "createdAt"],
+  
+  // Layout mode
+  layout: "default",
+  
+  // Submit button text
+  submitLabel: "Save Changes",
+  
+  // Success message
+  successMessage: "Changes saved successfully!",
+  
+  // Delete button
+  showDeleteButton: true,
+  deleteButtonLabel: "Delete Product",
+}
+```
+
+## Field Metadata
+
+Field metadata defines how each field should be displayed and edited. See the [Configuration](/docs/admin/configuration) guide for complete field metadata options.
+
+## Resource Relationships
+
+Define relationships between resources:
+
+```typescript
+createAdminResource({
+  name: "product",
+  fieldMetadata: {
+    categoryId: {
+      label: "Category",
+      inputType: "select",
+      reference: "category",
+      referenceField: "name",
+    },
+    tags: {
+      label: "Tags",
+      inputType: "multiselect",
+      reference: "tag",
+      referenceField: "name",
+    },
+  },
+})
+```
+
+## Virtual Fields
+
+Add computed fields that don't exist in the database:
+
+```typescript
+createAdminResource({
+  name: "product",
+  list: {
+    fields: ["name", "price", "discountPrice", "savings"],
+  },
+  fieldMetadata: {
+    savings: {
+      label: "Savings",
+      virtual: true,
+      compute: (record) => record.price - record.discountPrice,
+      formatter: (value) => `$${value.toFixed(2)}`,
+    },
+  },
+})
+```
+
+## Access Control
+
+Control access to resources and operations:
+
+```typescript
+createAdminResource({
+  name: "product",
+  permissions: {
+    list: (ctx) => ctx.user?.role === "admin",
+    create: (ctx) => ctx.user?.role === "admin",
+    read: (ctx) => true, // Everyone can view
+    update: (ctx) => ctx.user?.role === "admin",
+    delete: (ctx) => ctx.user?.role === "admin",
+  },
+})
+```
+
+## Custom Actions
+
+Add custom actions to resources:
+
+```typescript
+createAdminResource({
+  name: "product",
+  customActions: [
+    {
+      name: "publish",
+      label: "Publish",
+      icon: "🚀",
+      type: "single", // "single" | "bulk"
+      handler: async (adminClient, resourceId) => {
+        await adminClient.customAction("product", "publish", { id: resourceId });
+      },
+      condition: (record) => record.status === "draft",
+    },
+    {
+      name: "bulkPublish",
+      label: "Publish Selected",
+      icon: "🚀",
+      type: "bulk",
+      handler: async (adminClient, resourceIds) => {
+        await adminClient.customAction("product", "bulkPublish", { ids: resourceIds });
+      },
+    },
+  ],
+})
+```
+
+## Validation
+
+Add custom validation rules:
+
+```typescript
+fieldMetadata: {
+  email: {
+    label: "Email",
+    inputType: "email",
+    validate: (value) => {
+      if (!value.includes("@")) {
+        return "Invalid email address";
+      }
+      return true;
+    },
+  },
+  price: {
+    label: "Price",
+    inputType: "number",
+    validate: (value, formData) => {
+      if (formData.discountPrice && value < formData.discountPrice) {
+        return "Price must be greater than discount price";
+      }
+      return true;
+    },
+  },
+}
+```
+
+## Formatters and Parsers
+
+Transform values for display and editing:
+
+```typescript
+fieldMetadata: {
+  price: {
+    label: "Price",
+    inputType: "number",
+    // Format for display
+    formatter: (value) => `$${value.toFixed(2)}`,
+    // Parse for editing
+    parser: (value) => parseFloat(value.replace(/[^0-9.]/g, "")),
+  },
+  tags: {
+    label: "Tags",
+    inputType: "multiselect",
+    formatter: (value) => value.join(", "),
+    parser: (value) => value.split(",").map(v => v.trim()),
+  },
+}
+```
+
+## Examples
+
+### E-commerce Product Resource
+
+```typescript
+createAdminResource({
+  name: "product",
+  label: "Product",
+  labelPlural: "Products",
+  icon: "📦",
+  list: {
+    fields: ["name", "price", "stock", "status"],
+    defaultSort: "createdAt",
+    defaultSortOrder: "desc",
+    searchFields: ["name", "sku"],
+  },
+  fieldMetadata: {
+    name: {
+      label: "Product Name",
+      inputType: "text",
+      required: true,
+    },
+    sku: {
+      label: "SKU",
+      inputType: "text",
+      required: true,
+    },
+    price: {
+      label: "Price",
+      inputType: "number",
+      min: 0,
+      formatter: (value) => `$${value.toFixed(2)}`,
+    },
+    stock: {
+      label: "Stock",
+      inputType: "number",
+      min: 0,
+    },
+    status: {
+      label: "Status",
+      inputType: "select",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Active", value: "active" },
+        { label: "Out of Stock", value: "out_of_stock" },
+      ],
+    },
+  },
+})
+```
+
+### User Management Resource
+
+```typescript
+createAdminResource({
+  name: "user",
+  label: "User",
+  labelPlural: "Users",
+  icon: "👤",
+  list: {
+    fields: ["name", "email", "role", "status", "lastLogin"],
+    searchFields: ["name", "email"],
+    filterFields: ["role", "status"],
+  },
+  show: {
+    layout: "sections",
+    sections: [
+      {
+        title: "Profile",
+        fields: ["name", "email", "avatar"],
+      },
+      {
+        title: "Account",
+        fields: ["role", "status", "lastLogin", "createdAt"],
+      },
+    ],
+  },
+  fieldMetadata: {
+    name: {
+      label: "Full Name",
+      inputType: "text",
+      required: true,
+    },
+    email: {
+      label: "Email Address",
+      inputType: "email",
+      required: true,
+    },
+    role: {
+      label: "Role",
+      inputType: "select",
+      options: [
+        { label: "Admin", value: "admin" },
+        { label: "Editor", value: "editor" },
+        { label: "User", value: "user" },
+      ],
+    },
+  },
+})
+```
+
+## Next Steps
+
+- [Client](/docs/admin/client) - Set up the frontend client
+- [Hooks](/docs/admin/hooks) - Use React hooks for admin operations
+- [Customization](/docs/admin/customization) - Customize components and behavior
