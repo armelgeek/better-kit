@@ -1,0 +1,64 @@
+{
+	"name": "better-admin",
+	"version": "0.0.1",
+	"type": "module",
+	"description": "Full-stack admin kit built on Better Query - auto-generated admin UI with CRUD operations",
+	"scripts": {
+		"build": "tsup --clean",
+		"dev": "tsup --watch",
+		"test": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./core": "./dist/core.js",
+		"./client": "./dist/client.js",
+		"./react": "./dist/react.js",
+		"./ui": "./dist/ui.js",
+		"./types": "./dist/types.js"
+	},
+	"dependencies": {
+		"better-query": "workspace:*",
+		"zod": "^3.22.5"
+	},
+	"devDependencies": {
+		"@types/react": "^19.1.13",
+		"react": "^19.1.1",
+		"tsup": "^8.2.4",
+		"typescript": "^5.5.0-dev.20240508",
+		"vitest": "^1.6.0"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"peerDependencies": {
+		"@types/react": "*",
+		"react": ">=16.8.0",
+		"better-query": ">=0.0.1"
+	},
+	"peerDependenciesMeta": {
+		"@types/react": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
+	"keywords": [
+		"admin",
+		"admin-panel",
+		"admin-ui",
+		"crud",
+		"better-query",
+		"better-auth",
+		"typescript",
+		"react",
+		"shadcn",
+		"headless-ui"
+	],
+	"author": "Better Kit Contributors",
+	"license": "MIT"
+}
