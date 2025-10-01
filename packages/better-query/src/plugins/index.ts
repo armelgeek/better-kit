@@ -43,9 +43,17 @@ export { realtimePlugin } from "./realtime";
 export type {
 	RealtimePluginOptions,
 	RealtimeMessage,
-	RealtimeEvent,
 } from "./realtime";
-export type { RealtimePluginOptions, RealtimeMessage } from "./realtime";
+
+export { jobsPlugin, createJobHandler } from "./jobs";
+export type {
+	JobPluginOptions,
+	JobDefinition,
+	JobHistory,
+	JobHandler,
+	JobStatus,
+	JobContext,
+} from "./jobs";
 
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";
