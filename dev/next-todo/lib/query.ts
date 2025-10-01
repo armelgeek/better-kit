@@ -20,11 +20,9 @@ const todoResource = createResource({
 	middlewares: [
 		{
 			handler: async (context) => {
-				console.log("Todo resource middleware triggered", context);
 				const session = await auth.api.getSession({
 					headers: await headers(),
 				});
-				console.log("Middleware session user:", session?.user);
 				context.user = session?.user;
 			},
 		},
@@ -68,7 +66,7 @@ export const query = betterQuery({
 	},
 	plugins: [
 		// Built-in plugin: Audit logging for all CRUD operations
-		auditPlugin({
+		/**auditPlugin({
 			enabled: true,
 			operations: ["create", "update", "delete"],
 			includeRequestData: false,
@@ -82,7 +80,7 @@ export const query = betterQuery({
 					},
 				);
 			},
-		}),
+		}),**/
 
 		// Built-in plugin: Cache for read operations
 		/**cachePlugin({
@@ -108,7 +106,7 @@ export const query = betterQuery({
 		}),**/
 
 		// Custom plugin: Automatic timestamps
-		//	timestampPlugin,
+		timestampPlugin,
 	],
 	resources: [todoResource],
 });

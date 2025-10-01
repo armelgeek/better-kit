@@ -16,7 +16,6 @@ export default function ProductsPage() {
 		setSort,
 		refetch,
 	} = useAdminList(adminClient, "product");
-
 	const { delete: deleteProduct } = useAdminDelete(adminClient, "product");
 	const [searchQuery, setSearchQuery] = useState("");
 
@@ -126,7 +125,7 @@ export default function ProductsPage() {
 								</td>
 							</tr>
 						) : (
-							data.map((product: any) => (
+							data.items.map((product: any) => (
 								<tr key={product.id} className="hover:bg-gray-50">
 									<td className="px-6 py-4 whitespace-nowrap">
 										<div className="text-sm font-medium text-gray-900">

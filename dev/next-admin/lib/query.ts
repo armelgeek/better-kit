@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "./auth";
 
 // Product schema
-const productSchema = z.object({
+export const productSchema = z.object({
 	id: z.string().optional(),
 	name: z.string().min(1, "Product name is required"),
 	description: z.string().optional(),
@@ -16,7 +16,7 @@ const productSchema = z.object({
 });
 
 // User schema (for viewing user accounts)
-const userSchema = z.object({
+export const userSchema = z.object({
 	id: z.string().optional(),
 	email: z.string().email(),
 	name: z.string().optional(),
@@ -25,7 +25,7 @@ const userSchema = z.object({
 });
 
 // Order schema
-const orderSchema = z.object({
+export const orderSchema = z.object({
 	id: z.string().optional(),
 	userId: z.string(),
 	productId: z.string(),
@@ -49,24 +49,6 @@ export const query = betterQuery({
 		createResource({
 			name: "product",
 			schema: productSchema,
-			middlewares: [
-				{
-					handler: async (context) => {
-						// Extract user from Better Auth session
-						const session = await auth.api.getSession({
-							headers: context.request.headers,
-						});
-						if (session) context.user = session.user;
-					},
-				},
-			],
-			permissions: {
-				create: async (context) => !!context.user,
-				read: async () => true, // Public read
-				update: async (context) => !!context.user,
-				delete: async (context) => context.user?.role === "admin",
-				list: async () => true, // Public list
-			},
 		}),
 
 		// User resource (read-only for viewing)
@@ -98,7 +80,7 @@ export const query = betterQuery({
 
 		// Order resource
 		createResource({
-			name: "order",
+			name: "order_product",
 			schema: orderSchema,
 			middlewares: [
 				{
