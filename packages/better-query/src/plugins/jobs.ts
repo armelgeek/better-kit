@@ -110,7 +110,7 @@ function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
 
 /**
  * Parse cron expression to next execution time
- * Simplified cron parser - supports */n syntax and specific values
+ * Simplified cron parser - supports star-slash-n syntax and specific values
  */
 function parseCronExpression(cron: string, from: Date): Date {
 	const parts = cron.split(" ");
@@ -397,10 +397,12 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 	// Plugin endpoints
 	const endpoints = {
 		// Create a new job
-		createJob: createCrudEndpoint({
-			path: "/jobs",
-			method: "POST",
-			handler: async (ctx: any) => {
+		createJob: createCrudEndpoint(
+			"/jobs",
+			{
+				method: "POST",
+			},
+			async (ctx: any) => {
 				const { context } = ctx;
 				const body = await ctx.body;
 
@@ -436,14 +438,15 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 				const created = await context.adapter.create("jobs", job);
 				return ctx.json(created, { status: 201 });
 			},
-			options: {},
-		}),
+		),
 
 		// List all jobs
-		listJobs: createCrudEndpoint({
-			path: "/jobs",
-			method: "GET",
-			handler: async (ctx: any) => {
+		listJobs: createCrudEndpoint(
+			"/jobs",
+			{
+				method: "GET",
+			},
+			async (ctx: any) => {
 				const { context } = ctx;
 				const url = new URL(ctx.request.url);
 				const status = url.searchParams.get("status");
@@ -453,14 +456,15 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 
 				return ctx.json({ data: jobs });
 			},
-			options: {},
-		}),
+		),
 
 		// Get job by ID
-		getJob: createCrudEndpoint({
-			path: "/jobs/:id",
-			method: "GET",
-			handler: async (ctx: any) => {
+		getJob: createCrudEndpoint(
+			"/jobs/:id",
+			{
+				method: "GET",
+			},
+			async (ctx: any) => {
 				const { context, params } = ctx;
 				const job = await context.adapter.read("jobs", params.id);
 
@@ -470,14 +474,15 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 
 				return ctx.json(job);
 			},
-			options: {},
-		}),
+		),
 
 		// Update job
-		updateJob: createCrudEndpoint({
-			path: "/jobs/:id",
-			method: "PUT",
-			handler: async (ctx: any) => {
+		updateJob: createCrudEndpoint(
+			"/jobs/:id",
+			{
+				method: "PUT",
+			},
+			async (ctx: any) => {
 				const { context, params } = ctx;
 				const body = await ctx.body;
 
@@ -496,14 +501,15 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 
 				return ctx.json(updated);
 			},
-			options: {},
-		}),
+		),
 
 		// Delete job
-		deleteJob: createCrudEndpoint({
-			path: "/jobs/:id",
-			method: "DELETE",
-			handler: async (ctx: any) => {
+		deleteJob: createCrudEndpoint(
+			"/jobs/:id",
+			{
+				method: "DELETE",
+			},
+			async (ctx: any) => {
 				const { context, params } = ctx;
 
 				const existing = await context.adapter.read("jobs", params.id);
@@ -514,14 +520,15 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 				await context.adapter.delete("jobs", params.id);
 				return ctx.json({ success: true });
 			},
-			options: {},
-		}),
+		),
 
 		// Trigger job immediately
-		triggerJob: createCrudEndpoint({
-			path: "/jobs/:id/trigger",
-			method: "POST",
-			handler: async (ctx: any) => {
+		triggerJob: createCrudEndpoint(
+			"/jobs/:id/trigger",
+			{
+				method: "POST",
+			},
+			async (ctx: any) => {
 				const { context, params } = ctx;
 
 				const job = await context.adapter.read("jobs", params.id);
@@ -542,16 +549,17 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 					);
 				}
 			},
-			options: {},
-		}),
+		),
 
 		// Get job execution history
 		...(enableHistory
 			? {
-					getJobHistory: createCrudEndpoint({
-						path: "/jobs/:id/history",
-						method: "GET",
-						handler: async (ctx: any) => {
+					getJobHistory: createCrudEndpoint(
+						"/jobs/:id/history",
+						{
+							method: "GET",
+						},
+						async (ctx: any) => {
 							const { context, params } = ctx;
 
 							const history = await context.adapter.list("job_history", {
@@ -561,16 +569,17 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 
 							return ctx.json({ data: history });
 						},
-						options: {},
-					}),
+					),
 				}
 			: {}),
 
 		// Job runner control
-		startRunner: createCrudEndpoint({
-			path: "/jobs/runner/start",
-			method: "POST",
-			handler: async (ctx: any) => {
+		startRunner: createCrudEndpoint(
+			"/jobs/runner/start",
+			{
+				method: "POST",
+			},
+			async (ctx: any) => {
 				if (runner) {
 					runner.start();
 					return ctx.json({ success: true, message: "Job runner started" });
@@ -580,13 +589,14 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 					{ status: 500 },
 				);
 			},
-			options: {},
-		}),
+		),
 
-		stopRunner: createCrudEndpoint({
-			path: "/jobs/runner/stop",
-			method: "POST",
-			handler: async (ctx: any) => {
+		stopRunner: createCrudEndpoint(
+			"/jobs/runner/stop",
+			{
+				method: "POST",
+			},
+			async (ctx: any) => {
 				if (runner) {
 					runner.stop();
 					return ctx.json({ success: true, message: "Job runner stopped" });
@@ -596,8 +606,7 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 					{ status: 500 },
 				);
 			},
-			options: {},
-		}),
+		),
 	};
 
 	return {
