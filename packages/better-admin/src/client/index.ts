@@ -122,7 +122,9 @@ export function createAdminClient<T extends QueryClient = QueryClient>(
 			const errors = results.filter((r) => r.error);
 			if (errors.length > 0) {
 				throw new Error(
-					`Failed to delete ${errors.length} resource(s): ${errors.map((e) => e.error.message).join(", ")}`,
+					`Failed to delete ${errors.length} resource(s): ${errors
+						.map((e) => e.error.message)
+						.join(", ")}`,
 				);
 			}
 		},

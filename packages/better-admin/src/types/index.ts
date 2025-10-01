@@ -77,7 +77,7 @@ export interface AdminResourceConfig extends QueryResourceConfig {
 			label?: string;
 			/** Help text/description */
 			description?: string;
-			/** Input type for forms */
+			/** Input type for forms - supports built-in types and custom types */
 			inputType?:
 				| "text"
 				| "number"
@@ -89,7 +89,8 @@ export interface AdminResourceConfig extends QueryResourceConfig {
 				| "date"
 				| "datetime"
 				| "file"
-				| "richtext";
+				| "richtext"
+				| (string & {});
 			/** Options for select inputs */
 			options?: Array<{ label: string; value: string | number }>;
 			/** Whether to show in list view */
@@ -100,6 +101,15 @@ export interface AdminResourceConfig extends QueryResourceConfig {
 			showInForm?: boolean;
 			/** Custom formatter for display */
 			formatter?: (value: any) => string;
+			/** Custom render function for input fields (useful for custom input types) */
+			renderInput?: (props: {
+				value: any;
+				onChange: (value: any) => void;
+				error?: string;
+				disabled?: boolean;
+			}) => ComponentType;
+			/** Custom render function for display in list/show views */
+			renderDisplay?: (value: any, record: any) => ComponentType | string;
 		}
 	>;
 }

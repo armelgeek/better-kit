@@ -1,6 +1,6 @@
 "use client";
-import { useAdminList, useAdminDelete } from "better-admin/react";
 import { adminClient } from "@/lib/admin-client";
+import { useAdminDelete, useAdminList } from "better-admin/react";
 import { useState } from "react";
 
 export default function ProductsPage() {

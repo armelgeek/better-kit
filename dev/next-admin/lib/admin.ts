@@ -22,7 +22,16 @@ export const admin = betterAdmin({
 				bulkActions: true,
 			},
 			show: {
-				fields: ["name", "description", "category", "price", "stock", "status", "createdAt", "updatedAt"],
+				fields: [
+					"name",
+					"description",
+					"category",
+					"price",
+					"stock",
+					"status",
+					"createdAt",
+					"updatedAt",
+				],
 			},
 			create: {
 				fields: ["name", "description", "category", "price", "stock", "status"],
@@ -163,13 +172,27 @@ export const admin = betterAdmin({
 			showInMenu: true,
 			menuOrder: 3,
 			list: {
-				fields: ["userId", "productId", "quantity", "total", "status", "createdAt"],
+				fields: [
+					"userId",
+					"productId",
+					"quantity",
+					"total",
+					"status",
+					"createdAt",
+				],
 				defaultSort: "createdAt",
 				defaultSortOrder: "desc",
 				perPage: 10,
 			},
 			show: {
-				fields: ["userId", "productId", "quantity", "total", "status", "createdAt"],
+				fields: [
+					"userId",
+					"productId",
+					"quantity",
+					"total",
+					"status",
+					"createdAt",
+				],
 			},
 			create: {
 				fields: ["userId", "productId", "quantity", "total", "status"],

@@ -9,13 +9,11 @@ import { QueryResourceConfig } from "../types";
 
 describe("Issue Reproduction: User Injection for Permissions", () => {
 	const mockAdapter = {
-		create: vi
-			.fn()
-			.mockResolvedValue({
-				id: "todo-123",
-				title: "Test Todo",
-				userId: "user-456",
-			}),
+		create: vi.fn().mockResolvedValue({
+			id: "todo-123",
+			title: "Test Todo",
+			userId: "user-456",
+		}),
 	};
 
 	const mockContext = {
