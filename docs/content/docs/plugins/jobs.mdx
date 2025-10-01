@@ -1,0 +1,501 @@
+---
+title: Jobs & Schedules Plugin
+description: Background job processing and task scheduling for Better Query
+---
+
+The Jobs & Schedules plugin adds powerful background job processing and task scheduling capabilities to Better Query. Define recurring tasks, handle retries, track execution history, and automate your backend workflows.
+
+## Features
+
+- **Job Management** - Full CRUD operations for background jobs
+- **Flexible Scheduling** - Support for both interval expressions and cron syntax
+- **Auto-execution** - Built-in job runner with configurable polling
+- **Retry Logic** - Automatic retries with configurable max attempts
+- **Error Handling** - Comprehensive error tracking and logging
+- **Execution History** - Optional history tracking with performance metrics
+
+## Installation
+
+The jobs plugin is included in Better Query:
+
+```ts
+import { betterQuery, jobsPlugin } from "better-query";
+```
+
+## Basic Usage
+
+### Setup
+
+```ts title="lib/query.ts"
+import { betterQuery, jobsPlugin } from "better-query";
+
+// Define your job handlers
+const handlers = {
+  cleanupOldRecords: async (data: { days: number }) => {
+    console.log(`Cleaning up records older than ${data.days} days`);
+    // Your cleanup logic here
+    return { deleted: 42 };
+  },
+  
+  sendNotifications: async (data: { users: string[] }) => {
+    console.log(`Sending notifications to ${data.users.length} users`);
+    // Your notification logic here
+    return { sent: data.users.length };
+  },
+};
+
+export const query = betterQuery({
+  database: {
+    provider: "sqlite",
+    url: "app.db",
+    autoMigrate: true,
+  },
+  resources: [],
+  plugins: [
+    jobsPlugin({
+      enabled: true,
+      autoStart: true,           // Start job runner automatically
+      pollInterval: 60000,        // Check for jobs every 60 seconds
+      defaultMaxAttempts: 3,      // Retry failed jobs up to 3 times
+      enableHistory: true,        // Track execution history
+      handlers,                   // Register job handlers
+    }),
+  ],
+});
+```
+
+## Scheduling Formats
+
+### Interval Expressions
+
+Simple time-based intervals:
+
+```ts
+"5s"   // Every 5 seconds
+"10m"  // Every 10 minutes
+"2h"   // Every 2 hours
+"1d"   // Every 1 day
+```
+
+### Cron Expressions
+
+Standard cron format: `minute hour day month dayOfWeek`
+
+```ts
+"*/5 * * * *"  // Every 5 minutes
+"0 * * * *"    // Every hour at minute 0
+"0 0 * * *"    // Every day at midnight
+"0 9 * * 1"    // Every Monday at 9 AM
+```
+
+## API Endpoints
+
+### Creating Jobs
+
+```ts
+// Using the client
+import { createQueryClient } from "better-query/client";
+
+const client = createQueryClient<typeof query>();
+
+// Create a scheduled job
+const job = await client.$post("/jobs", {
+  body: {
+    name: "Daily Cleanup",
+    handler: "cleanupOldRecords",
+    data: { days: 30 },
+    schedule: "0 2 * * *", // Daily at 2 AM
+    maxAttempts: 3,
+  },
+});
+
+console.log("Created job:", job.id);
+```
+
+### Listing Jobs
+
+```ts
+// List all jobs
+const allJobs = await client.$get("/jobs");
+
+// Filter by status
+const pendingJobs = await client.$get("/jobs?status=pending");
+const failedJobs = await client.$get("/jobs?status=failed");
+```
+
+### Managing Jobs
+
+```ts
+// Get job details
+const job = await client.$get(`/jobs/${jobId}`);
+
+// Update job
+await client.$put(`/jobs/${jobId}`, {
+  body: {
+    schedule: "*/10 * * * *", // Change to every 10 minutes
+    maxAttempts: 5,
+  },
+});
+
+// Delete job
+await client.$delete(`/jobs/${jobId}`);
+```
+
+### Manual Execution
+
+```ts
+// Trigger a job immediately
+await client.$post(`/jobs/${jobId}/trigger`);
+```
+
+### Execution History
+
+```ts
+// Get job execution history
+const history = await client.$get(`/jobs/${jobId}/history`);
+
+// Analyze execution times
+const avgDuration = history.data.reduce(
+  (sum, h) => sum + h.duration, 0
+) / history.data.length;
+
+console.log(`Average execution time: ${avgDuration}ms`);
+```
+
+### Runner Control
+
+```ts
+// Start the job runner
+await client.$post("/jobs/runner/start");
+
+// Stop the job runner
+await client.$post("/jobs/runner/stop");
+```
+
+## Use Cases
+
+### 1. Database Cleanup
+
+```ts
+// Clean up old sessions daily
+await client.$post("/jobs", {
+  body: {
+    name: "Clean Old Sessions",
+    handler: "cleanupSessions",
+    schedule: "0 2 * * *", // 2 AM daily
+    data: { olderThanDays: 30 },
+  },
+});
+```
+
+### 2. Periodic Data Sync
+
+```ts
+// Sync external data every 15 minutes
+await client.$post("/jobs", {
+  body: {
+    name: "Sync External Data",
+    handler: "syncData",
+    schedule: "*/15 * * * *",
+    data: { source: "external-api" },
+  },
+});
+```
+
+### 3. Report Generation
+
+```ts
+// Generate weekly reports
+await client.$post("/jobs", {
+  body: {
+    name: "Weekly Report",
+    handler: "generateReport",
+    schedule: "0 9 * * 1", // Monday at 9 AM
+    data: { type: "weekly" },
+  },
+});
+```
+
+### 4. One-Time Deferred Task
+
+```ts
+// Process uploaded file (runs once)
+await client.$post("/jobs", {
+  body: {
+    name: "Process Upload",
+    handler: "processUpload",
+    data: { fileId: "abc123" },
+    // No schedule = executes once
+  },
+});
+```
+
+## Job Status Lifecycle
+
+Jobs move through the following states:
+
+1. **pending** - Waiting to be executed
+2. **running** - Currently executing
+3. **completed** - Successfully completed (one-time jobs)
+4. **failed** - Failed after all retry attempts
+5. **cancelled** - Manually cancelled
+
+Scheduled jobs return to `pending` status after successful execution with an updated `nextRunAt` time.
+
+## Configuration Options
+
+```ts
+jobsPlugin({
+  // Enable/disable the plugin
+  enabled: true,
+  
+  // Auto-start the job runner
+  autoStart: true,
+  
+  // Poll interval in milliseconds
+  pollInterval: 60000,
+  
+  // Default max retry attempts
+  defaultMaxAttempts: 3,
+  
+  // Enable execution history tracking
+  enableHistory: true,
+  
+  // Register job handlers
+  handlers: {
+    myHandler: async (data) => {
+      // Handler implementation
+    },
+  },
+})
+```
+
+## Advanced Patterns
+
+### Custom Job Handlers
+
+```ts
+const handlers = {
+  processPayments: async (data: { batchId: string }) => {
+    try {
+      const results = await processPaymentBatch(data.batchId);
+      
+      return {
+        processed: results.length,
+        errors: results.filter(r => r.error).length,
+      };
+    } catch (error) {
+      console.error("Payment processing failed:", error);
+      throw error; // Will trigger retry
+    }
+  },
+};
+```
+
+### Dynamic Handler Registration
+
+```ts
+import { createJobHandler } from "better-query/plugins";
+
+const customHandler = createJobHandler("myHandler", async (data) => {
+  // Handler logic
+  return { success: true };
+});
+
+// Use with the plugin
+jobsPlugin({
+  handlers: {
+    [customHandler.name]: customHandler.handler,
+  },
+});
+```
+
+### Error Monitoring
+
+```ts
+// Get failed jobs
+const failed = await client.$get("/jobs?status=failed");
+
+for (const job of failed.data) {
+  console.log(`Job ${job.name} failed:`, job.lastError);
+  console.log(`Attempts: ${job.attempts}/${job.maxAttempts}`);
+}
+```
+
+## Database Schema
+
+### jobs Table
+
+```ts
+{
+  id: string;           // Unique job ID
+  name: string;         // Job name
+  handler: string;      // Handler function name
+  data: any;           // JSON data for handler
+  schedule: string;     // Cron or interval expression
+  status: string;       // Job status
+  attempts: number;     // Current attempt count
+  maxAttempts: number;  // Max retry attempts
+  lastRunAt: Date;      // Last execution time
+  nextRunAt: Date;      // Next scheduled execution
+  lastError: string;    // Last error message
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### job_history Table (optional)
+
+```ts
+{
+  id: string;          // Unique history entry ID
+  jobId: string;       // Reference to job
+  status: string;      // Execution status
+  startedAt: Date;     // Execution start time
+  completedAt: Date;   // Execution completion time
+  error: string;       // Error message if failed
+  result: any;         // Execution result (JSON)
+  duration: number;    // Execution duration in ms
+}
+```
+
+## Best Practices
+
+### 1. Idempotent Handlers
+
+Design handlers to be safe to retry:
+
+```ts
+const handlers = {
+  sendEmail: async (data: { userId: string, template: string }) => {
+    // Check if already sent
+    const sent = await checkIfSent(data.userId, data.template);
+    if (sent) {
+      return { alreadySent: true };
+    }
+    
+    // Send email
+    await sendEmail(data.userId, data.template);
+    
+    // Mark as sent
+    await markAsSent(data.userId, data.template);
+    
+    return { sent: true };
+  },
+};
+```
+
+### 2. Error Handling
+
+Provide clear error messages:
+
+```ts
+const handlers = {
+  processData: async (data: { id: string }) => {
+    try {
+      const item = await fetchData(data.id);
+      if (!item) {
+        throw new Error(`Item not found: ${data.id}`);
+      }
+      
+      return await processItem(item);
+    } catch (error) {
+      // Log for debugging
+      console.error("Processing failed:", error);
+      
+      // Re-throw to trigger retry
+      throw error;
+    }
+  },
+};
+```
+
+### 3. Performance Monitoring
+
+Track execution times and optimize:
+
+```ts
+// Analyze job performance
+const history = await client.$get(`/jobs/${jobId}/history`);
+
+const slowExecutions = history.data.filter(
+  h => h.duration > 5000 // More than 5 seconds
+);
+
+if (slowExecutions.length > 0) {
+  console.warn(`Job ${jobId} has slow executions:`, slowExecutions);
+}
+```
+
+### 4. Cleanup Old History
+
+```ts
+// Create a cleanup job for job history
+const handlers = {
+  cleanupHistory: async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    // Delete old history entries
+    await adapter.delete("job_history", {
+      where: { completedAt: { lt: thirtyDaysAgo } }
+    });
+  },
+};
+
+// Schedule to run monthly
+await client.$post("/jobs", {
+  body: {
+    name: "Cleanup Job History",
+    handler: "cleanupHistory",
+    schedule: "0 0 1 * *", // First of every month
+  },
+});
+```
+
+## Troubleshooting
+
+### Jobs Not Running
+
+- Verify `autoStart: true` or manually start the runner
+- Check `nextRunAt` is in the past
+- Ensure handler is registered
+- Confirm job status is `pending`
+
+### Jobs Failing Repeatedly
+
+- Review `lastError` field for details
+- Check handler implementation
+- Verify data passed to handler is valid
+- Consider increasing `maxAttempts`
+
+### Performance Issues
+
+- Reduce `pollInterval` if jobs are delayed
+- Optimize handler execution time
+- Consider archiving old job history records
+
+## TypeScript Support
+
+Full type safety for jobs:
+
+```ts
+import type { JobDefinition, JobHistory } from "better-query/plugins";
+
+// Define your handler data types
+interface CleanupData {
+  days: number;
+}
+
+const handlers = {
+  cleanup: async (data: CleanupData) => {
+    // TypeScript knows data.days is a number
+    console.log(`Cleaning up ${data.days} old records`);
+    return { deleted: 0 };
+  },
+};
+```
+
+## See Also
+
+- [Audit Plugin](/docs/plugins/audit) - Track changes to your data
+- [Cache Plugin](/docs/plugins/cache) - Cache query results
+- [Realtime Plugin](/docs/plugins/realtime) - Real-time data updates
