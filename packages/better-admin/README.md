@@ -60,6 +60,80 @@ import {
 
 See the [Components Documentation](./COMPONENTS.md) for examples and full API reference.
 
+## Auto-Generated Forms
+
+Better Admin automatically generates form fields from your admin configuration, eliminating the need to manually define field arrays. This ensures your forms stay in sync with your resource configuration.
+
+### Basic Usage
+
+```tsx
+import { adminConfig } from "@/lib/admin";
+import { generateFormFields } from "better-admin";
+import { AdminForm } from "better-admin/components";
+
+// Get the resource configuration
+const productResource = adminConfig.resources.get("product");
+
+// Auto-generate fields for create/edit forms
+const fields = generateFormFields(productResource, "create");
+
+<AdminForm
+  fields={fields}
+  onSubmit={handleSubmit}
+/>
+```
+
+### How It Works
+
+1. **Define field metadata once** in your admin configuration:
+
+```typescript
+createAdminResource({
+  name: "product",
+  fieldMetadata: {
+    name: {
+      label: "Product Name",
+      inputType: "text",
+      description: "The name of the product",
+    },
+    price: {
+      label: "Price",
+      inputType: "number",
+    },
+    status: {
+      label: "Status",
+      inputType: "select",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Active", value: "active" },
+      ],
+    },
+  },
+})
+```
+
+2. **Forms are automatically generated** based on the `create` and `edit` field configurations:
+
+```typescript
+create: {
+  fields: ["name", "price", "status"],
+}
+```
+
+3. **Export the serializable config** for client-side use:
+
+```typescript
+export const admin = betterAdmin({...});
+export const adminConfig = admin.getSerializableConfig();
+```
+
+### Benefits
+
+- ✅ **No duplication**: Define field metadata once, use everywhere
+- ✅ **Type-safe**: Full TypeScript support
+- ✅ **Consistent**: Forms automatically match your configuration
+- ✅ **Less code**: Eliminate manual field definitions in every form
+
 ## Quick Start
 
 ### 1. Define Your Backend with Better Query
