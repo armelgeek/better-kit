@@ -737,6 +737,28 @@ VERCEL_URL=https://your-app.vercel.app/api
 NEXT_PUBLIC_VERCEL_URL=https://your-app.vercel.app/api
 ```
 
+## Examples
+
+Better Query includes comprehensive examples demonstrating real-world use cases:
+
+### HITADY Platform Example
+
+A complete service marketplace platform featuring:
+- **Professional Profiles** - Service providers with ratings and badges
+- **Client Testimonials** - Reviews with star ratings and moderation
+- **Publications** - Multiple content types (work photos, promotions, services, stories)
+- **Contact & Communication** - WhatsApp integration, location sharing, booking requests
+
+See [examples/HITADY_EXAMPLE.md](examples/HITADY_EXAMPLE.md) for detailed documentation.
+
+### Additional Examples
+
+- [secure-product-example.ts](examples/secure-product-example.ts) - Comprehensive security features
+- [ecommerce-relationships.ts](examples/ecommerce-relationships.ts) - Database relationships
+- [custom-endpoints.ts](examples/custom-endpoints.ts) - Custom API endpoints
+- [plugin-demo.ts](examples/plugin-demo.ts) - Plugin system usage
+- [middleware-example.ts](examples/middleware-example.ts) - Middleware integration
+
 ## Contributing
 
 Better Query follows the patterns established by better-auth. When contributing:
