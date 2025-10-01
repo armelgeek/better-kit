@@ -349,3 +349,6 @@ export type {
 	InferClientMethods,
 	InferClientAtoms,
 } from "../types/client-plugins";
+
+// Export client plugins
+export * from "./plugins";

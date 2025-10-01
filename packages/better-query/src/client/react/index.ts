@@ -81,3 +81,24 @@ export * from "./types";
 
 // Export hooks
 export { useQuery, useResource } from "./hooks";
+
+// Export enhanced hooks
+export {
+	useRead,
+	useList,
+	useCreate,
+	useUpdate,
+	useDelete,
+	useInfiniteList,
+} from "./enhanced-hooks";
+export type { UseQueryOptions, UseMutationOptions } from "./enhanced-hooks";
+
+// Export error handling
+export {
+	ErrorProvider,
+	ErrorBoundary,
+	useErrorHandler,
+	useAsyncError,
+	ErrorType,
+} from "./error-handler";
+export type { AppError, ErrorHandlerOptions } from "./error-handler";
