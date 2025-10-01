@@ -1,7 +1,9 @@
 "use client";
 import { adminClient } from "@/lib/admin-client";
+import { adminConfig } from "@/lib/admin";
 import { useAdminGet, useAdminUpdate } from "better-admin/react";
 import { AdminForm } from "better-admin/components";
+import { generateFormFields } from "better-admin";
 import { useRouter } from "next/navigation";
 
 export default function EditProductPage({
@@ -68,7 +70,14 @@ export default function EditProductPage({
 		);
 	}
 
-	const prod = product as any;
+	// Get the product resource configuration
+	const productResource = adminConfig.resources.get("product");
+	if (!productResource) {
+		return <div>Resource configuration not found</div>;
+	}
+
+	// Auto-generate form fields from the resource configuration
+	const fields = generateFormFields(productResource, "edit", product as any);
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
@@ -96,71 +105,11 @@ export default function EditProductPage({
 				</div>
 			)}
 
-			{/* Form using new AdminForm component */}
+			{/* Form with auto-generated fields from admin config */}
 			<AdminForm
-				fields={[
-					{
-						name: "name",
-						label: "Product Name",
-						type: "text",
-						placeholder: "Enter product name",
-						required: true,
-						defaultValue: prod.name,
-					},
-					{
-						name: "description",
-						label: "Description",
-						type: "textarea",
-						placeholder: "Enter product description",
-						defaultValue: prod.description,
-					},
-					{
-						name: "category",
-						label: "Category",
-						type: "select",
-						defaultValue: prod.category,
-						options: [
-							{ label: "Electronics", value: "electronics" },
-							{ label: "Clothing", value: "clothing" },
-							{ label: "Books", value: "books" },
-							{ label: "Home & Garden", value: "home-garden" },
-							{ label: "Other", value: "other" },
-						],
-					},
-					{
-						name: "price",
-						label: "Price (USD)",
-						type: "number",
-						placeholder: "0.00",
-						required: true,
-						defaultValue: prod.price,
-						validation: {
-							min: { value: 0, message: "Price must be positive" },
-						},
-					},
-					{
-						name: "stock",
-						label: "Stock",
-						type: "number",
-						placeholder: "0",
-						defaultValue: prod.stock || 0,
-						validation: {
-							min: { value: 0, message: "Stock must be positive" },
-						},
-					},
-					{
-						name: "status",
-						label: "Status",
-						type: "select",
-						required: true,
-						defaultValue: prod.status || "draft",
-						options: [
-							{ label: "🟡 Draft", value: "draft" },
-							{ label: "🟢 Active", value: "active" },
-							{ label: "🔴 Inactive", value: "inactive" },
-						],
-					},
-				]}
+				fields={fields}
+				defaultValues={{}}
+				title=""
 				onSubmit={handleSubmit}
 				onCancel={() => router.push("/admin/products")}
 				submitLabel="Save Changes"

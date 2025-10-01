@@ -47,6 +47,51 @@ export function betterAdmin<T extends BetterQuery = BetterQuery>(options: {
 		query,
 	};
 
+	/**
+	 * Get a serializable version of the admin configuration
+	 * This can be exposed to the client for UI generation
+	 */
+	const getSerializableConfig = () => {
+		const serializableResources = Array.from(resourceMap.entries()).map(
+			([name, resource]) => {
+				// Remove non-serializable properties (functions, components)
+				const {
+					hooks,
+					permissions,
+					schema,
+					endpoints,
+					middlewares,
+					customEndpoints,
+					scopes,
+					...serializableResource
+				} = resource;
+
+				// Keep only serializable field metadata
+				const fieldMetadata = resource.fieldMetadata
+					? Object.fromEntries(
+							Object.entries(resource.fieldMetadata).map(([key, meta]) => {
+								const { renderInput, renderDisplay, formatter, ...rest } = meta;
+								return [key, rest];
+							}),
+						)
+					: undefined;
+
+				return [
+					name,
+					{
+						...serializableResource,
+						fieldMetadata,
+					},
+				];
+			},
+		);
+
+		return {
+			resources: new Map(serializableResources as any),
+			config: defaultConfig,
+		};
+	};
+
 	return {
 		/** Admin context */
 		context: adminContext,
@@ -130,6 +175,9 @@ export function betterAdmin<T extends BetterQuery = BetterQuery>(options: {
 
 			return true;
 		},
+
+		/** Get serializable configuration for client-side use */
+		getSerializableConfig,
 
 		/** Admin configuration */
 		config: defaultConfig,
