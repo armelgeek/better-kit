@@ -84,8 +84,9 @@ export interface JobContext {
 function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
 	// Handle interval expressions (e.g., "5m", "1h", "30s")
 	const intervalMatch = schedule.match(/^(\d+)(s|m|h|d)$/);
-	if (intervalMatch) {
-		const [, value, unit] = intervalMatch;
+	if (intervalMatch && intervalMatch[1] && intervalMatch[2]) {
+		const value = intervalMatch[1];
+		const unit = intervalMatch[2];
 		const num = Number.parseInt(value, 10);
 		const multipliers: Record<string, number> = {
 			s: 1000,
@@ -93,8 +94,11 @@ function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
 			h: 60 * 60 * 1000,
 			d: 24 * 60 * 60 * 1000,
 		};
-		const interval = num * multipliers[unit];
-		return new Date(from.getTime() + interval);
+		const multiplier = multipliers[unit];
+		if (multiplier) {
+			const interval = num * multiplier;
+			return new Date(from.getTime() + interval);
+		}
 	}
 
 	// Handle cron expressions (simplified implementation)
@@ -114,7 +118,7 @@ function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
  */
 function parseCronExpression(cron: string, from: Date): Date {
 	const parts = cron.split(" ");
-	const [minutePart, hourPart, dayPart, monthPart, weekdayPart] = parts;
+	const [minutePart = "*", hourPart = "*", dayPart = "*", monthPart = "*", weekdayPart = "*"] = parts;
 
 	const next = new Date(from);
 	next.setSeconds(0);
@@ -124,7 +128,7 @@ function parseCronExpression(cron: string, from: Date): Date {
 	next.setMinutes(next.getMinutes() + 1);
 
 	// Parse minute
-	if (minutePart !== "*") {
+	if (minutePart && minutePart !== "*") {
 		if (minutePart.startsWith("*/")) {
 			const interval = Number.parseInt(minutePart.slice(2), 10);
 			const currentMinute = next.getMinutes();
@@ -141,7 +145,7 @@ function parseCronExpression(cron: string, from: Date): Date {
 	}
 
 	// Parse hour
-	if (hourPart !== "*" && !hourPart.startsWith("*/")) {
+	if (hourPart && hourPart !== "*" && !hourPart.startsWith("*/")) {
 		next.setHours(Number.parseInt(hourPart, 10));
 	}
 
@@ -361,33 +365,37 @@ export function jobsPlugin(options: JobPluginOptions = {}): Plugin {
 	const schema = {
 		jobs: {
 			fields: {
-				id: { type: "string", required: true, unique: true },
-				name: { type: "string", required: true },
-				handler: { type: "string", required: true },
-				data: { type: "json", required: false },
-				schedule: { type: "string", required: false },
-				status: { type: "string", required: true },
-				attempts: { type: "number", required: true },
-				maxAttempts: { type: "number", required: true },
-				lastRunAt: { type: "date", required: false },
-				nextRunAt: { type: "date", required: false },
-				lastError: { type: "string", required: false },
-				createdAt: { type: "date", required: true },
-				updatedAt: { type: "date", required: true },
+				id: { type: "string" as const, required: true, unique: true },
+				name: { type: "string" as const, required: true },
+				handler: { type: "string" as const, required: true },
+				data: { type: "json" as const, required: false },
+				schedule: { type: "string" as const, required: false },
+				status: { type: "string" as const, required: true },
+				attempts: { type: "number" as const, required: true },
+				maxAttempts: { type: "number" as const, required: true },
+				lastRunAt: { type: "date" as const, required: false },
+				nextRunAt: { type: "date" as const, required: false },
+				lastError: { type: "string" as const, required: false },
+				createdAt: { type: "date" as const, required: true },
+				updatedAt: { type: "date" as const, required: true },
 			},
 		},
 		...(enableHistory
 			? {
 					job_history: {
 						fields: {
-							id: { type: "string", required: true, unique: true },
-							jobId: { type: "string", required: true, references: "jobs" },
-							status: { type: "string", required: true },
-							startedAt: { type: "date", required: true },
-							completedAt: { type: "date", required: false },
-							error: { type: "string", required: false },
-							result: { type: "json", required: false },
-							duration: { type: "number", required: false },
+							id: { type: "string" as const, required: true, unique: true },
+							jobId: {
+								type: "string" as const,
+								required: true,
+								references: { model: "jobs", field: "id" },
+							},
+							status: { type: "string" as const, required: true },
+							startedAt: { type: "date" as const, required: true },
+							completedAt: { type: "date" as const, required: false },
+							error: { type: "string" as const, required: false },
+							result: { type: "json" as const, required: false },
+							duration: { type: "number" as const, required: false },
 						},
 					},
 				}
