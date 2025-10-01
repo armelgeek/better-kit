@@ -150,10 +150,11 @@ pnpm test
 - **✅ Validation Plugin** - Enhanced data validation  
 - **⚡ Cache Plugin** - Multi-level caching
 - **📊 OpenAPI Plugin** - Auto-generated API docs
+- **📤 Upload Plugin** - File upload with multiple storage backends
 
 ### Third-Party Integrations (Planned)
 - **🔐 Better Auth** - Authentication system
-- **📁 File Storage** - S3, Cloudinary, local files
+- **☁️ Cloud Storage** - S3, Cloudinary integration
 - **📧 Email** - Transactional email sending
 - **🔍 Search** - Elasticsearch, Algolia
 
@@ -164,12 +165,13 @@ pnpm test
 - Basic admin components  
 - Database adapters
 - Plugin system foundation
+- File upload support
 
 ### 🚧 Next (v0.1.0)
 - Complete admin component library
 - Better Auth integration
-- File upload support
 - Enhanced documentation
+- Cloud storage integrations
 
 ### 🎯 Future (v1.0.0)
 - Production stability

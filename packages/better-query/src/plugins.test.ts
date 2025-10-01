@@ -5,6 +5,7 @@ import {
 	auditPlugin,
 	cachePlugin,
 	createPlugin,
+	uploadPlugin,
 	validationPlugin,
 } from "../src/index";
 
@@ -170,11 +171,43 @@ describe("Plugin System", () => {
 		expect(crudInstance.api.clearCache).toBeDefined();
 	});
 
+	it("should support upload plugin", () => {
+		const upload = uploadPlugin({
+			enabled: true,
+			uploadDir: "./test-uploads",
+		});
+
+		crudInstance = adiemus({
+			database: {
+				provider: "sqlite",
+				url: ":memory:",
+			},
+			resources: [
+				{
+					name: "user",
+					schema: z.object({
+						id: z.string(),
+						name: z.string(),
+					}),
+				},
+			],
+			plugins: [upload],
+		});
+
+		expect(crudInstance.context.pluginManager.getPlugin("upload")).toBeDefined();
+		expect(crudInstance.api.uploadFile).toBeDefined();
+		expect(crudInstance.api.getFile).toBeDefined();
+		expect(crudInstance.api.downloadFile).toBeDefined();
+		expect(crudInstance.api.deleteFile).toBeDefined();
+		expect(crudInstance.api.listFiles).toBeDefined();
+	});
+
 	it("should support multiple plugins together", () => {
 		const plugins = [
 			auditPlugin({ enabled: true }),
 			validationPlugin({ strict: true }),
 			cachePlugin({ enabled: true }),
+			uploadPlugin({ enabled: true, uploadDir: "./test-uploads" }),
 		];
 
 		crudInstance = adiemus({
@@ -194,12 +227,13 @@ describe("Plugin System", () => {
 			plugins,
 		});
 
-		expect(crudInstance.context.pluginManager.getPlugins()).toHaveLength(3);
+		expect(crudInstance.context.pluginManager.getPlugins()).toHaveLength(4);
 		expect(crudInstance.context.pluginManager.getPlugin("audit")).toBeDefined();
 		expect(
 			crudInstance.context.pluginManager.getPlugin("validation"),
 		).toBeDefined();
 		expect(crudInstance.context.pluginManager.getPlugin("cache")).toBeDefined();
+		expect(crudInstance.context.pluginManager.getPlugin("upload")).toBeDefined();
 	});
 
 	it("should allow plugins to add resources", () => {
