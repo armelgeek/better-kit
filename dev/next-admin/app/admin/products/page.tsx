@@ -45,7 +45,7 @@ export default function ProductsPage() {
 	if (error) {
 		return (
 			<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-				<p className="text-red-800">Error: {error.message}</p>
+				<p className="text-red-800">Error: {(error as Error).message}</p>
 			</div>
 		);
 	}
