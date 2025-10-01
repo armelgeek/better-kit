@@ -39,5 +39,8 @@ export type {
 } from "./upload";
 export { LocalStorageAdapter } from "./upload";
 
+export { realtimePlugin } from "./realtime";
+export type { RealtimePluginOptions, RealtimeMessage } from "./realtime";
+
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";

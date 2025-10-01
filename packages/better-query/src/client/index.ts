@@ -349,3 +349,13 @@ export type {
 	InferClientMethods,
 	InferClientAtoms,
 } from "../types/client-plugins";
+
+// Export client plugins
+export { realtimeClient } from "./realtime";
+export type {
+	RealtimeClientOptions,
+	RealtimeMessage,
+	DataChangeEvent,
+	PresenceUpdateEvent,
+	ConnectionState,
+} from "./realtime";
