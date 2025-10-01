@@ -40,6 +40,11 @@ export type {
 export { LocalStorageAdapter } from "./upload";
 
 export { realtimePlugin } from "./realtime";
+export type {
+	RealtimePluginOptions,
+	RealtimeMessage,
+	RealtimeEvent,
+} from "./realtime";
 export type { RealtimePluginOptions, RealtimeMessage } from "./realtime";
 
 // Plugin utilities

@@ -1,0 +1,377 @@
+---
+title: Plugins Overview
+description: Explore all available plugins for Better Query
+---
+
+Better Query comes with powerful built-in plugins that extend the base CRUD functionality. Each plugin is designed to be production-ready, well-tested, and easy to configure.
+
+## Available Plugins
+
+<Cards>
+  <Card
+    title="Audit Plugin"
+    href="/docs/plugins/audit"
+    description="Track all CRUD operations with comprehensive audit logging for compliance and debugging."
+  />
+  <Card
+    title="Cache Plugin"
+    href="/docs/plugins/cache"
+    description="High-performance caching with multiple backends and smart invalidation strategies."
+  />
+  <Card
+    title="Validation Plugin"
+    href="/docs/plugins/validation"
+    description="Enhanced data validation with custom rules, sanitization, and business logic checks."
+  />
+  <Card
+    title="Upload Plugin"
+    href="/docs/plugins/upload"
+    description="Complete file upload solution with multiple storage backends and automatic metadata tracking."
+  />
+  <Card
+    title="Realtime Plugin"
+    href="/docs/plugins/realtime"
+    description="Real-time data synchronization using Server-Sent Events for live, collaborative applications."
+  />
+  <Card
+    title="OpenAPI Plugin"
+    href="/docs/plugins/open-api"
+    description="Automatic OpenAPI/Swagger documentation generation with interactive UI."
+  />
+</Cards>
+
+## Quick Start
+
+Add any plugin to your Better Query configuration:
+
+```ts title="query.ts"
+import { betterQuery } from "better-query";
+import {
+  auditPlugin,
+  cachePlugin,
+  validationPlugin,
+  uploadPlugin,
+  realtimePlugin,
+  openApiPlugin,
+} from "better-query/plugins";
+
+export const query = betterQuery({
+  database: {
+    provider: "sqlite",
+    url: "./data.db"
+  },
+  plugins: [
+    // Audit all changes
+    auditPlugin({
+      enabled: true,
+      operations: ["create", "update", "delete"],
+    }),
+    
+    // Cache frequently accessed data
+    cachePlugin({
+      enabled: true,
+      defaultTTL: 300,
+    }),
+    
+    // Validate and sanitize input
+    validationPlugin({
+      strict: true,
+      globalRules: {
+        trimStrings: true,
+        sanitizeHtml: true,
+      },
+    }),
+    
+    // Handle file uploads
+    uploadPlugin({
+      enabled: true,
+      uploadDir: "./uploads",
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+    }),
+    
+    // Real-time updates
+    realtimePlugin({
+      enabled: true,
+      keepAliveInterval: 30,
+    }),
+    
+    // API documentation
+    openApiPlugin(),
+  ],
+});
+```
+
+## Plugin Categories
+
+### Data Integrity
+
+Plugins that help maintain data quality and compliance:
+
+- **[Audit Plugin](/docs/plugins/audit)** - Complete audit trail of all changes
+- **[Validation Plugin](/docs/plugins/validation)** - Input validation and sanitization
+
+### Performance
+
+Plugins that improve application performance:
+
+- **[Cache Plugin](/docs/plugins/cache)** - Redis or in-memory caching with smart invalidation
+
+### User Experience
+
+Plugins that enhance the user experience:
+
+- **[Realtime Plugin](/docs/plugins/realtime)** - Live data synchronization
+- **[Upload Plugin](/docs/plugins/upload)** - Seamless file upload handling
+
+### Developer Experience
+
+Plugins that improve development workflow:
+
+- **[OpenAPI Plugin](/docs/plugins/open-api)** - Interactive API documentation
+
+## Features by Plugin
+
+| Plugin | Schema Changes | Endpoints | Hooks | Description |
+|--------|---------------|-----------|-------|-------------|
+| **Audit** | ✅ | ❌ | ✅ | Tracks all CRUD operations |
+| **Cache** | ❌ | ✅ | ✅ | Caches read operations |
+| **Validation** | ❌ | ❌ | ✅ | Validates before create/update |
+| **Upload** | ✅ | ✅ | ❌ | File upload and management |
+| **Realtime** | ❌ | ✅ | ✅ | Real-time event broadcasting |
+| **OpenAPI** | ❌ | ✅ | ❌ | API documentation generation |
+
+## Common Use Cases
+
+### E-commerce Application
+
+```ts
+export const query = betterQuery({
+  plugins: [
+    // Track inventory changes
+    auditPlugin({
+      operations: ["update", "delete"],
+    }),
+    
+    // Cache product listings
+    cachePlugin({
+      defaultTTL: 600,
+      operations: {
+        read: { ttl: 600 },
+        list: { ttl: 300 },
+      },
+    }),
+    
+    // Validate orders and products
+    validationPlugin({
+      strict: true,
+      rules: {
+        order: {
+          create: z.object({
+            items: z.array(z.object({
+              productId: z.string(),
+              quantity: z.number().min(1),
+            })).min(1),
+          }),
+        },
+      },
+    }),
+    
+    // Handle product images
+    uploadPlugin({
+      uploadDir: "./uploads/products",
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+      maxFileSize: 5 * 1024 * 1024,
+    }),
+    
+    // Live inventory updates
+    realtimePlugin({
+      enabled: true,
+    }),
+  ],
+});
+```
+
+### Content Management System
+
+```ts
+export const query = betterQuery({
+  plugins: [
+    // Track content changes
+    auditPlugin({
+      operations: ["create", "update", "delete"],
+      includeRequestInfo: true,
+    }),
+    
+    // Cache published content
+    cachePlugin({
+      defaultTTL: 1800,
+    }),
+    
+    // Sanitize HTML content
+    validationPlugin({
+      globalRules: {
+        sanitizeHtml: true,
+        trimStrings: true,
+      },
+    }),
+    
+    // Handle media uploads
+    uploadPlugin({
+      uploadDir: "./uploads/media",
+      trackInDatabase: true,
+    }),
+    
+    // Collaborative editing
+    realtimePlugin({
+      enabled: true,
+    }),
+    
+    // API docs for integrations
+    openApiPlugin(),
+  ],
+});
+```
+
+### SaaS Application
+
+```ts
+export const query = betterQuery({
+  plugins: [
+    // Compliance and audit trail
+    auditPlugin({
+      operations: ["create", "update", "delete"],
+      retention: 365, // 1 year
+    }),
+    
+    // Performance optimization
+    cachePlugin({
+      backend: "redis",
+      defaultTTL: 600,
+    }),
+    
+    // Data validation
+    validationPlugin({
+      strict: true,
+      rules: {
+        user: {
+          customValidation: async (data, context) => {
+            // Check email uniqueness
+            const existing = await context.adapter.findFirst("user", {
+              where: { email: data.email },
+            });
+            return existing ? ["email: Email already exists"] : [];
+          },
+        },
+      },
+    }),
+    
+    // Profile pictures and documents
+    uploadPlugin({
+      uploadDir: "./uploads",
+      maxFileSize: 10 * 1024 * 1024,
+    }),
+    
+    // Real-time notifications
+    realtimePlugin({
+      enabled: true,
+      maxConnectionsPerUser: 5,
+    }),
+    
+    // API documentation
+    openApiPlugin(),
+  ],
+});
+```
+
+## Plugin Development
+
+Want to create your own plugin? Check out the [Plugin Development Guide](/docs/concepts/plugins) to learn how to:
+
+- Create custom endpoints
+- Add database schema extensions
+- Implement hooks for CRUD operations
+- Add middleware for request processing
+- Create client-side plugin interfaces
+
+## Best Practices
+
+### Performance
+
+1. **Enable caching** for read-heavy applications
+2. **Use validation** to prevent invalid data at the source
+3. **Monitor realtime connections** to prevent resource exhaustion
+
+### Security
+
+1. **Audit sensitive operations** for compliance
+2. **Validate all input** before database operations
+3. **Sanitize HTML** to prevent XSS attacks
+4. **Filter realtime events** based on user permissions
+
+### Maintenance
+
+1. **Configure retention policies** for audit logs
+2. **Set appropriate TTLs** for cached data
+3. **Limit file sizes** to prevent storage issues
+4. **Monitor connection counts** for realtime
+
+## Migration Guide
+
+### Adding Plugins to Existing Projects
+
+Most plugins work out of the box, but some require database migrations:
+
+**Plugins requiring migration:**
+- Audit Plugin (adds audit_log table)
+- Upload Plugin (adds file_upload table)
+
+**Plugins without schema changes:**
+- Cache Plugin (in-memory or external cache)
+- Validation Plugin (runtime validation)
+- Realtime Plugin (in-memory connections)
+- OpenAPI Plugin (documentation only)
+
+**Migration steps:**
+
+```bash
+# Add plugin to your config
+# Then run migration
+npx better-query migrate
+
+# Or generate schema file
+npx better-query generate
+```
+
+## Plugin Compatibility
+
+All plugins are compatible with each other and can be used together. The order of plugins in the configuration determines the order of hook execution:
+
+```ts
+plugins: [
+  validationPlugin(), // Runs first (validates data)
+  auditPlugin(),      // Runs second (logs the operation)
+  cachePlugin(),      // Runs third (caches the result)
+  realtimePlugin(),   // Runs last (broadcasts the event)
+]
+```
+
+## Support
+
+Need help with plugins? Check these resources:
+
+- [Plugin Development Guide](/docs/concepts/plugins)
+- [GitHub Issues](https://github.com/armelgeek/better-kit/issues)
+- [Community Discord](https://discord.gg/better-kit)
+
+## Roadmap
+
+Upcoming plugins in development:
+
+- **Rate Limiting Plugin** - Protect your API from abuse
+- **Search Plugin** - Full-text search with Elasticsearch/Meilisearch
+- **Export Plugin** - Export data to CSV, JSON, Excel
+- **Import Plugin** - Bulk import with validation and mapping
+- **Webhook Plugin** - Trigger webhooks on CRUD events
+- **Email Plugin** - Send transactional emails on events
+
+Want to contribute a plugin? Check our [Contributing Guide](https://github.com/armelgeek/better-kit/blob/master/CONTRIBUTING.md)!

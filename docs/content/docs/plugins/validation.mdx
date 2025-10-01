@@ -1,0 +1,572 @@
+---
+title: Validation
+description: Validation plugin for Better Query
+---
+
+The Validation plugin provides enhanced data validation capabilities beyond standard Zod schemas. It offers automatic field sanitization, custom validation rules per resource, and comprehensive error handling for your CRUD operations.
+
+## Installation
+
+<Steps>
+  <Step>
+    ### Add the plugin to your query config
+
+    To use the Validation plugin, add it to your query config.
+
+    ```ts title="query.ts"
+    import { betterQuery } from "better-query"
+    import { validationPlugin } from "better-query/plugins" // [!code highlight]
+
+    export const query = betterQuery({
+        // ... other config options
+        plugins: [
+            validationPlugin({
+                strict: true, // Throw errors on validation failure
+                globalRules: {
+                    trimStrings: true, // Auto-trim whitespace
+                    sanitizeHtml: true, // Sanitize HTML input
+                    validateEmails: true, // Validate email formats
+                },
+                rules: {
+                    // Resource-specific validation
+                    user: {
+                        create: z.object({
+                            email: z.string().email(),
+                            username: z.string().min(3),
+                        }),
+                    },
+                },
+            }) // [!code highlight]
+        ]
+    })
+    ```
+
+  </Step>
+
+  <Step>
+    ### No additional migration needed
+
+    The Validation plugin works on the fly and doesn't require database schema changes. Just add it to your config and start using it.
+
+  </Step>
+</Steps>
+
+## Configuration
+
+The Validation plugin accepts the following configuration options:
+
+### `strict` (boolean)
+
+When set to `true`, validation errors will throw a `ValidationError` exception, stopping the operation. When `false`, errors are logged as warnings but the operation continues.
+
+**Default:** `true`
+
+```ts
+validationPlugin({
+  strict: true, // Throw on validation errors
+})
+```
+
+### `globalRules` (object)
+
+Global validation rules that apply to all resources:
+
+#### `trimStrings` (boolean)
+
+Automatically trims whitespace from the beginning and end of all string fields.
+
+**Default:** `false`
+
+```ts
+validationPlugin({
+  globalRules: {
+    trimStrings: true,
+  },
+})
+```
+
+#### `sanitizeHtml` (boolean)
+
+Sanitizes HTML content by removing potentially dangerous tags and attributes like `<script>`, `<iframe>`, and inline event handlers.
+
+**Default:** `false`
+
+```ts
+validationPlugin({
+  globalRules: {
+    sanitizeHtml: true,
+  },
+})
+```
+
+#### `validateEmails` (boolean)
+
+Automatically validates fields containing "email" in their name against a standard email format regex.
+
+**Default:** `false`
+
+```ts
+validationPlugin({
+  globalRules: {
+    validateEmails: true,
+  },
+})
+```
+
+#### `customGlobalValidation` (function)
+
+A custom validation function that runs for all resources and operations.
+
+**Signature:**
+```ts
+(data: any, context: CrudHookContext) => Promise<string[]> | string[]
+```
+
+**Example:**
+```ts
+validationPlugin({
+  globalRules: {
+    customGlobalValidation: async (data, context) => {
+      const errors: string[] = [];
+      
+      // Check for profanity in all string fields
+      for (const [key, value] of Object.entries(data)) {
+        if (typeof value === 'string' && containsProfanity(value)) {
+          errors.push(`${key}: Contains inappropriate language`);
+        }
+      }
+      
+      return errors;
+    },
+  },
+})
+```
+
+### `rules` (object)
+
+Resource-specific validation rules. Each key is a resource name, and the value contains validation schemas and custom logic for that resource.
+
+#### Per-Resource Configuration
+
+```ts
+validationPlugin({
+  rules: {
+    user: {
+      // Schema for create operations
+      create: z.object({
+        email: z.string().email("Invalid email format"),
+        username: z.string().min(3, "Username must be at least 3 characters"),
+        age: z.number().min(18, "Must be at least 18 years old"),
+      }),
+      
+      // Schema for update operations
+      update: z.object({
+        email: z.string().email().optional(),
+        username: z.string().min(3).optional(),
+      }),
+      
+      // Custom validation logic
+      customValidation: async (data, context) => {
+        const errors: string[] = [];
+        
+        // Check username uniqueness
+        if (data.username) {
+          const existing = await context.adapter.findFirst("user", {
+            where: { username: data.username },
+          });
+          
+          if (existing && existing.id !== data.id) {
+            errors.push("username: Username already taken");
+          }
+        }
+        
+        return errors;
+      },
+    },
+    
+    post: {
+      create: z.object({
+        title: z.string().min(5).max(200),
+        content: z.string().min(10),
+        published: z.boolean().default(false),
+      }),
+    },
+  },
+})
+```
+
+## Usage
+
+Once configured, the Validation plugin automatically validates all create and update operations before they reach the database.
+
+### Basic Usage
+
+```ts
+import { query } from "~/lib/query";
+
+// This will be validated automatically
+const user = await query.user.create({
+  data: {
+    email: "  user@example.com  ", // Will be trimmed if trimStrings is enabled
+    username: "johndoe",
+    bio: "<script>alert('xss')</script>Bio text", // Will be sanitized if sanitizeHtml is enabled
+  },
+});
+```
+
+### Handling Validation Errors
+
+When `strict` mode is enabled, validation errors throw a `ValidationError`:
+
+```ts
+import { query } from "~/lib/query";
+import { ValidationError } from "better-query/plugins";
+
+try {
+  await query.user.create({
+    data: {
+      email: "invalid-email", // Invalid format
+      username: "ab", // Too short
+    },
+  });
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.log("Validation errors:", error.errors);
+    // ["email: Invalid email format", "username: Username must be at least 3 characters"]
+  }
+}
+```
+
+### Non-Strict Mode
+
+With `strict: false`, validation warnings are logged but operations continue:
+
+```ts
+validationPlugin({
+  strict: false,
+  // ...
+})
+
+// This will log warnings but still create the record
+const user = await query.user.create({
+  data: {
+    email: "invalid-email", // Warning logged
+    username: "ab", // Warning logged
+  },
+});
+```
+
+## Advanced Examples
+
+### Cross-Field Validation
+
+Validate relationships between multiple fields:
+
+```ts
+validationPlugin({
+  rules: {
+    event: {
+      customValidation: async (data) => {
+        const errors: string[] = [];
+        
+        // Ensure end date is after start date
+        if (data.startDate && data.endDate) {
+          if (new Date(data.endDate) <= new Date(data.startDate)) {
+            errors.push("endDate: End date must be after start date");
+          }
+        }
+        
+        // Ensure at least one contact method is provided
+        if (!data.email && !data.phone) {
+          errors.push("contact: Either email or phone must be provided");
+        }
+        
+        return errors;
+      },
+    },
+  },
+})
+```
+
+### Database-Level Validation
+
+Check uniqueness and referential integrity:
+
+```ts
+validationPlugin({
+  rules: {
+    product: {
+      customValidation: async (data, context) => {
+        const errors: string[] = [];
+        
+        // Check SKU uniqueness
+        if (data.sku) {
+          const existing = await context.adapter.findFirst("product", {
+            where: { sku: data.sku },
+          });
+          
+          if (existing && existing.id !== data.id) {
+            errors.push("sku: SKU already exists");
+          }
+        }
+        
+        // Validate category exists
+        if (data.categoryId) {
+          const category = await context.adapter.findFirst("category", {
+            where: { id: data.categoryId },
+          });
+          
+          if (!category) {
+            errors.push("categoryId: Category does not exist");
+          }
+        }
+        
+        return errors;
+      },
+    },
+  },
+})
+```
+
+### Conditional Validation
+
+Apply different validation rules based on data or context:
+
+```ts
+validationPlugin({
+  rules: {
+    order: {
+      customValidation: async (data, context) => {
+        const errors: string[] = [];
+        
+        // Different validation for different order types
+        if (data.type === "wholesale") {
+          if (!data.taxId) {
+            errors.push("taxId: Tax ID required for wholesale orders");
+          }
+          if (data.quantity < 10) {
+            errors.push("quantity: Minimum 10 items for wholesale");
+          }
+        }
+        
+        // Validate shipping for physical products only
+        if (data.productType === "physical" && !data.shippingAddress) {
+          errors.push("shippingAddress: Required for physical products");
+        }
+        
+        return errors;
+      },
+    },
+  },
+})
+```
+
+## Features
+
+✅ **Automatic Field Sanitization** - Trim whitespace, sanitize HTML, and validate emails  
+✅ **Resource-Specific Rules** - Define custom validation per resource and operation  
+✅ **Zod Schema Integration** - Use Zod schemas for type-safe validation  
+✅ **Custom Validation Functions** - Implement complex business logic validation  
+✅ **Database-Level Checks** - Validate uniqueness and referential integrity  
+✅ **Strict/Non-Strict Modes** - Choose between errors or warnings  
+✅ **Comprehensive Error Messages** - Clear, actionable validation feedback
+
+## Best Practices
+
+1. **Use Zod schemas** for basic type and format validation
+2. **Use custom validation** for business logic and database checks
+3. **Enable global rules** like `trimStrings` for better data quality
+4. **Always sanitize HTML** if accepting user-generated content
+5. **Provide clear error messages** that help users fix issues
+6. **Consider performance** - don't make too many database queries in validation
+7. **Use strict mode** in production to prevent invalid data
+
+## Common Use Cases
+
+### User Registration
+
+```ts
+validationPlugin({
+  rules: {
+    user: {
+      create: z.object({
+        email: z.string().email(),
+        password: z.string().min(8),
+        username: z.string().min(3).max(20),
+      }),
+      customValidation: async (data, context) => {
+        const errors: string[] = [];
+        
+        // Check email uniqueness
+        const existingEmail = await context.adapter.findFirst("user", {
+          where: { email: data.email },
+        });
+        if (existingEmail) {
+          errors.push("email: Email already registered");
+        }
+        
+        // Check username uniqueness
+        const existingUsername = await context.adapter.findFirst("user", {
+          where: { username: data.username },
+        });
+        if (existingUsername) {
+          errors.push("username: Username already taken");
+        }
+        
+        // Password strength check
+        if (!/[A-Z]/.test(data.password) || !/[0-9]/.test(data.password)) {
+          errors.push("password: Must contain uppercase letter and number");
+        }
+        
+        return errors;
+      },
+    },
+  },
+})
+```
+
+### Form Data Validation
+
+```ts
+validationPlugin({
+  globalRules: {
+    trimStrings: true,
+    sanitizeHtml: true,
+  },
+  rules: {
+    contact: {
+      create: z.object({
+        name: z.string().min(2),
+        email: z.string().email(),
+        subject: z.string().min(5),
+        message: z.string().min(20).max(1000),
+      }),
+    },
+  },
+})
+```
+
+### E-commerce Product Validation
+
+```ts
+validationPlugin({
+  rules: {
+    product: {
+      create: z.object({
+        name: z.string().min(3),
+        price: z.number().positive(),
+        stock: z.number().int().min(0),
+        sku: z.string().min(3),
+      }),
+      customValidation: async (data, context) => {
+        const errors: string[] = [];
+        
+        // SKU must be unique
+        const existing = await context.adapter.findFirst("product", {
+          where: { sku: data.sku },
+        });
+        if (existing) {
+          errors.push("sku: SKU already exists");
+        }
+        
+        // Price must be reasonable
+        if (data.price > 1000000) {
+          errors.push("price: Price seems unreasonably high");
+        }
+        
+        return errors;
+      },
+    },
+  },
+})
+```
+
+## API Reference
+
+### `ValidationError`
+
+Exception thrown when validation fails in strict mode.
+
+```ts
+class ValidationError extends Error {
+  constructor(
+    public errors: string[],
+    message = "Validation failed"
+  )
+}
+```
+
+**Properties:**
+- `errors: string[]` - Array of validation error messages
+- `message: string` - Error message (default: "Validation failed")
+- `name: string` - Always "ValidationError"
+
+### Type Definitions
+
+```ts
+interface ValidationPluginOptions {
+  strict?: boolean;
+  rules?: Record<string, {
+    create?: ZodSchema;
+    update?: ZodSchema;
+    customValidation?: (
+      data: any,
+      context: CrudHookContext
+    ) => Promise<string[]> | string[];
+  }>;
+  globalRules?: {
+    sanitizeHtml?: boolean;
+    trimStrings?: boolean;
+    validateEmails?: boolean;
+    customGlobalValidation?: (
+      data: any,
+      context: CrudHookContext
+    ) => Promise<string[]> | string[];
+  };
+}
+```
+
+## Troubleshooting
+
+### Validation Not Running
+
+Make sure the plugin is added to your query config and the operation is create or update:
+
+```ts
+export const query = betterQuery({
+  plugins: [validationPlugin({ /* options */ })], // ✅ Correct
+})
+```
+
+### Custom Validation Not Working
+
+Ensure your custom validation function returns an array of strings:
+
+```ts
+customValidation: async (data, context) => {
+  return ["field: Error message"]; // ✅ Correct
+  // return "Error message"; // ❌ Wrong - must be array
+}
+```
+
+### Validation Too Slow
+
+Limit database queries in custom validation and consider caching:
+
+```ts
+// ❌ Bad - queries for each field
+for (const field of fields) {
+  await context.adapter.findFirst(...);
+}
+
+// ✅ Good - single query
+const existing = await context.adapter.findMany("resource", {
+  where: { field: { in: fields } }
+});
+```
+
+## Related
+
+- [Audit Plugin](/docs/plugins/audit) - Track all data changes
+- [Cache Plugin](/docs/plugins/cache) - Improve performance with caching
+- [Hooks](/docs/concepts/hooks) - Understand the hook system
