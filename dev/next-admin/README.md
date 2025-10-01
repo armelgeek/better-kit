@@ -7,9 +7,34 @@ This example demonstrates how to use Better Admin to create a complete admin pan
 - 🚀 Auto-generated admin UI from Better Query resources
 - 🔐 Authentication with Better Auth
 - ✅ Full CRUD operations for multiple resources
+- 📝 Complete form examples (create, edit, view)
 - 📊 List view with pagination, sorting, and search
 - 🎨 Modern UI with Tailwind CSS
 - 🔒 Permission-based access control
+
+## Form Examples
+
+This demo includes comprehensive form examples for product management:
+
+### Create Form (`/admin/products/new`)
+- Uses `useAdminCreate` hook
+- Form validation with required fields
+- Error handling and loading states
+- Auto-populated default values (status: draft, stock: 0)
+- Navigates back to product list on success
+
+### Edit Form (`/admin/products/[id]/edit`)
+- Uses `useAdminGet` to fetch existing product data
+- Uses `useAdminUpdate` to save changes
+- Auto-populates form with current values
+- Handles loading states while fetching data
+- Error handling for non-existent products
+
+### View Page (`/admin/products/[id]`)
+- Uses `useAdminGet` to display product details
+- Organized sections (Basic Info, Pricing & Inventory, Status, Timestamps)
+- Formatted display values (price, dates, status badges)
+- Quick navigation to edit form
 
 ## Resources
 
@@ -66,6 +91,13 @@ Use these credentials to log in:
 │   ├── admin/
 │   │   ├── dashboard/    # Dashboard page
 │   │   ├── products/     # Products management
+│   │   │   ├── page.tsx          # List products
+│   │   │   ├── new/
+│   │   │   │   └── page.tsx      # Create product form
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx      # View product details
+│   │   │       └── edit/
+│   │   │           └── page.tsx  # Edit product form
 │   │   └── users/        # Users management
 │   └── layout.tsx        # Root layout
 └── components/
@@ -162,6 +194,67 @@ export default function ProductsPage() {
     useAdminList(adminClient, "product");
 
   // ... render your UI
+}
+```
+
+**app/admin/products/new/page.tsx** - Create product form:
+
+```typescript
+"use client";
+import { useAdminCreate } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function NewProductPage() {
+  const { create, loading, error } = useAdminCreate(adminClient, "product");
+  
+  const handleSubmit = async (formData) => {
+    const result = await create(formData);
+    if (result) {
+      // Navigate to products list or show success message
+    }
+  };
+
+  // ... render your form
+}
+```
+
+**app/admin/products/[id]/edit/page.tsx** - Edit product form:
+
+```typescript
+"use client";
+import { useAdminGet, useAdminUpdate } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function EditProductPage({ params }) {
+  const { data: product, loading } = useAdminGet(adminClient, "product", params.id);
+  const { update, loading: updating } = useAdminUpdate(adminClient, "product");
+  
+  const handleSubmit = async (formData) => {
+    const result = await update(params.id, formData);
+    if (result) {
+      // Navigate or show success message
+    }
+  };
+
+  // ... render your form with product data
+}
+```
+
+**app/admin/products/[id]/page.tsx** - View product details:
+
+```typescript
+"use client";
+import { useAdminGet } from "better-admin/react";
+import { adminClient } from "@/lib/admin-client";
+
+export default function ViewProductPage({ params }) {
+  const { data: product, loading, error } = useAdminGet(
+    adminClient,
+    "product",
+    params.id
+  );
+
+  // ... render product details
 }
 ```
 
