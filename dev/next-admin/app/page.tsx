@@ -28,9 +28,7 @@ export default function HomePage() {
 					</div>
 
 					<div className="border-t border-gray-200 pt-8 text-left">
-						<h2 className="text-2xl font-bold text-gray-900 mb-4">
-							Features
-						</h2>
+						<h2 className="text-2xl font-bold text-gray-900 mb-4">Features</h2>
 						<ul className="space-y-3 text-gray-600">
 							<li className="flex items-start">
 								<span className="text-2xl mr-3">✅</span>

@@ -199,6 +199,238 @@ fieldMetadata: {
 }
 ```
 
+### Custom Input Type Examples
+
+Better Admin supports custom input types beyond the built-in ones. Here are some practical examples:
+
+#### Date Range Picker
+
+```typescript
+fieldMetadata: {
+  availabilityPeriod: {
+    label: "Availability Period",
+    inputType: "daterange", // Custom type
+    renderInput: (props) => (
+      <DateRangePicker
+        value={props.value}
+        onChange={props.onChange}
+        minDate={new Date()}
+        maxDate={addYears(new Date(), 2)}
+        disabled={props.disabled}
+      />
+    ),
+    renderDisplay: (value) => (
+      <span>
+        {formatDate(value.start)} - {formatDate(value.end)}
+      </span>
+    ),
+  },
+}
+```
+
+#### Markdown Editor
+
+```typescript
+fieldMetadata: {
+  content: {
+    label: "Content",
+    inputType: "markdown", // Custom type
+    renderInput: (props) => (
+      <MarkdownEditor
+        value={props.value}
+        onChange={props.onChange}
+        toolbar={["bold", "italic", "link", "image"]}
+        preview={true}
+        height="400px"
+      />
+    ),
+    renderDisplay: (value) => (
+      <MarkdownRenderer content={value} />
+    ),
+  },
+}
+```
+
+#### Drag and Drop File Upload
+
+```typescript
+fieldMetadata: {
+  documents: {
+    label: "Documents",
+    inputType: "file-dropzone", // Custom type
+    renderInput: (props) => (
+      <FileDropzone
+        value={props.value}
+        onChange={props.onChange}
+        accept={{
+          'application/pdf': ['.pdf'],
+          'application/msword': ['.doc', '.docx'],
+        }}
+        maxFiles={5}
+        maxSize={10 * 1024 * 1024} // 10MB
+      />
+    ),
+    renderDisplay: (value) => (
+      <FileList files={value} />
+    ),
+  },
+}
+```
+
+#### Color Palette Picker
+
+```typescript
+fieldMetadata: {
+  brandColors: {
+    label: "Brand Colors",
+    inputType: "color-palette", // Custom type
+    renderInput: (props) => (
+      <ColorPalettePicker
+        value={props.value}
+        onChange={props.onChange}
+        slots={["primary", "secondary", "accent", "background"]}
+        presets={["vibrant", "minimal", "dark", "light"]}
+      />
+    ),
+    renderDisplay: (value) => (
+      <ColorPaletteDisplay colors={value} />
+    ),
+  },
+}
+```
+
+#### Location Picker with Map
+
+```typescript
+fieldMetadata: {
+  location: {
+    label: "Business Location",
+    inputType: "map-location", // Custom type
+    renderInput: (props) => (
+      <MapLocationPicker
+        value={props.value}
+        onChange={props.onChange}
+        center={props.value || { lat: 0, lng: 0 }}
+        zoom={13}
+        searchEnabled={true}
+      />
+    ),
+    renderDisplay: (value) => (
+      <div>
+        <MapPreview lat={value.lat} lng={value.lng} />
+        <p className="text-sm text-gray-600">
+          {value.lat.toFixed(4)}, {value.lng.toFixed(4)}
+        </p>
+      </div>
+    ),
+  },
+}
+```
+
+#### Slider with Range
+
+```typescript
+fieldMetadata: {
+  ageRange: {
+    label: "Target Age Range",
+    inputType: "range-slider", // Custom type
+    renderInput: (props) => (
+      <RangeSlider
+        value={props.value}
+        onChange={props.onChange}
+        min={0}
+        max={100}
+        step={5}
+        marks={[0, 25, 50, 75, 100]}
+      />
+    ),
+    renderDisplay: (value) => (
+      <span>{value.min} - {value.max} years</span>
+    ),
+  },
+}
+```
+
+### Building Custom Input Components
+
+When creating custom input components, follow these guidelines:
+
+1. **Accept the required props**: Your component should accept `value`, `onChange`, `error`, and `disabled` props.
+
+2. **Handle the value correctly**: Make sure your component updates via the `onChange` callback.
+
+3. **Show validation errors**: Display the `error` prop when present.
+
+4. **Support disabled state**: Respect the `disabled` prop to prevent user interaction when needed.
+
+Example custom input component:
+
+```typescript
+// components/CustomSlugInput.tsx
+interface CustomSlugInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  disabled?: boolean;
+  sourceField?: string; // Additional custom prop
+}
+
+export function CustomSlugInput({
+  value,
+  onChange,
+  error,
+  disabled,
+  sourceField,
+}: CustomSlugInputProps) {
+  const handleGenerateSlug = () => {
+    // Logic to generate slug from source field
+    const slug = value.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    onChange(slug);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="flex-1 px-3 py-2 border rounded"
+        />
+        <button
+          type="button"
+          onClick={handleGenerateSlug}
+          disabled={disabled}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Generate
+        </button>
+      </div>
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
+    </div>
+  );
+}
+
+// Usage in fieldMetadata
+fieldMetadata: {
+  slug: {
+    label: "URL Slug",
+    inputType: "slug", // Custom type
+    renderInput: (props) => (
+      <CustomSlugInput
+        {...props}
+        sourceField="name"
+      />
+    ),
+  },
+}
+```
+
 ## Theme Customization
 
 ### Using CSS Variables

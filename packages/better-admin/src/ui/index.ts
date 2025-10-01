@@ -126,6 +126,7 @@ export function createAdminShowData<T = any>(props: AdminShowProps<T>) {
 export interface AdminFormField {
 	name: string;
 	label: string;
+	/** Input type - supports built-in types and custom types */
 	type:
 		| "text"
 		| "number"
@@ -136,12 +137,20 @@ export interface AdminFormField {
 		| "checkbox"
 		| "date"
 		| "datetime"
-		| "file";
+		| "file"
+		| (string & {});
 	required?: boolean;
 	placeholder?: string;
 	defaultValue?: any;
 	options?: Array<{ label: string; value: string | number }>;
 	validation?: any; // Zod schema
+	/** Custom render function for the input (useful for custom input types) */
+	renderInput?: (props: {
+		value: any;
+		onChange: (value: any) => void;
+		error?: string;
+		disabled?: boolean;
+	}) => any;
 }
 
 export interface AdminFormProps {

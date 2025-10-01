@@ -1,9 +1,5 @@
 import type { BetterQuery } from "better-query";
-import type {
-	AdminConfig,
-	AdminContext,
-	AdminResourceConfig,
-} from "../types";
+import type { AdminConfig, AdminContext, AdminResourceConfig } from "../types";
 
 /**
  * Initialize Better Admin

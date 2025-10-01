@@ -261,7 +261,7 @@ fieldMetadata: {
 
 ### Input Types
 
-Better Admin supports various input types:
+Better Admin supports various built-in input types:
 
 - `text` - Single-line text input
 - `textarea` - Multi-line text input
@@ -282,6 +282,72 @@ Better Admin supports various input types:
 - `richtext` - Rich text editor
 - `json` - JSON editor
 - `color` - Color picker
+
+### Custom Input Types
+
+Beyond the built-in input types, you can define custom input types to suit your specific needs. This is useful when you have specialized input requirements that aren't covered by the default types.
+
+To use a custom input type, simply specify any string as the `inputType` and provide a `renderInput` function:
+
+```typescript
+fieldMetadata: {
+  priceRange: {
+    label: "Price Range",
+    inputType: "price-range", // Custom input type
+    renderInput: (props) => (
+      <PriceRangeInput
+        value={props.value}
+        onChange={props.onChange}
+        error={props.error}
+        disabled={props.disabled}
+        min={0}
+        max={10000}
+        currency="USD"
+      />
+    ),
+    renderDisplay: (value) => (
+      <span>
+        ${value.min} - ${value.max}
+      </span>
+    ),
+  },
+  coordinates: {
+    label: "Location",
+    inputType: "map-picker", // Another custom type
+    renderInput: (props) => (
+      <MapPicker
+        value={props.value}
+        onChange={props.onChange}
+        defaultCenter={{ lat: 0, lng: 0 }}
+        zoom={10}
+      />
+    ),
+    renderDisplay: (value) => (
+      <MapDisplay lat={value.lat} lng={value.lng} />
+    ),
+  },
+  colorScheme: {
+    label: "Color Scheme",
+    inputType: "advanced-color-picker", // Custom color picker
+    renderInput: (props) => (
+      <AdvancedColorPicker
+        value={props.value}
+        onChange={props.onChange}
+        palette={["primary", "secondary", "accent"]}
+        enableGradients={true}
+      />
+    ),
+  },
+}
+```
+
+The `renderInput` function receives props that allow you to:
+- Access the current value
+- Update the value via `onChange`
+- Display validation errors
+- Handle disabled state
+
+You can implement any custom UI component and integrate it seamlessly with Better Admin's form system. The TypeScript types provide autocomplete for built-in types while allowing any custom string value.
 
 ### Field Options
 

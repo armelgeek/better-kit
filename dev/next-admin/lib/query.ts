@@ -31,7 +31,9 @@ const orderSchema = z.object({
 	productId: z.string(),
 	quantity: z.number().min(1),
 	total: z.number(),
-	status: z.enum(["pending", "processing", "completed", "cancelled"]).default("pending"),
+	status: z
+		.enum(["pending", "processing", "completed", "cancelled"])
+		.default("pending"),
 	createdAt: z.date().optional(),
 });
 
@@ -62,8 +64,7 @@ export const query = betterQuery({
 				create: async (context) => !!context.user,
 				read: async () => true, // Public read
 				update: async (context) => !!context.user,
-				delete: async (context) => 
-					context.user?.role === "admin",
+				delete: async (context) => context.user?.role === "admin",
 				list: async () => true, // Public list
 			},
 		}),
