@@ -7,7 +7,7 @@ import { useState } from "react";
 export default function NewProductPage() {
 	const router = useRouter();
 	const { create, loading, error } = useAdminCreate(adminClient, "product");
-	
+
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
@@ -34,9 +34,9 @@ export default function NewProductPage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		
+
 		const result = await create(formData);
-		
+
 		if (result) {
 			alert("Product created successfully!");
 			router.push("/admin/products");
@@ -49,7 +49,9 @@ export default function NewProductPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-bold text-gray-900">Create Product</h1>
-					<p className="text-gray-500 mt-1">Add a new product to your catalog</p>
+					<p className="text-gray-500 mt-1">
+						Add a new product to your catalog
+					</p>
 				</div>
 				<button
 					type="button"
@@ -68,7 +70,10 @@ export default function NewProductPage() {
 			)}
 
 			{/* Form */}
-			<form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+			<form
+				onSubmit={handleSubmit}
+				className="bg-white rounded-lg shadow p-6 space-y-6"
+			>
 				{/* Product Name */}
 				<div>
 					<label

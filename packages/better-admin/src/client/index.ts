@@ -43,16 +43,18 @@ export function createAdminClient<T extends QueryClient = QueryClient>(
 				throw new Error(result.error.message || "Failed to fetch list");
 			}
 
-			// Format response
-			const data = result.data || [];
-			const total = result.total || data.length;
-			const totalPages = Math.ceil(total / perPage);
+			// Better Query returns { items: [], pagination: {} } format
+			// We need to extract and transform it to admin format
+			const items = result.data?.items || result.data || [];
+			const pagination = result.data?.pagination || {};
+			const total = pagination.total || items.length;
+			const totalPages = pagination.totalPages || Math.ceil(total / perPage);
 
 			return {
-				data,
+				data: items,
 				total,
-				page,
-				perPage,
+				page: pagination.page || page,
+				perPage: pagination.limit || perPage,
 				totalPages,
 			};
 		},

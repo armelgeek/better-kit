@@ -10,15 +10,16 @@ export default function EditProductPage({
 	params: { id: string };
 }) {
 	const router = useRouter();
-	const { data: product, loading: loadingProduct, error: loadError } = useAdminGet(
-		adminClient,
-		"product",
-		params.id,
-	);
-	const { update, loading: updating, error: updateError } = useAdminUpdate(
-		adminClient,
-		"product",
-	);
+	const {
+		data: product,
+		loading: loadingProduct,
+		error: loadError,
+	} = useAdminGet(adminClient, "product", params.id);
+	const {
+		update,
+		loading: updating,
+		error: updateError,
+	} = useAdminUpdate(adminClient, "product");
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -81,7 +82,9 @@ export default function EditProductPage({
 	if (loadError) {
 		return (
 			<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-				<p className="text-red-800">Error loading product: {(loadError as Error).message}</p>
+				<p className="text-red-800">
+					Error loading product: {(loadError as Error).message}
+				</p>
 				<button
 					onClick={() => router.push("/admin/products")}
 					className="mt-4 text-blue-600 hover:text-blue-800"
@@ -126,12 +129,17 @@ export default function EditProductPage({
 			{/* Error Display */}
 			{updateError && (
 				<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-					<p className="text-red-800">Error: {(updateError as Error).message}</p>
+					<p className="text-red-800">
+						Error: {(updateError as Error).message}
+					</p>
 				</div>
 			)}
 
 			{/* Form */}
-			<form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+			<form
+				onSubmit={handleSubmit}
+				className="bg-white rounded-lg shadow p-6 space-y-6"
+			>
 				{/* Product Name */}
 				<div>
 					<label

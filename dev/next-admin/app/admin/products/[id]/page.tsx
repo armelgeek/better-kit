@@ -9,11 +9,11 @@ export default function ViewProductPage({
 	params: { id: string };
 }) {
 	const router = useRouter();
-	const { data: product, loading, error } = useAdminGet(
-		adminClient,
-		"product",
-		params.id,
-	);
+	const {
+		data: product,
+		loading,
+		error,
+	} = useAdminGet(adminClient, "product", params.id);
 
 	if (loading) {
 		return (
@@ -26,7 +26,9 @@ export default function ViewProductPage({
 	if (error) {
 		return (
 			<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-				<p className="text-red-800">Error loading product: {(error as Error).message}</p>
+				<p className="text-red-800">
+					Error loading product: {(error as Error).message}
+				</p>
 				<button
 					onClick={() => router.push("/admin/products")}
 					className="mt-4 text-blue-600 hover:text-blue-800"
@@ -99,13 +101,17 @@ export default function ViewProductPage({
 						</h2>
 						<dl className="grid grid-cols-1 gap-4">
 							<div>
-								<dt className="text-sm font-medium text-gray-500">Product Name</dt>
+								<dt className="text-sm font-medium text-gray-500">
+									Product Name
+								</dt>
 								<dd className="mt-1 text-sm text-gray-900">{prod.name}</dd>
 							</div>
-							
+
 							{prod.description && (
 								<div>
-									<dt className="text-sm font-medium text-gray-500">Description</dt>
+									<dt className="text-sm font-medium text-gray-500">
+										Description
+									</dt>
 									<dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
 										{prod.description}
 									</dd>
@@ -145,9 +151,7 @@ export default function ViewProductPage({
 
 					{/* Status */}
 					<div className="border-t pt-6">
-						<h2 className="text-lg font-semibold text-gray-900 mb-4">
-							Status
-						</h2>
+						<h2 className="text-lg font-semibold text-gray-900 mb-4">Status</h2>
 						<span
 							className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
 								prod.status === "active"
@@ -159,9 +163,7 @@ export default function ViewProductPage({
 						>
 							{prod.status === "active" && "🟢"}
 							{prod.status === "inactive" && "🔴"}
-							{prod.status === "draft" && "🟡"}
-							{" "}
-							{prod.status}
+							{prod.status === "draft" && "🟡"} {prod.status}
 						</span>
 					</div>
 
@@ -174,7 +176,9 @@ export default function ViewProductPage({
 							<dl className="grid grid-cols-2 gap-4">
 								{prod.createdAt && (
 									<div>
-										<dt className="text-sm font-medium text-gray-500">Created At</dt>
+										<dt className="text-sm font-medium text-gray-500">
+											Created At
+										</dt>
 										<dd className="mt-1 text-sm text-gray-900">
 											{formatDate(prod.createdAt)}
 										</dd>
@@ -183,7 +187,9 @@ export default function ViewProductPage({
 
 								{prod.updatedAt && (
 									<div>
-										<dt className="text-sm font-medium text-gray-500">Updated At</dt>
+										<dt className="text-sm font-medium text-gray-500">
+											Updated At
+										</dt>
 										<dd className="mt-1 text-sm text-gray-900">
 											{formatDate(prod.updatedAt)}
 										</dd>
