@@ -45,6 +45,7 @@ export type {
 	RealtimeMessage,
 	RealtimeEvent,
 } from "./realtime";
+export type { RealtimePluginOptions, RealtimeMessage } from "./realtime";
 
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";

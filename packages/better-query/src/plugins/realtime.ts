@@ -1,59 +1,134 @@
-import { Plugin } from "../types/plugins";
-import { createCrudEndpoint } from "../endpoints/crud-endpoint";
+import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
-
-/**
- * Realtime event types
- */
-export type RealtimeEvent =
-	| "create"
-	| "update"
-	| "delete"
-	| "custom"
-	| "*"; // Subscribe to all events
-
-/**
- * Realtime message structure
- */
-export interface RealtimeMessage {
-	id: string;
-	event: RealtimeEvent;
-	resource: string;
-	data: any;
-	timestamp: number;
-	userId?: string;
-}
-
-/**
- * SSE connection with event subscriptions
- */
-interface SSEConnection {
-	controller: ReadableStreamDefaultController;
-	subscriptions: Set<string>; // Set of "resource:event" patterns
-	userId?: string;
-	connectedAt: number;
-	lastActivity: number;
-}
+import { createCrudEndpoint } from "../endpoints/crud-endpoint";
+import { CrudHookContext } from "../types";
+import { Plugin } from "../types/plugins";
 
 /**
  * Realtime plugin options
  */
 export interface RealtimePluginOptions {
-	/** Enable the plugin */
+	/** Whether to enable realtime sync */
 	enabled?: boolean;
-	/** Keep-alive interval in seconds */
-	keepAliveInterval?: number;
-	/** Connection timeout in seconds */
-	connectionTimeout?: number;
-	/** Maximum connections per user */
-	maxConnectionsPerUser?: number;
-	/** Custom event filter */
-	eventFilter?: (
-		event: RealtimeMessage,
-		connection: SSEConnection,
-	) => boolean;
-	/** Custom event transformer */
-	eventTransformer?: (event: RealtimeMessage) => RealtimeMessage;
+	/** WebSocket server instance (if you want to provide your own) */
+	wss?: WebSocketServer;
+	/** Port for WebSocket server (if creating a new one) */
+	port?: number;
+	/** Path for WebSocket endpoint */
+	path?: string;
+	/** Resources to enable realtime for (default: all) */
+	resources?: string[];
+	/** Whether to broadcast user presence */
+	broadcastPresence?: boolean;
+	/** Custom authentication handler */
+	authenticate?: (
+		request: any,
+	) => Promise<{ userId: string; [key: string]: any } | null>;
+	/** Maximum reconnection attempts */
+	maxReconnectAttempts?: number;
+	/** Heartbeat interval in milliseconds */
+	heartbeatInterval?: number;
+}
+
+/**
+ * WebSocket message types
+ */
+export type RealtimeMessageType =
+	| "subscribe"
+	| "unsubscribe"
+	| "data_change"
+	| "presence_update"
+	| "broadcast"
+	| "heartbeat"
+	| "error";
+
+/**
+ * WebSocket message structure
+ */
+export interface RealtimeMessage {
+	type: RealtimeMessageType;
+	channel?: string;
+	payload?: any;
+	timestamp?: number;
+}
+
+/**
+ * Client connection with metadata
+ */
+interface ClientConnection {
+	ws: WebSocket;
+	userId?: string;
+	channels: Set<string>;
+	metadata?: Record<string, any>;
+	lastHeartbeat: number;
+}
+
+/**
+ * Channel subscription manager
+ */
+class ChannelManager {
+	private channels = new Map<string, Set<ClientConnection>>();
+
+	subscribe(channel: string, client: ClientConnection): void {
+		if (!this.channels.has(channel)) {
+			this.channels.set(channel, new Set());
+		}
+		this.channels.get(channel)!.add(client);
+		client.channels.add(channel);
+	}
+
+	unsubscribe(channel: string, client: ClientConnection): void {
+		const channelClients = this.channels.get(channel);
+		if (channelClients) {
+			channelClients.delete(client);
+			if (channelClients.size === 0) {
+				this.channels.delete(channel);
+			}
+		}
+		client.channels.delete(channel);
+	}
+
+	unsubscribeAll(client: ClientConnection): void {
+		for (const channel of client.channels) {
+			this.unsubscribe(channel, client);
+		}
+	}
+
+	broadcast(
+		channel: string,
+		message: RealtimeMessage,
+		excludeClient?: ClientConnection,
+	): void {
+		const clients = this.channels.get(channel);
+		if (!clients) return;
+
+		const messageStr = JSON.stringify(message);
+		for (const client of clients) {
+			if (client !== excludeClient && client.ws.readyState === WebSocket.OPEN) {
+				client.ws.send(messageStr);
+			}
+		}
+	}
+
+	getChannels(): string[] {
+		return Array.from(this.channels.keys());
+	}
+
+	getChannelClientCount(channel: string): number {
+		return this.channels.get(channel)?.size || 0;
+	}
+
+	getOnlineUsers(channel: string): Array<{ userId?: string; metadata?: any }> {
+		const clients = this.channels.get(channel);
+		if (!clients) return [];
+
+		return Array.from(clients)
+			.filter((c) => c.userId)
+			.map((c) => ({
+				userId: c.userId,
+				metadata: c.metadata,
+			}));
+	}
 }
 
 /**
@@ -62,350 +137,378 @@ export interface RealtimePluginOptions {
 export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 	const {
 		enabled = true,
-		keepAliveInterval = 30,
-		connectionTimeout = 300,
-		maxConnectionsPerUser = 5,
-		eventFilter,
-		eventTransformer,
+		wss: providedWss,
+		port = 3001,
+		path = "/realtime",
+		resources = [],
+		broadcastPresence = true,
+		authenticate,
+		maxReconnectAttempts = 5,
+		heartbeatInterval = 30000,
 	} = options;
 
 	if (!enabled) {
 		return {
 			id: "realtime",
 			endpoints: {},
+			init: () => {},
+			destroy: async () => {},
 		};
 	}
 
-	// Store active SSE connections
-	const connections = new Map<string, SSEConnection>();
+	// Initialize channel manager
+	const channelManager = new ChannelManager();
+	const clients = new Map<WebSocket, ClientConnection>();
 
-	// Clean up stale connections periodically
-	const cleanupInterval = setInterval(() => {
-		const now = Date.now();
-		const entries = Array.from(connections.entries());
-		for (const [id, conn] of entries) {
-			if (now - conn.lastActivity > connectionTimeout * 1000) {
-				try {
-					conn.controller.close();
-				} catch (e) {
-					// Connection already closed
+	// Create or use provided WebSocket server
+	let wss: WebSocketServer | null = null;
+	let shouldCleanupWss = false;
+
+	// Setup will happen during plugin init
+	const setupWebSocketServer = () => {
+		if (providedWss) {
+			wss = providedWss;
+		} else {
+			// Create a new WebSocket server
+			wss = new WebSocketServer({ port, path });
+			shouldCleanupWss = true;
+			console.log(`[Realtime] WebSocket server started on port ${port}`);
+		}
+
+		wss.on("connection", async (ws, request) => {
+			// Create client connection
+			const client: ClientConnection = {
+				ws,
+				channels: new Set(),
+				lastHeartbeat: Date.now(),
+			};
+
+			// Authenticate if handler provided
+			if (authenticate) {
+				const authResult = await authenticate(request);
+				if (authResult) {
+					client.userId = authResult.userId;
+					client.metadata = authResult;
 				}
-				connections.delete(id);
-			}
-		}
-	}, 60000); // Check every minute
-
-	// Send keep-alive to all connections
-	const keepAliveTimer = setInterval(() => {
-		const entries = Array.from(connections.entries());
-		for (const [id, conn] of entries) {
-			try {
-				conn.controller.enqueue(
-					`event: keepalive\ndata: ${Date.now()}\n\n`,
-				);
-				conn.lastActivity = Date.now();
-			} catch (e) {
-				connections.delete(id);
-			}
-		}
-	}, keepAliveInterval * 1000);
-
-	/**
-	 * Broadcast an event to all subscribed connections
-	 */
-	const broadcast = (event: RealtimeMessage) => {
-		let processedEvent = event;
-
-		// Apply custom transformer if provided
-		if (eventTransformer) {
-			processedEvent = eventTransformer(event);
-		}
-
-		const entries = Array.from(connections.entries());
-		for (const [id, conn] of entries) {
-			// Check if connection is subscribed to this event
-			const patterns = [
-				`${event.resource}:${event.event}`, // Exact match
-				`${event.resource}:*`, // All events for this resource
-				`*:${event.event}`, // This event for all resources
-				`*:*`, // All events for all resources
-			];
-
-			const isSubscribed = patterns.some((pattern) =>
-				conn.subscriptions.has(pattern),
-			);
-
-			if (!isSubscribed) continue;
-
-			// Apply custom filter if provided
-			if (eventFilter && !eventFilter(processedEvent, conn)) {
-				continue;
 			}
 
-			// Filter by userId if event is user-specific
-			if (event.userId && event.userId !== conn.userId) {
-				continue;
-			}
+			clients.set(ws, client);
 
-			try {
-				const data = JSON.stringify(processedEvent);
-				conn.controller.enqueue(
-					`id: ${processedEvent.id}\nevent: ${processedEvent.event}\ndata: ${data}\n\n`,
-				);
-				conn.lastActivity = Date.now();
-			} catch (e) {
-				// Connection closed, remove it
-				connections.delete(id);
+			// Handle messages
+			ws.on("message", (data) => {
+				try {
+					const message: RealtimeMessage = JSON.parse(data.toString());
+
+					switch (message.type) {
+						case "subscribe":
+							if (message.channel) {
+								channelManager.subscribe(message.channel, client);
+								ws.send(
+									JSON.stringify({
+										type: "subscribed",
+										channel: message.channel,
+										timestamp: Date.now(),
+									}),
+								);
+
+								// Broadcast presence update
+								if (broadcastPresence && client.userId) {
+									channelManager.broadcast(
+										message.channel,
+										{
+											type: "presence_update",
+											payload: {
+												action: "join",
+												userId: client.userId,
+												metadata: client.metadata,
+												onlineUsers: channelManager.getOnlineUsers(
+													message.channel,
+												),
+											},
+											timestamp: Date.now(),
+										},
+										client,
+									);
+								}
+							}
+							break;
+
+						case "unsubscribe":
+							if (message.channel) {
+								channelManager.unsubscribe(message.channel, client);
+								ws.send(
+									JSON.stringify({
+										type: "unsubscribed",
+										channel: message.channel,
+										timestamp: Date.now(),
+									}),
+								);
+
+								// Broadcast presence update
+								if (broadcastPresence && client.userId) {
+									channelManager.broadcast(message.channel, {
+										type: "presence_update",
+										payload: {
+											action: "leave",
+											userId: client.userId,
+											onlineUsers: channelManager.getOnlineUsers(
+												message.channel,
+											),
+										},
+										timestamp: Date.now(),
+									});
+								}
+							}
+							break;
+
+						case "broadcast":
+							if (message.channel && message.payload) {
+								channelManager.broadcast(
+									message.channel,
+									{
+										type: "broadcast",
+										channel: message.channel,
+										payload: message.payload,
+										timestamp: Date.now(),
+									},
+									client,
+								);
+							}
+							break;
+
+						case "heartbeat":
+							client.lastHeartbeat = Date.now();
+							ws.send(
+								JSON.stringify({
+									type: "heartbeat",
+									timestamp: Date.now(),
+								}),
+							);
+							break;
+					}
+				} catch (error) {
+					console.error("[Realtime] Error handling message:", error);
+					ws.send(
+						JSON.stringify({
+							type: "error",
+							payload: { message: "Invalid message format" },
+							timestamp: Date.now(),
+						}),
+					);
+				}
+			});
+
+			// Handle disconnection
+			ws.on("close", () => {
+				// Notify channels about disconnection
+				if (broadcastPresence && client.userId) {
+					for (const channel of client.channels) {
+						channelManager.broadcast(channel, {
+							type: "presence_update",
+							payload: {
+								action: "leave",
+								userId: client.userId,
+								onlineUsers: channelManager.getOnlineUsers(channel),
+							},
+							timestamp: Date.now(),
+						});
+					}
+				}
+
+				channelManager.unsubscribeAll(client);
+				clients.delete(ws);
+			});
+
+			// Handle errors
+			ws.on("error", (error) => {
+				console.error("[Realtime] WebSocket error:", error);
+			});
+		});
+
+		// Setup heartbeat monitoring
+		const heartbeatTimer = setInterval(() => {
+			const now = Date.now();
+			for (const [ws, client] of clients.entries()) {
+				if (now - client.lastHeartbeat > heartbeatInterval * 2) {
+					// Client hasn't responded to heartbeat - terminate connection
+					ws.terminate();
+					clients.delete(ws);
+				} else if (ws.readyState === WebSocket.OPEN) {
+					// Send heartbeat
+					ws.send(
+						JSON.stringify({
+							type: "heartbeat",
+							timestamp: now,
+						}),
+					);
+				}
 			}
+		}, heartbeatInterval);
+
+		// Store timer for cleanup
+		(wss as any)._heartbeatTimer = heartbeatTimer;
+	};
+
+	// Broadcast database changes to subscribed clients
+	const broadcastDataChange = (
+		resource: string,
+		operation: string,
+		data: any,
+		id?: string,
+	) => {
+		// Broadcast to resource-specific channel
+		const resourceChannel = `resource:${resource}`;
+		channelManager.broadcast(resourceChannel, {
+			type: "data_change",
+			channel: resourceChannel,
+			payload: {
+				resource,
+				operation,
+				data,
+				id,
+			},
+			timestamp: Date.now(),
+		});
+
+		// Broadcast to specific record channel if id provided
+		if (id) {
+			const recordChannel = `${resource}:${id}`;
+			channelManager.broadcast(recordChannel, {
+				type: "data_change",
+				channel: recordChannel,
+				payload: {
+					resource,
+					operation,
+					data,
+					id,
+				},
+				timestamp: Date.now(),
+			});
 		}
 	};
 
-	const realtimePlugin: Plugin = {
+	const shouldBroadcast = (resource: string): boolean => {
+		return resources.length === 0 || resources.includes(resource);
+	};
+
+	return {
 		id: "realtime",
 
+		init: () => {
+			setupWebSocketServer();
+		},
+
+		destroy: async () => {
+			if (wss) {
+				// Clear heartbeat timer
+				if ((wss as any)._heartbeatTimer) {
+					clearInterval((wss as any)._heartbeatTimer);
+				}
+
+				// Close all connections
+				for (const [ws] of clients.entries()) {
+					ws.close();
+				}
+				clients.clear();
+
+				// Close server if we created it
+				if (shouldCleanupWss) {
+					wss.close();
+				}
+			}
+		},
+
 		endpoints: {
-			// SSE endpoint for real-time updates
-			subscribe: createCrudEndpoint(
-				"/realtime/subscribe",
-				{
-					method: "GET",
-					query: z.object({
-						resources: z.string().optional(), // Comma-separated list
-						events: z.string().optional(), // Comma-separated list
-						userId: z.string().optional(),
-					}),
-				},
-				async (ctx) => {
-					const { resources, events, userId } = ctx.query;
-
-					// Generate unique connection ID
-					const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-					// Check max connections per user
-					if (userId && maxConnectionsPerUser) {
-						const userConnections = Array.from(connections.values()).filter(
-							(c) => c.userId === userId,
-						);
-						if (userConnections.length >= maxConnectionsPerUser) {
-							return ctx.json(
-								{ error: "Maximum connections reached" },
-								{ status: 429 },
-							);
-						}
-					}
-
-					// Parse subscriptions
-					const resourceList = resources ? resources.split(",") : ["*"];
-					const eventList = events ? events.split(",") : ["*"];
-
-					const subscriptions = new Set<string>();
-					for (const resource of resourceList) {
-						for (const event of eventList) {
-							subscriptions.add(`${resource.trim()}:${event.trim()}`);
-						}
-					}
-
-					// Create SSE stream
-					const stream = new ReadableStream({
-						start(controller) {
-							// Store connection
-							const connection: SSEConnection = {
-								controller,
-								subscriptions,
-								userId,
-								connectedAt: Date.now(),
-								lastActivity: Date.now(),
-							};
-
-							connections.set(connectionId, connection);
-
-							// Send initial connection message
-							const initMessage = JSON.stringify({
-								id: connectionId,
-								event: "connected",
-								resource: "realtime",
-								data: {
-									connectionId,
-									subscriptions: Array.from(subscriptions),
-								},
-								timestamp: Date.now(),
-							});
-
-							controller.enqueue(
-								`id: ${connectionId}\nevent: connected\ndata: ${initMessage}\n\n`,
-							);
-						},
-						cancel() {
-							// Connection closed by client
-							connections.delete(connectionId);
-						},
-					});
-
-					return new Response(stream, {
-						headers: {
-							"Content-Type": "text/event-stream",
-							"Cache-Control": "no-cache",
-							Connection: "keep-alive",
-						},
-					});
-				},
-			),
-
-			// Endpoint to broadcast custom events
-			broadcast: createCrudEndpoint(
-				"/realtime/broadcast",
-				{
-					method: "POST",
-					body: z.object({
-						event: z.enum(["create", "update", "delete", "custom", "*"]),
-						resource: z.string(),
-						data: z.any(),
-						userId: z.string().optional(),
-					}),
-				},
-				async (ctx) => {
-					const { event, resource, data, userId } = ctx.body;
-
-					const message: RealtimeMessage = {
-						id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-						event,
-						resource,
-						data,
-						timestamp: Date.now(),
-						userId,
-					};
-
-					broadcast(message);
-
-					return ctx.json({
-						success: true,
-						message: "Event broadcasted",
-						connections: connections.size,
-					});
-				},
-			),
-
-			// Get connection statistics
-			stats: createCrudEndpoint(
+			// Get realtime stats
+			getRealtimeStats: createCrudEndpoint(
 				"/realtime/stats",
 				{
 					method: "GET",
 				},
 				async (ctx) => {
-					const now = Date.now();
-					const connectionStats = Array.from(connections.values()).map(
-						(conn) => ({
-							subscriptions: Array.from(conn.subscriptions),
-							userId: conn.userId,
-							connectedAt: conn.connectedAt,
-							lastActivity: conn.lastActivity,
-							activeFor: Math.round((now - conn.connectedAt) / 1000),
-							idleFor: Math.round((now - conn.lastActivity) / 1000),
-						}),
-					);
-
 					return ctx.json({
-						totalConnections: connections.size,
-						keepAliveInterval,
-						connectionTimeout,
-						connections: connectionStats,
+						connected: clients.size,
+						channels: channelManager.getChannels().map((channel) => ({
+							name: channel,
+							clients: channelManager.getChannelClientCount(channel),
+							onlineUsers: channelManager.getOnlineUsers(channel),
+						})),
 					});
 				},
 			),
 
-			// Disconnect a specific connection
-			disconnect: createCrudEndpoint(
-				"/realtime/disconnect",
+			// Get online users in a channel
+			getChannelUsers: createCrudEndpoint(
+				"/realtime/channel/users",
 				{
-					method: "POST",
-					body: z.object({
-						connectionId: z.string(),
+					method: "GET",
+					query: z.object({
+						channel: z.string(),
 					}),
 				},
 				async (ctx) => {
-					const { connectionId } = ctx.body;
-
-					const connection = connections.get(connectionId);
-					if (!connection) {
-						return ctx.json(
-							{ error: "Connection not found" },
-							{ status: 404 },
-						);
-					}
-
-					try {
-						connection.controller.close();
-					} catch (e) {
-						// Already closed
-					}
-
-					connections.delete(connectionId);
-
+					const { channel } = ctx.query;
 					return ctx.json({
-						success: true,
-						message: "Connection closed",
+						channel,
+						users: channelManager.getOnlineUsers(channel),
+						count: channelManager.getChannelClientCount(channel),
 					});
+				},
+			),
+
+			// Broadcast message to channel (server-side)
+			broadcastToChannel: createCrudEndpoint(
+				"/realtime/broadcast",
+				{
+					method: "POST",
+					body: z.object({
+						channel: z.string(),
+						payload: z.any(),
+					}),
+				},
+				async (ctx) => {
+					const { channel, payload } = ctx.body;
+					channelManager.broadcast(channel, {
+						type: "broadcast",
+						channel,
+						payload,
+						timestamp: Date.now(),
+					});
+					return ctx.json({ success: true, channel });
 				},
 			),
 		},
 
 		hooks: {
-			// Automatically broadcast CRUD operations
-			afterCreate: async (context) => {
-				const message: RealtimeMessage = {
-					id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-					event: "create",
-					resource: context.resource,
-					data: context.result,
-					timestamp: Date.now(),
-				};
-				broadcast(message);
+			afterCreate: async (context: CrudHookContext) => {
+				if (shouldBroadcast(context.resource)) {
+					broadcastDataChange(
+						context.resource,
+						"create",
+						context.result,
+						(context.result as any)?.id,
+					);
+				}
 			},
 
-			afterUpdate: async (context) => {
-				const message: RealtimeMessage = {
-					id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-					event: "update",
-					resource: context.resource,
-					data: context.result,
-					timestamp: Date.now(),
-				};
-				broadcast(message);
+			afterUpdate: async (context: CrudHookContext) => {
+				if (shouldBroadcast(context.resource)) {
+					broadcastDataChange(
+						context.resource,
+						"update",
+						context.result,
+						context.id,
+					);
+				}
 			},
 
-			afterDelete: async (context) => {
-				const message: RealtimeMessage = {
-					id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-					event: "delete",
-					resource: context.resource,
-					data: context.result,
-					timestamp: Date.now(),
-				};
-				broadcast(message);
+			afterDelete: async (context: CrudHookContext) => {
+				if (shouldBroadcast(context.resource)) {
+					broadcastDataChange(context.resource, "delete", null, context.id);
+				}
 			},
 		},
 
 		options,
 	};
-
-	// Cleanup when needed (note: Plugin type doesn't have onUnload, 
-	// so we handle cleanup through process exit or manual cleanup)
-	// Store cleanup function if needed by calling code
-	(
-		realtimePlugin as any
-	).cleanup = () => {
-		clearInterval(cleanupInterval);
-		clearInterval(keepAliveTimer);
-		const entries = Array.from(connections.entries());
-		for (const [id, conn] of entries) {
-			try {
-				conn.controller.close();
-			} catch (e) {
-				// Ignore
-			}
-		}
-		connections.clear();
-	};
-
-	return realtimePlugin as Plugin;
 }
