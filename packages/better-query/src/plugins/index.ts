@@ -31,5 +31,13 @@ export type { CachePluginOptions } from "./cache";
 export { openApiPlugin } from "./openapi";
 export type { OpenAPIOptions } from "./openapi";
 
+export { uploadPlugin } from "./upload";
+export type {
+	UploadPluginOptions,
+	FileMetadata,
+	StorageAdapter,
+} from "./upload";
+export { LocalStorageAdapter } from "./upload";
+
 // Plugin utilities
 export { createCrudEndpoint } from "../endpoints/crud-endpoint";
