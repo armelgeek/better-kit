@@ -1,0 +1,597 @@
+---
+title: Upload
+description: Upload plugin for Better Query
+---
+
+The Upload plugin provides comprehensive file upload functionality for Better Query applications. It supports multiple storage backends (local filesystem, S3, custom), file validation, automatic metadata tracking, and secure file handling.
+
+## Installation
+
+<Steps>
+  <Step>
+    ### Add the plugin to your query config
+
+    To use the Upload plugin, add it to your query config.
+
+    ```ts title="query.ts"
+    import { betterQuery } from "better-query"
+    import { uploadPlugin } from "better-query/plugins" // [!code highlight]
+
+    export const query = betterQuery({
+        database: {
+            provider: "sqlite",
+            url: "./data.db"
+        },
+        plugins: [
+            uploadPlugin({
+                enabled: true,
+                uploadDir: './uploads',
+                baseUrl: 'http://localhost:3000/uploads',
+                maxFileSize: 10 * 1024 * 1024, // 10MB
+                allowedMimeTypes: [
+                    'image/jpeg',
+                    'image/png',
+                    'image/gif',
+                    'application/pdf'
+                ],
+                fileNaming: 'uuid', // or 'original' or custom function
+                trackInDatabase: true,
+            }) // [!code highlight]
+        ]
+    })
+    ```
+
+  </Step>
+
+  <Step>
+    ### Migrate the database
+
+    Run the migration or generate the schema to add the necessary upload tables to the database.
+
+    <Tabs items={["migrate", "generate"]}>
+        <Tab value="migrate">
+        ```bash
+        npx better-query migrate
+        ```
+        </Tab>
+        <Tab value="generate">
+        ```bash
+        npx better-query generate
+        ```
+        </Tab>
+    </Tabs>
+
+  </Step>
+
+  <Step>
+    ### Serve uploaded files (for local storage)
+
+    If using local storage, you need to serve the uploaded files statically:
+
+    ```ts title="server.ts"
+    import express from 'express';
+
+    const app = express();
+
+    // Serve uploaded files
+    app.use('/uploads', express.static('./uploads')); // [!code highlight]
+
+    // Mount Better Query API
+    app.all('/api/query/*', query.handler);
+
+    app.listen(3000);
+    ```
+
+  </Step>
+</Steps>
+
+## Client Usage
+
+### Basic File Upload (Browser)
+
+```ts title="upload.ts"
+import { createClient } from 'better-query/client';
+
+const client = createClient({
+  baseUrl: 'http://localhost:3000'
+});
+
+// Upload a file
+async function uploadFile(file: File) {
+  // Convert file to base64
+  const base64File = await fileToBase64(file);
+  
+  // Upload the file
+  const response = await client.uploadFile({
+    file: base64File,
+    filename: file.name,
+    mimeType: file.type,
+    metadata: {
+      uploadedFrom: 'web-app',
+      description: 'User uploaded file'
+    }
+  });
+  
+  console.log('File uploaded:', response.data);
+  return response.data;
+}
+
+// Helper function to convert File to base64
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+```
+
+### React Component Example
+
+```tsx title="FileUploader.tsx"
+import { useState } from 'react';
+import { useClient } from 'better-query/react';
+
+function FileUploader() {
+  const client = useClient();
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<any>(null);
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Convert to base64
+      const base64File = await fileToBase64(file);
+      
+      // Upload
+      const response = await client.uploadFile({
+        file: base64File,
+        filename: file.name,
+        mimeType: file.type,
+      });
+      
+      setUploadedFile(response.data);
+      alert('File uploaded successfully!');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="upload-container">
+      <input
+        type="file"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+        disabled={uploading}
+        accept="image/*,application/pdf"
+      />
+      
+      <button 
+        onClick={handleUpload} 
+        disabled={!file || uploading}
+      >
+        {uploading ? 'Uploading...' : 'Upload File'}
+      </button>
+
+      {uploadedFile && (
+        <div className="upload-result">
+          <h3>Uploaded File:</h3>
+          <p>Filename: {uploadedFile.filename}</p>
+          <p>Size: {(uploadedFile.size / 1024).toFixed(2)} KB</p>
+          {uploadedFile.url && (
+            <a href={uploadedFile.url} target="_blank" rel="noopener noreferrer">
+              View File
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper function
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export default FileUploader;
+```
+
+### List and Delete Files
+
+```ts title="file-operations.ts"
+// List uploaded files
+async function listFiles() {
+  const response = await client.listFiles({
+    page: 1,
+    limit: 10,
+    mimeType: 'image/jpeg' // optional filter
+  });
+  
+  console.log('Files:', response.data);
+  return response.data;
+}
+
+// Delete a file
+async function deleteFile(fileId: string) {
+  await client.deleteFile({ id: fileId });
+  console.log('File deleted');
+}
+```
+
+## Configuration Options
+
+### Plugin Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enabled` | `boolean` | `true` | Enable/disable the plugin |
+| `storage` | `StorageAdapter` | `LocalStorageAdapter` | Storage backend to use |
+| `uploadDir` | `string` | `'./uploads'` | Directory for local storage |
+| `baseUrl` | `string` | `undefined` | Base URL for serving files |
+| `maxFileSize` | `number` | `10485760` (10MB) | Maximum file size in bytes |
+| `allowedMimeTypes` | `string[]` | `[]` (all) | Allowed MIME types |
+| `fileNaming` | `'original' \| 'uuid' \| function` | `'uuid'` | File naming strategy |
+| `trackInDatabase` | `boolean` | `true` | Store metadata in database |
+| `validate` | `function` | `undefined` | Custom validation function |
+
+### File Naming Strategies
+
+```ts title="query.ts"
+// Use UUID naming (recommended for production)
+uploadPlugin({
+  fileNaming: 'uuid'
+})
+
+// Keep original filename
+uploadPlugin({
+  fileNaming: 'original'
+})
+
+// Custom naming function
+uploadPlugin({
+  fileNaming: (originalName) => {
+    const timestamp = Date.now();
+    const sanitized = originalName
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .toLowerCase();
+    return `${timestamp}-${sanitized}`;
+  }
+})
+```
+
+## Storage Adapters
+
+### Local Storage (Default)
+
+Stores files on the local filesystem:
+
+```ts title="query.ts"
+import { uploadPlugin, LocalStorageAdapter } from 'better-query/plugins';
+
+uploadPlugin({
+  storage: new LocalStorageAdapter('./uploads', 'http://localhost:3000/uploads')
+})
+```
+
+### S3 Storage Adapter
+
+For production deployments, use S3-compatible storage:
+
+```ts title="s3-adapter.ts"
+import { uploadPlugin, type StorageAdapter } from 'better-query/plugins';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+
+class S3StorageAdapter implements StorageAdapter {
+  private s3Client: S3Client;
+  private bucket: string;
+  private region: string;
+
+  constructor(config: { bucket: string; region: string; credentials: any }) {
+    this.bucket = config.bucket;
+    this.region = config.region;
+    this.s3Client = new S3Client({
+      region: config.region,
+      credentials: config.credentials
+    });
+  }
+
+  async store(file: Buffer | ReadableStream, filename: string, options?: any) {
+    const buffer = Buffer.isBuffer(file) ? file : await this.streamToBuffer(file);
+    
+    await this.s3Client.send(new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: filename,
+      Body: buffer,
+      ContentType: options?.mimeType,
+      Metadata: options?.metadata
+    }));
+
+    return {
+      path: filename,
+      url: `https://${this.bucket}.s3.${this.region}.amazonaws.com/${filename}`
+    };
+  }
+
+  async retrieve(path: string): Promise<Buffer> {
+    const response = await this.s3Client.send(new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: path
+    }));
+    
+    return await this.streamToBuffer(response.Body as any);
+  }
+
+  async delete(path: string): Promise<void> {
+    await this.s3Client.send(new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: path
+    }));
+  }
+
+  async exists(path: string): Promise<boolean> {
+    try {
+      await this.s3Client.send(new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: path
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  getUrl(path: string): string {
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${path}`;
+  }
+
+  private async streamToBuffer(stream: ReadableStream): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    const reader = stream.getReader();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(Buffer.from(value));
+    }
+    
+    return Buffer.concat(chunks);
+  }
+}
+
+// Use S3 adapter
+export const query = betterQuery({
+  database: { provider: "sqlite", url: "./data.db" },
+  plugins: [
+    uploadPlugin({
+      storage: new S3StorageAdapter({
+        bucket: 'my-app-uploads',
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
+      })
+    })
+  ]
+});
+```
+
+### Environment-Specific Storage
+
+Switch storage backends based on environment:
+
+```ts title="query.ts"
+const storage = process.env.NODE_ENV === 'production'
+  ? new S3StorageAdapter({
+      bucket: process.env.S3_BUCKET!,
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+      }
+    })
+  : new LocalStorageAdapter('./uploads', 'http://localhost:3000/uploads');
+
+uploadPlugin({ storage })
+```
+
+## Validation & Security
+
+### File Size and Type Validation
+
+```ts title="query.ts"
+uploadPlugin({
+  maxFileSize: 10 * 1024 * 1024, // 10MB
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+})
+```
+
+### Custom Validation
+
+```ts title="query.ts"
+uploadPlugin({
+  validate: async (file) => {
+    // Check file size
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('File too large');
+    }
+    
+    // Check file extension
+    const ext = file.filename.split('.').pop()?.toLowerCase();
+    if (!['jpg', 'png', 'pdf'].includes(ext || '')) {
+      throw new Error('Invalid file type');
+    }
+    
+    // Custom validation logic
+    if (file.filename.includes('malicious')) {
+      return false;
+    }
+    
+    return true;
+  }
+})
+```
+
+### Secure File Access
+
+Add authentication middleware to protect uploaded files:
+
+```ts title="server.ts"
+// Add authentication middleware
+app.use('/uploads/*', authenticateUser);
+
+// Serve uploads directory
+app.use('/uploads', express.static('./uploads'));
+```
+
+## API Endpoints
+
+The plugin automatically creates the following endpoints:
+
+### Upload File
+- **POST** `/api/query/upload/file`
+- Body: `{ file: string, filename: string, mimeType: string, metadata?: object }`
+
+### Get File Metadata
+- **GET** `/api/query/upload/file/:id`
+
+### Download File
+- **GET** `/api/query/upload/download/:id`
+
+### Delete File
+- **DELETE** `/api/query/upload/file/:id`
+
+### List Files
+- **GET** `/api/query/upload/files?page=1&limit=50&mimeType=image/jpeg`
+
+## Database Schema
+
+The plugin creates the following table to track uploaded files:
+
+```sql
+CREATE TABLE uploaded_files (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  original_name TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  path TEXT NOT NULL,
+  url TEXT,
+  uploaded_by TEXT,
+  uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  metadata JSON
+);
+```
+
+## Best Practices
+
+<Callout type="info">
+  Follow these best practices for secure and efficient file uploads.
+</Callout>
+
+### 1. Always Validate Files
+
+```ts
+uploadPlugin({
+  maxFileSize: 10 * 1024 * 1024,
+  allowedMimeTypes: ['image/jpeg', 'image/png'],
+  validate: async (file) => {
+    // Additional custom validation
+    return true;
+  }
+})
+```
+
+### 2. Use Environment-Specific Storage
+
+Use local storage for development and S3 for production:
+
+```ts
+const storage = process.env.NODE_ENV === 'production'
+  ? new S3StorageAdapter()
+  : new LocalStorageAdapter('./uploads');
+
+uploadPlugin({ storage })
+```
+
+### 3. Secure File Access
+
+Protect your uploaded files with authentication:
+
+```ts
+// Add authentication middleware
+app.use('/uploads/*', authenticateUser);
+```
+
+### 4. Use UUID Naming
+
+Use UUID file naming to prevent filename conflicts and security issues:
+
+```ts
+uploadPlugin({
+  fileNaming: 'uuid'
+})
+```
+
+### 5. Set Appropriate File Size Limits
+
+Configure reasonable file size limits based on your application needs:
+
+```ts
+uploadPlugin({
+  maxFileSize: 10 * 1024 * 1024, // 10MB for documents
+  // or
+  maxFileSize: 50 * 1024 * 1024, // 50MB for videos
+})
+```
+
+## Troubleshooting
+
+### Files not being served
+
+Make sure you're serving the uploads directory statically:
+
+```ts
+app.use('/uploads', express.static('./uploads'));
+```
+
+### Large file uploads failing
+
+Increase the body parser limit in your Express configuration:
+
+```ts
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+```
+
+### CORS issues
+
+Add CORS headers for file uploads:
+
+```ts
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+```
