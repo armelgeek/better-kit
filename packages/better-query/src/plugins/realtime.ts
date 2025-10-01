@@ -82,7 +82,8 @@ export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 	// Clean up stale connections periodically
 	const cleanupInterval = setInterval(() => {
 		const now = Date.now();
-		for (const [id, conn] of connections.entries()) {
+		const entries = Array.from(connections.entries());
+		for (const [id, conn] of entries) {
 			if (now - conn.lastActivity > connectionTimeout * 1000) {
 				try {
 					conn.controller.close();
@@ -96,7 +97,8 @@ export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 
 	// Send keep-alive to all connections
 	const keepAliveTimer = setInterval(() => {
-		for (const [id, conn] of connections.entries()) {
+		const entries = Array.from(connections.entries());
+		for (const [id, conn] of entries) {
 			try {
 				conn.controller.enqueue(
 					`event: keepalive\ndata: ${Date.now()}\n\n`,
@@ -119,7 +121,8 @@ export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 			processedEvent = eventTransformer(event);
 		}
 
-		for (const [id, conn] of connections.entries()) {
+		const entries = Array.from(connections.entries());
+		for (const [id, conn] of entries) {
 			// Check if connection is subscribed to this event
 			const patterns = [
 				`${event.resource}:${event.event}`, // Exact match
@@ -157,7 +160,7 @@ export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 		}
 	};
 
-	return {
+	const realtimePlugin: Plugin = {
 		id: "realtime",
 
 		endpoints: {
@@ -382,20 +385,27 @@ export function realtimePlugin(options: RealtimePluginOptions = {}): Plugin {
 			},
 		},
 
-		// Cleanup on plugin unload
-		onUnload: () => {
-			clearInterval(cleanupInterval);
-			clearInterval(keepAliveTimer);
-			for (const [id, conn] of connections.entries()) {
-				try {
-					conn.controller.close();
-				} catch (e) {
-					// Ignore
-				}
-			}
-			connections.clear();
-		},
-
 		options,
 	};
+
+	// Cleanup when needed (note: Plugin type doesn't have onUnload, 
+	// so we handle cleanup through process exit or manual cleanup)
+	// Store cleanup function if needed by calling code
+	(
+		realtimePlugin as any
+	).cleanup = () => {
+		clearInterval(cleanupInterval);
+		clearInterval(keepAliveTimer);
+		const entries = Array.from(connections.entries());
+		for (const [id, conn] of entries) {
+			try {
+				conn.controller.close();
+			} catch (e) {
+				// Ignore
+			}
+		}
+		connections.clear();
+	};
+
+	return realtimePlugin as Plugin;
 }
