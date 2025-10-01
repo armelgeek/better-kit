@@ -276,3 +276,10 @@ export const admin = betterAdmin({
 		},
 	},
 });
+
+/**
+ * Export serializable admin configuration for client-side use
+ * This includes field metadata and UI configuration but excludes
+ * non-serializable properties like functions and components
+ */
+export const adminConfig = admin.getSerializableConfig();

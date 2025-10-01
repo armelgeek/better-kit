@@ -1,7 +1,9 @@
 "use client";
 import { adminClient } from "@/lib/admin-client";
+import { adminConfig } from "@/lib/admin";
 import { useAdminCreate } from "better-admin/react";
 import { AdminForm } from "better-admin/components";
+import { generateFormFields } from "better-admin";
 import { useRouter } from "next/navigation";
 
 export default function NewProductPage() {
@@ -16,6 +18,15 @@ export default function NewProductPage() {
 			router.push("/admin/products");
 		}
 	};
+
+	// Get the product resource configuration
+	const productResource = adminConfig.resources.get("product");
+	if (!productResource) {
+		return <div>Resource configuration not found</div>;
+	}
+
+	// Auto-generate form fields from the resource configuration
+	const fields = generateFormFields(productResource, "create");
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
@@ -43,67 +54,11 @@ export default function NewProductPage() {
 				</div>
 			)}
 
-			{/* Form using new AdminForm component */}
+			{/* Form with auto-generated fields from admin config */}
 			<AdminForm
-				fields={[
-					{
-						name: "name",
-						label: "Product Name",
-						type: "text",
-						placeholder: "Enter product name",
-						required: true,
-					},
-					{
-						name: "description",
-						label: "Description",
-						type: "textarea",
-						placeholder: "Enter product description",
-					},
-					{
-						name: "category",
-						label: "Category",
-						type: "select",
-						options: [
-							{ label: "Electronics", value: "electronics" },
-							{ label: "Clothing", value: "clothing" },
-							{ label: "Books", value: "books" },
-							{ label: "Home & Garden", value: "home-garden" },
-							{ label: "Other", value: "other" },
-						],
-					},
-					{
-						name: "price",
-						label: "Price (USD)",
-						type: "number",
-						placeholder: "0.00",
-						required: true,
-						validation: {
-							min: { value: 0, message: "Price must be positive" },
-						},
-					},
-					{
-						name: "stock",
-						label: "Stock",
-						type: "number",
-						placeholder: "0",
-						defaultValue: 0,
-						validation: {
-							min: { value: 0, message: "Stock must be positive" },
-						},
-					},
-					{
-						name: "status",
-						label: "Status",
-						type: "select",
-						required: true,
-						defaultValue: "draft",
-						options: [
-							{ label: "🟡 Draft", value: "draft" },
-							{ label: "🟢 Active", value: "active" },
-							{ label: "🔴 Inactive", value: "inactive" },
-						],
-					},
-				]}
+				fields={fields}
+				defaultValues={{}}
+				title=""
 				onSubmit={handleSubmit}
 				onCancel={() => router.push("/admin/products")}
 				submitLabel="Create Product"
