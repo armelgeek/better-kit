@@ -12,11 +12,12 @@ Better Admin is a comprehensive admin panel solution that combines the power of 
 - 🚀 **Auto-Generated Admin UI**: Define your resources once, get a full admin interface
 - 🔐 **Better Auth Integration**: Seamless integration with Better Auth for authentication and permissions
 - ✅ **Type-Safe**: Full TypeScript support with automatic type inference from Better Query
-- 🎨 **Headless UI**: Framework-agnostic components that work with any UI library
+- 🎨 **shadcn/ui Components**: Beautiful, accessible components with react-hook-form integration
 - 🔧 **Fully Customizable**: Override any component or behavior for specific resources
 - 📊 **Rich Features**: Pagination, sorting, filtering, search, bulk operations out of the box
 - 🎯 **Permission-Aware**: Respects Better Query permissions for all operations
 - 🌐 **Framework Agnostic**: Works with Next.js, Remix, React, and more
+- 📝 **React Hook Form**: Powerful form management with validation
 
 ## Inspiration
 
@@ -30,12 +31,34 @@ Unlike shadcn-admin-kit which uses ra-core, Better Admin is built on Better Quer
 ## Installation
 
 ```bash
-npm install better-admin better-query
+npm install better-admin better-query react-hook-form
 # or
-pnpm add better-admin better-query
+pnpm add better-admin better-query react-hook-form
 # or
-yarn add better-admin better-query
+yarn add better-admin better-query react-hook-form
 ```
+
+## UI Components
+
+Better Admin now includes a comprehensive set of shadcn/ui-inspired components with react-hook-form integration. See [COMPONENTS.md](./COMPONENTS.md) for detailed documentation.
+
+```tsx
+import {
+  AdminForm,
+  DataTable,
+  Button,
+  Badge,
+  Card,
+  // ... and more
+} from "better-admin/components";
+```
+
+**Key Components:**
+- **AdminForm**: Powerful form component with validation and error handling
+- **DataTable**: Feature-rich table with sorting, pagination, and search
+- **UI Primitives**: Button, Input, Label, Card, Badge, Table, Select, Textarea
+
+See the [Components Documentation](./COMPONENTS.md) for examples and full API reference.
 
 ## Quick Start
 
@@ -160,7 +183,70 @@ const queryClient = createQueryClient({
 export const adminClient = createAdminClient(queryClient);
 ```
 
-### 4. Use Admin Hooks in Your Components
+### 4. Use Admin Components in Your UI
+
+**Option A: Using the new UI Components (Recommended)**
+
+```tsx
+// app/admin/products/page.tsx
+"use client";
+import { useAdminList } from "better-admin/react";
+import { DataTable, Badge } from "better-admin/components";
+import { adminClient } from "@/lib/admin-client";
+
+export default function ProductsPage() {
+  const {
+    data,
+    loading,
+    page,
+    totalPages,
+    setPage,
+    setSearch,
+  } = useAdminList(adminClient, "product");
+
+  return (
+    <DataTable
+      title="Products"
+      data={data}
+      loading={loading}
+      searchable
+      onSearch={setSearch}
+      page={page}
+      totalPages={totalPages}
+      onPageChange={setPage}
+      columns={[
+        { key: "name", label: "Name", sortable: true },
+        { 
+          key: "price", 
+          label: "Price",
+          render: (value) => `$${value.toFixed(2)}`
+        },
+        {
+          key: "status",
+          label: "Status",
+          render: (value) => (
+            <Badge variant={value === "active" ? "success" : "warning"}>
+              {value}
+            </Badge>
+          ),
+        },
+      ]}
+      actions={[
+        {
+          label: "View",
+          onClick: (row) => router.push(`/admin/products/${row.id}`),
+        },
+        {
+          label: "Edit",
+          onClick: (row) => router.push(`/admin/products/${row.id}/edit`),
+        },
+      ]}
+    />
+  );
+}
+```
+
+**Option B: Using Hooks with Custom UI**
 
 ```typescript
 // app/admin/products/page.tsx
@@ -484,23 +570,23 @@ Works with:
 |---------|--------------|------------------|-------------|
 | Type Safety | ✅ Full | ⚠️ Partial | ⚠️ Partial |
 | Backend | Better Query | ra-core | REST/GraphQL |
-| UI Library | Headless | shadcn/ui | Material-UI |
+| UI Library | shadcn/ui + react-hook-form | shadcn/ui | Material-UI |
 | Bundle Size | Small | Medium | Large |
 | Learning Curve | Low | Medium | High |
 | Customization | Complete | High | Medium |
+| Form Management | react-hook-form | ra-core | ra-core |
 
 ## Examples
 
-See the `/dev` directory for complete examples:
-
-- Next.js Admin (coming soon)
-- Remix Admin (coming soon)
-- React SPA Admin (coming soon)
+See the `/dev/next-admin` directory for a complete Next.js example using the new UI components.
 
 ## Roadmap
 
+- [x] Pre-built UI component library with shadcn/ui
+- [x] React Hook Form integration
+- [x] DataTable component with sorting and pagination
+- [x] AdminForm component with validation
 - [ ] CLI for scaffolding admin panels (`npx create-better-admin`)
-- [ ] Pre-built UI component library (optional)
 - [ ] Advanced filtering UI
 - [ ] File upload components
 - [ ] Rich text editor integration
