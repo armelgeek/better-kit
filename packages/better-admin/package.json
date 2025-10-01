@@ -17,7 +17,8 @@
 		"./client": "./dist/client.js",
 		"./react": "./dist/react.js",
 		"./ui": "./dist/ui.js",
-		"./types": "./dist/types.js"
+		"./types": "./dist/types.js",
+		"./components": "./dist/components.js"
 	},
 	"dependencies": {
 		"better-query": "workspace:*",
@@ -26,6 +27,7 @@
 	"devDependencies": {
 		"@types/react": "^19.1.13",
 		"react": "^19.1.1",
+		"react-hook-form": "^7.53.2",
 		"tsup": "^8.2.4",
 		"typescript": "^5.5.0-dev.20240508",
 		"vitest": "^1.6.0"
@@ -37,6 +39,7 @@
 	"peerDependencies": {
 		"@types/react": "*",
 		"react": ">=16.8.0",
+		"react-hook-form": ">=7.0.0",
 		"better-query": ">=0.0.1"
 	},
 	"peerDependenciesMeta": {
@@ -44,6 +47,9 @@
 			"optional": true
 		},
 		"react": {
+			"optional": true
+		},
+		"react-hook-form": {
 			"optional": true
 		}
 	},

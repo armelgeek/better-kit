@@ -14,7 +14,7 @@ export default defineConfig([
 		dts: true,
 		target: "es2022",
 		sourcemap: true,
-		external: ["react", "@types/react", "better-query"],
+		external: ["react", "@types/react", "better-query", "react-hook-form"],
 	},
 
 	// Dedicated React client entry
@@ -27,7 +27,24 @@ export default defineConfig([
 		dts: true,
 		target: "es2022",
 		sourcemap: true,
-		external: ["react", "@types/react", "better-query"],
+		external: ["react", "@types/react", "better-query", "react-hook-form"],
+		bundle: true,
+		banner: {
+			js: '"use client";',
+		},
+	},
+
+	// UI Components entry
+	{
+		entry: {
+			components: "./src/components/index.ts",
+		},
+		splitting: false,
+		format: ["esm", "cjs"],
+		dts: true,
+		target: "es2022",
+		sourcemap: true,
+		external: ["react", "@types/react", "react-hook-form"],
 		bundle: true,
 		banner: {
 			js: '"use client";',
