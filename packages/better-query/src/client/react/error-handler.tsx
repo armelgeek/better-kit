@@ -48,7 +48,10 @@ interface ErrorContextValue {
 	lastError: AppError | null;
 	clearErrors: () => void;
 	clearError: (timestamp: number) => void;
-	handleError: (error: any, context?: { resource?: string; operation?: string }) => void;
+	handleError: (
+		error: any,
+		context?: { resource?: string; operation?: string },
+	) => void;
 }
 
 const ErrorContext = createContext<ErrorContextValue | null>(null);
@@ -178,10 +181,7 @@ function classifyError(error: any): ErrorType {
 	}
 
 	// Not found errors
-	if (
-		error?.code === "NOT_FOUND" ||
-		error?.error?.code === "NOT_FOUND"
-	) {
+	if (error?.code === "NOT_FOUND" || error?.error?.code === "NOT_FOUND") {
 		return ErrorType.NOT_FOUND;
 	}
 

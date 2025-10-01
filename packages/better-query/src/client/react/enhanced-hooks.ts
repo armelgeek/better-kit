@@ -82,16 +82,14 @@ export function useRead<T extends BetterQuery = BetterQuery>(
 	const read = useCallback(
 		async (readId?: string, opts?: any) => {
 			const targetId = readId || id;
-			if (!targetId) return { data: null, error: { message: "ID is required" } };
+			if (!targetId)
+				return { data: null, error: { message: "ID is required" } };
 
 			setLoading(true);
 			setError(null);
 
 			try {
-				const result = await (client as any)[resourceName].read(
-					targetId,
-					opts,
-				);
+				const result = await (client as any)[resourceName].read(targetId, opts);
 
 				if (!isMountedRef.current) return result;
 
@@ -125,15 +123,7 @@ export function useRead<T extends BetterQuery = BetterQuery>(
 				}
 			}
 		},
-		[
-			resourceName,
-			id,
-			client,
-			retry,
-			retryDelay,
-			onSuccess,
-			onError,
-		],
+		[resourceName, id, client, retry, retryDelay, onSuccess, onError],
 	);
 
 	// Check if data is stale
@@ -641,7 +631,15 @@ export function useInfiniteList<T extends BetterQuery = BetterQuery>(
 		} finally {
 			setLoading(false);
 		}
-	}, [client, resourceName, baseParams, currentPage, pageSize, loading, hasMore]);
+	}, [
+		client,
+		resourceName,
+		baseParams,
+		currentPage,
+		pageSize,
+		loading,
+		hasMore,
+	]);
 
 	const reset = useCallback(() => {
 		setPages([]);
