@@ -1,4 +1,4 @@
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
 import { createCrudEndpoint } from "../endpoints/crud-endpoint";
 import { CrudHookContext } from "../types";

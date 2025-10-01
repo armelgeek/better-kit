@@ -1,4 +1,4 @@
-import type { BetterQueryClientPlugin, Atom } from "../types/client-plugins";
+import type { Atom, BetterQueryClientPlugin } from "../types/client-plugins";
 
 /**
  * Realtime client plugin options
@@ -89,7 +89,9 @@ function createAtom<T>(initialValue: T): Atom<T> {
 		get: () => value,
 		set: (newValue: T) => {
 			value = newValue;
-			listeners.forEach((listener) => listener(value));
+			for (const listener of listeners) {
+				listener(value);
+			}
 		},
 		subscribe: (listener: (value: T) => void) => {
 			listeners.add(listener);
