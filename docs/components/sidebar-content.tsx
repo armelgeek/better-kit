@@ -281,23 +281,6 @@ export const contents: Content[] = [
 				),
 			},
 			{
-				href: "/docs/concepts/plugins",
-				title: "Plugins",
-				icon: (props?: SVGProps<any>) => (
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="1.2em"
-						height="1.2em"
-						viewBox="0 0 20 20"
-					>
-						<path
-							fill="currentColor"
-							d="M20 14v4a2 2 0 0 1-2 2h-4v-2a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2H6a2 2 0 0 1-2-2v-4H2a2 2 0 0 1-2-2a2 2 0 0 1 2-2h2V6c0-1.1.9-2 2-2h4V2a2 2 0 0 1 2-2a2 2 0 0 1 2 2v2h4a2 2 0 0 1 2 2v4h-2a2 2 0 0 0-2 2a2 2 0 0 0 2 2z"
-						></path>
-					</svg>
-				),
-			},
-			{
 				title: "TypeScript",
 				href: "/docs/concepts/typescript",
 				icon: () => (
@@ -334,6 +317,144 @@ export const contents: Content[] = [
 				></path>
 			</svg>
 		),
+	},
+	{
+		title: "Plugins",
+		href: "/docs/plugins",
+		Icon: (props?: SVGProps<any>) => (
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="1.4em"
+				height="1.4em"
+				viewBox="0 0 24 24"
+			>
+				<path
+					fill="currentColor"
+					d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7c1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11"
+				/>
+			</svg>
+		),
+		list: [
+			{
+				title: "Overview",
+				href: "/docs/plugins",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6m0 14c-2.03 0-4.43-.82-6.14-2.88a9.95 9.95 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Audit",
+				href: "/docs/plugins/audit",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm4 18H6V4h7v5h5z"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Cache",
+				href: "/docs/plugins/cache",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M19 8h-1V6c0-2.76-2.24-5-5-5S8 3.24 8 6h1.9c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h13c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6 9c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Validation",
+				href: "/docs/plugins/validation",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12c5.16-1.26 9-6.45 9-12V5zm-2 16l-4-4l1.41-1.41L10 14.17l6.59-6.59L18 9z"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Upload",
+				href: "/docs/plugins/upload",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M9 16h6v-6h4l-7-7l-7 7h4zm-4 2h14v2H5z"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Realtime",
+				href: "/docs/plugins/realtime",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 0 0-5 5a5 5 0 0 0 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1M8 13h8v-2H8zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 0 0 5-5a5 5 0 0 0-5-5"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "OpenAPI",
+				href: "/docs/plugins/open-api",
+				icon: (props?: SVGProps<any>) => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 10v2h-2v-2zm0-8l5 5h-5z"
+						/>
+					</svg>
+				),
+			},
+		],
 	},
 	{
 		title: "Databases",

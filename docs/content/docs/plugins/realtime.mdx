@@ -1,0 +1,739 @@
+---
+title: Realtime
+description: Realtime plugin for Better Query
+---
+
+The Realtime plugin enables real-time data synchronization in your Better Query application using Server-Sent Events (SSE). It automatically broadcasts all CRUD operations to connected clients and supports custom events, allowing you to build live, collaborative applications.
+
+## Installation
+
+<Steps>
+  <Step>
+    ### Add the plugin to your query config
+
+    To use the Realtime plugin, add it to your query config.
+
+    ```ts title="query.ts"
+    import { betterQuery } from "better-query"
+    import { realtimePlugin } from "better-query/plugins" // [!code highlight]
+
+    export const query = betterQuery({
+        // ... other config options
+        plugins: [
+            realtimePlugin({
+                enabled: true,
+                keepAliveInterval: 30, // Send keep-alive every 30 seconds
+                connectionTimeout: 300, // Disconnect inactive clients after 5 minutes
+                maxConnectionsPerUser: 5, // Limit connections per user
+            }) // [!code highlight]
+        ]
+    })
+    ```
+
+  </Step>
+
+  <Step>
+    ### No additional migration needed
+
+    The Realtime plugin works entirely in-memory and doesn't require database schema changes. Just add it to your config and start using it.
+
+  </Step>
+</Steps>
+
+## How It Works
+
+The Realtime plugin uses **Server-Sent Events (SSE)** to push updates from the server to connected clients. SSE is a simple, HTTP-based protocol that's built into all modern browsers and works well with existing infrastructure.
+
+### Automatic Broadcasting
+
+The plugin automatically broadcasts these events:
+- **`create`** - When a new record is created
+- **`update`** - When a record is updated
+- **`delete`** - When a record is deleted
+
+### Event Format
+
+Each event has this structure:
+
+```ts
+interface RealtimeMessage {
+  id: string;           // Unique message ID
+  event: RealtimeEvent; // Event type (create, update, delete, custom)
+  resource: string;     // Resource name (e.g., "user", "post")
+  data: any;           // The actual data
+  timestamp: number;    // Unix timestamp
+  userId?: string;     // Optional user ID for user-specific events
+}
+```
+
+## Configuration
+
+### `enabled` (boolean)
+
+Enable or disable the plugin.
+
+**Default:** `true`
+
+```ts
+realtimePlugin({
+  enabled: true,
+})
+```
+
+### `keepAliveInterval` (number)
+
+How often to send keep-alive messages to maintain connections (in seconds).
+
+**Default:** `30`
+
+```ts
+realtimePlugin({
+  keepAliveInterval: 30, // Every 30 seconds
+})
+```
+
+### `connectionTimeout` (number)
+
+How long to wait before disconnecting inactive clients (in seconds).
+
+**Default:** `300` (5 minutes)
+
+```ts
+realtimePlugin({
+  connectionTimeout: 600, // 10 minutes
+})
+```
+
+### `maxConnectionsPerUser` (number)
+
+Maximum number of simultaneous connections allowed per user.
+
+**Default:** `5`
+
+```ts
+realtimePlugin({
+  maxConnectionsPerUser: 10,
+})
+```
+
+### `eventFilter` (function)
+
+Custom filter function to control which events are sent to which connections.
+
+**Signature:**
+```ts
+(event: RealtimeMessage, connection: SSEConnection) => boolean
+```
+
+**Example:**
+```ts
+realtimePlugin({
+  eventFilter: (event, connection) => {
+    // Only send public posts to all users
+    if (event.resource === "post" && event.data.visibility === "private") {
+      // Only send to post author
+      return connection.userId === event.data.authorId;
+    }
+    return true;
+  },
+})
+```
+
+### `eventTransformer` (function)
+
+Transform events before broadcasting them to clients.
+
+**Signature:**
+```ts
+(event: RealtimeMessage) => RealtimeMessage
+```
+
+**Example:**
+```ts
+realtimePlugin({
+  eventTransformer: (event) => {
+    // Remove sensitive fields
+    if (event.resource === "user") {
+      const { password, ...safeData } = event.data;
+      return { ...event, data: safeData };
+    }
+    return event;
+  },
+})
+```
+
+## Client Usage
+
+### Connecting to Realtime Updates
+
+Use the EventSource API (built into browsers) to connect to the realtime endpoint:
+
+```ts title="client.ts"
+// Subscribe to all events for all resources
+const eventSource = new EventSource('/api/query/realtime/subscribe');
+
+eventSource.addEventListener('create', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('New record created:', data);
+});
+
+eventSource.addEventListener('update', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Record updated:', data);
+});
+
+eventSource.addEventListener('delete', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Record deleted:', data);
+});
+
+// Handle connection events
+eventSource.addEventListener('connected', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Connected with ID:', data.data.connectionId);
+});
+
+eventSource.addEventListener('keepalive', (event) => {
+  console.log('Keep-alive received');
+});
+
+// Handle errors
+eventSource.onerror = (error) => {
+  console.error('SSE error:', error);
+};
+```
+
+### Subscribe to Specific Resources
+
+Filter events by resource and event type:
+
+```ts
+// Only receive updates for posts
+const eventSource = new EventSource(
+  '/api/query/realtime/subscribe?resources=post&events=create,update'
+);
+```
+
+**Query Parameters:**
+- `resources` - Comma-separated list of resources (e.g., `"post,comment"`)
+- `events` - Comma-separated list of events (e.g., `"create,update,delete"`)
+- `userId` - Optional user ID for user-specific events
+
+### React Hook Example
+
+Create a reusable React hook for realtime updates:
+
+```tsx title="useRealtime.ts"
+import { useEffect, useState } from 'react';
+
+export function useRealtime<T>(
+  resource: string,
+  events: string[] = ['create', 'update', 'delete']
+) {
+  const [data, setData] = useState<T[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    const eventSource = new EventSource(
+      `/api/query/realtime/subscribe?resources=${resource}&events=${events.join(',')}`
+    );
+
+    eventSource.addEventListener('connected', () => {
+      setIsConnected(true);
+    });
+
+    eventSource.addEventListener('create', (event) => {
+      const message = JSON.parse(event.data);
+      setData((prev) => [...prev, message.data]);
+    });
+
+    eventSource.addEventListener('update', (event) => {
+      const message = JSON.parse(event.data);
+      setData((prev) =>
+        prev.map((item) =>
+          item.id === message.data.id ? message.data : item
+        )
+      );
+    });
+
+    eventSource.addEventListener('delete', (event) => {
+      const message = JSON.parse(event.data);
+      setData((prev) =>
+        prev.filter((item) => item.id !== message.data.id)
+      );
+    });
+
+    eventSource.onerror = () => {
+      setIsConnected(false);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [resource, events.join(',')]);
+
+  return { data, isConnected };
+}
+```
+
+**Usage:**
+
+```tsx title="PostList.tsx"
+import { useRealtime } from './useRealtime';
+
+export function PostList() {
+  const { data: posts, isConnected } = useRealtime<Post>('post');
+
+  return (
+    <div>
+      <div>
+        Status: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+      </div>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Vue Composable Example
+
+```ts title="useRealtime.ts"
+import { ref, onMounted, onUnmounted } from 'vue';
+
+export function useRealtime<T>(
+  resource: string,
+  events: string[] = ['create', 'update', 'delete']
+) {
+  const data = ref<T[]>([]);
+  const isConnected = ref(false);
+  let eventSource: EventSource | null = null;
+
+  onMounted(() => {
+    eventSource = new EventSource(
+      `/api/query/realtime/subscribe?resources=${resource}&events=${events.join(',')}`
+    );
+
+    eventSource.addEventListener('connected', () => {
+      isConnected.value = true;
+    });
+
+    eventSource.addEventListener('create', (event) => {
+      const message = JSON.parse(event.data);
+      data.value.push(message.data);
+    });
+
+    eventSource.addEventListener('update', (event) => {
+      const message = JSON.parse(event.data);
+      const index = data.value.findIndex((item) => item.id === message.data.id);
+      if (index !== -1) {
+        data.value[index] = message.data;
+      }
+    });
+
+    eventSource.addEventListener('delete', (event) => {
+      const message = JSON.parse(event.data);
+      data.value = data.value.filter((item) => item.id !== message.data.id);
+    });
+
+    eventSource.onerror = () => {
+      isConnected.value = false;
+    };
+  });
+
+  onUnmounted(() => {
+    eventSource?.close();
+  });
+
+  return { data, isConnected };
+}
+```
+
+## Server-Side Broadcasting
+
+### Broadcasting Custom Events
+
+You can broadcast custom events from your server code:
+
+```ts title="server.ts"
+import { query } from "~/lib/query";
+
+// Broadcast a custom event
+await fetch("http://localhost:3000/api/query/realtime/broadcast", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    event: "custom",
+    resource: "notification",
+    data: {
+      message: "New notification!",
+      type: "info",
+    },
+  }),
+});
+```
+
+### User-Specific Events
+
+Send events to specific users only:
+
+```ts
+await fetch("http://localhost:3000/api/query/realtime/broadcast", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    event: "custom",
+    resource: "notification",
+    data: {
+      message: "You have a new message",
+    },
+    userId: "user_123", // Only sent to this user
+  }),
+});
+```
+
+### Monitoring Connections
+
+Get statistics about active connections:
+
+```ts
+const response = await fetch("http://localhost:3000/api/query/realtime/stats");
+const stats = await response.json();
+
+console.log(stats);
+// {
+//   totalConnections: 42,
+//   keepAliveInterval: 30,
+//   connectionTimeout: 300,
+//   connections: [...]
+// }
+```
+
+## Advanced Examples
+
+### Live Collaborative Editing
+
+```tsx title="CollaborativeEditor.tsx"
+import { useEffect, useState } from 'react';
+
+export function CollaborativeEditor({ documentId }: { documentId: string }) {
+  const [content, setContent] = useState('');
+  const [activeUsers, setActiveUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Subscribe to document updates
+    const eventSource = new EventSource(
+      `/api/query/realtime/subscribe?resources=document&userId=${documentId}`
+    );
+
+    eventSource.addEventListener('update', (event) => {
+      const message = JSON.parse(event.data);
+      if (message.data.id === documentId) {
+        setContent(message.data.content);
+      }
+    });
+
+    eventSource.addEventListener('custom', (event) => {
+      const message = JSON.parse(event.data);
+      if (message.data.event === 'user-joined') {
+        setActiveUsers((prev) => [...prev, message.data.userId]);
+      } else if (message.data.event === 'user-left') {
+        setActiveUsers((prev) =>
+          prev.filter((id) => id !== message.data.userId)
+        );
+      }
+    });
+
+    return () => eventSource.close();
+  }, [documentId]);
+
+  return (
+    <div>
+      <div>Active Users: {activeUsers.length}</div>
+      <textarea value={content} onChange={(e) => setContent(e.target.value)} />
+    </div>
+  );
+}
+```
+
+### Real-Time Dashboard
+
+```tsx title="Dashboard.tsx"
+import { useRealtime } from './useRealtime';
+
+export function Dashboard() {
+  const { data: orders } = useRealtime<Order>('order');
+  const { data: users } = useRealtime<User>('user', ['create']);
+
+  const todayOrders = orders.filter(
+    (order) => new Date(order.createdAt).toDateString() === new Date().toDateString()
+  );
+
+  const newUsers = users.filter(
+    (user) => Date.now() - new Date(user.createdAt).getTime() < 24 * 60 * 60 * 1000
+  );
+
+  return (
+    <div>
+      <div>
+        <h3>Today's Orders</h3>
+        <p>{todayOrders.length} orders</p>
+        <p>${todayOrders.reduce((sum, o) => sum + o.total, 0)}</p>
+      </div>
+      <div>
+        <h3>New Users (24h)</h3>
+        <p>{newUsers.length} users</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Live Chat
+
+```tsx title="Chat.tsx"
+import { useEffect, useState } from 'react';
+
+export function Chat({ roomId }: { roomId: string }) {
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const eventSource = new EventSource(
+      `/api/query/realtime/subscribe?resources=message&userId=${roomId}`
+    );
+
+    eventSource.addEventListener('create', (event) => {
+      const message = JSON.parse(event.data);
+      if (message.data.roomId === roomId) {
+        setMessages((prev) => [...prev, message.data]);
+      }
+    });
+
+    return () => eventSource.close();
+  }, [roomId]);
+
+  return (
+    <div>
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          <strong>{msg.author}:</strong> {msg.content}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Live Notifications
+
+```tsx title="NotificationBell.tsx"
+import { useEffect, useState } from 'react';
+
+export function NotificationBell({ userId }: { userId: string }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const eventSource = new EventSource(
+      `/api/query/realtime/subscribe?resources=notification&userId=${userId}`
+    );
+
+    eventSource.addEventListener('create', (event) => {
+      const message = JSON.parse(event.data);
+      setNotifications((prev) => [message.data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => eventSource.close();
+  }, [userId]);
+
+  return (
+    <div>
+      <button>
+        🔔 {unreadCount > 0 && <span>{unreadCount}</span>}
+      </button>
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+1. **Subscribe to specific resources** - Don't subscribe to all events if you only need specific ones
+2. **Handle reconnection** - SSE automatically reconnects, but you may want to refetch data on reconnect
+3. **Clean up connections** - Always close EventSource when components unmount
+4. **Use event filtering** - Filter sensitive data on the server, not the client
+5. **Limit connections** - Set reasonable `maxConnectionsPerUser` to prevent abuse
+6. **Monitor performance** - Use the stats endpoint to monitor active connections
+7. **Consider bandwidth** - Large payloads can impact performance with many connections
+
+## Security Considerations
+
+### Authentication
+
+Always verify user identity before sending sensitive data:
+
+```ts
+realtimePlugin({
+  eventFilter: (event, connection) => {
+    // Verify user owns the resource
+    if (event.resource === "privateDocument") {
+      return event.data.ownerId === connection.userId;
+    }
+    return true;
+  },
+})
+```
+
+### Data Filtering
+
+Remove sensitive fields before broadcasting:
+
+```ts
+realtimePlugin({
+  eventTransformer: (event) => {
+    if (event.resource === "user") {
+      const { password, email, ...publicData } = event.data;
+      return { ...event, data: publicData };
+    }
+    return event;
+  },
+})
+```
+
+### Rate Limiting
+
+Limit connections per user to prevent abuse:
+
+```ts
+realtimePlugin({
+  maxConnectionsPerUser: 3,
+})
+```
+
+## API Reference
+
+### Endpoints
+
+#### `GET /realtime/subscribe`
+
+Subscribe to real-time updates.
+
+**Query Parameters:**
+- `resources` (string, optional) - Comma-separated list of resources
+- `events` (string, optional) - Comma-separated list of events
+- `userId` (string, optional) - User ID for user-specific events
+
+**Response:** SSE stream
+
+#### `POST /realtime/broadcast`
+
+Broadcast a custom event.
+
+**Body:**
+```ts
+{
+  event: "create" | "update" | "delete" | "custom" | "*",
+  resource: string,
+  data: any,
+  userId?: string
+}
+```
+
+**Response:**
+```ts
+{
+  success: boolean,
+  message: string,
+  connections: number
+}
+```
+
+#### `GET /realtime/stats`
+
+Get connection statistics.
+
+**Response:**
+```ts
+{
+  totalConnections: number,
+  keepAliveInterval: number,
+  connectionTimeout: number,
+  connections: Array<{
+    subscriptions: string[],
+    userId?: string,
+    connectedAt: number,
+    lastActivity: number,
+    activeFor: number,
+    idleFor: number
+  }>
+}
+```
+
+#### `POST /realtime/disconnect`
+
+Disconnect a specific connection.
+
+**Body:**
+```ts
+{
+  connectionId: string
+}
+```
+
+**Response:**
+```ts
+{
+  success: boolean,
+  message: string
+}
+```
+
+## Troubleshooting
+
+### Connection Keeps Closing
+
+- Check `connectionTimeout` setting
+- Ensure keep-alive is enabled
+- Verify network/firewall allows SSE
+
+### Events Not Received
+
+- Verify subscription filters match event resource/type
+- Check eventFilter and eventTransformer aren't blocking events
+- Ensure event listeners are properly registered
+
+### High Memory Usage
+
+- Reduce `maxConnectionsPerUser`
+- Lower `connectionTimeout`
+- Monitor connections with stats endpoint
+
+### CORS Issues
+
+If connecting from a different domain, ensure CORS headers are set:
+
+```ts
+// In your Better Query config
+headers: {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+}
+```
+
+## Performance Tips
+
+1. **Use connection pooling** - Reuse connections when possible
+2. **Implement pagination** - Don't send large datasets in events
+3. **Batch updates** - Group multiple updates into single events
+4. **Monitor metrics** - Track connection count and event frequency
+5. **Scale horizontally** - Use Redis pub/sub for multi-server deployments
+
+## Related
+
+- [Cache Plugin](/docs/plugins/cache) - Reduce database load with caching
+- [Audit Plugin](/docs/plugins/audit) - Track all changes for compliance
+- [Hooks](/docs/concepts/hooks) - Understand the hook system
