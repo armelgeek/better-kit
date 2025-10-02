@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import type { CrudContext } from "../types";
 import { generator } from "../plugins/openapi/generator";
+import type { CrudContext } from "../types";
 
 describe("OpenAPI Generator", () => {
 	const createMockContext = (resources: any[]): CrudContext => ({

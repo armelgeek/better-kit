@@ -308,7 +308,6 @@ function CodePreview() {
 										)}
 									</Highlight>
 								</motion.div>
-								
 							</div>
 						</div>
 					</div>

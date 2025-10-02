@@ -44,7 +44,6 @@ export default function ArticleLayout() {
 			>
 				<div>
 					<SidebarTab group={group} setGroup={setGroup} />
-					
 
 					<MotionConfig
 						transition={{ duration: 0.4, type: "spring", bounce: 0 }}

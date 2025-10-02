@@ -5,7 +5,7 @@ import { belongsTo, belongsToMany, hasMany } from "../schemas/relationships";
 
 /**
  * Comprehensive TODO CRUD Test with Complex Relationships
- * 
+ *
  * This test demonstrates a complete TODO system with:
  * - Users (authors of todos)
  * - Projects (containers for todos)
@@ -13,7 +13,7 @@ import { belongsTo, belongsToMany, hasMany } from "../schemas/relationships";
  * - Tags (many-to-many with todos)
  * - Comments (replies on todos)
  * - Priorities (belongsTo relationship)
- * 
+ *
  * Relationship types tested:
  * - hasMany: User -> Todos, Project -> Todos, Todo -> Comments
  * - belongsTo: Todo -> User, Todo -> Project, Todo -> Priority, Comment -> Todo, Comment -> User
@@ -166,8 +166,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 	describe("Basic CRUD Operations", () => {
 		it("should create users", async () => {
-			
-
 			const user1 = await adapter.create({
 				model: "user",
 				data: {
@@ -198,8 +196,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create priorities", async () => {
-			
-
 			const high = await adapter.create({
 				model: "priority",
 				data: {
@@ -239,8 +235,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create projects", async () => {
-			
-
 			const project1 = await adapter.create({
 				model: "project",
 				data: {
@@ -272,8 +266,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create tags", async () => {
-			
-
 			const urgent = await adapter.create({
 				model: "tag",
 				data: {
@@ -309,8 +301,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create todos with relationships", async () => {
-			
-
 			const todo1 = await adapter.create({
 				model: "todo",
 				data: {
@@ -367,8 +357,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create subtasks (self-referential relationship)", async () => {
-			
-
 			const subtask1 = await adapter.create({
 				model: "todo",
 				data: {
@@ -406,8 +394,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should create comments", async () => {
-			
-
 			const comment1 = await adapter.create({
 				model: "comment",
 				data: {
@@ -449,8 +435,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 	describe("Read Operations with Relationships", () => {
 		it("should read a todo with user relationship", async () => {
-			
-
 			const todo = await adapter.findFirst({
 				model: "todo",
 				where: [{ field: "id", value: "todo-1" }],
@@ -465,8 +449,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should read a todo with multiple relationships", async () => {
-			
-
 			const todo = await adapter.findFirst({
 				model: "todo",
 				where: [{ field: "id", value: "todo-1" }],
@@ -483,8 +465,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should read a todo with comments", async () => {
-			
-
 			const todo = await adapter.findFirst({
 				model: "todo",
 				where: [{ field: "id", value: "todo-1" }],
@@ -498,8 +478,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should read a todo with subtasks", async () => {
-			
-
 			const todo = await adapter.findFirst({
 				model: "todo",
 				where: [{ field: "id", value: "todo-1" }],
@@ -514,8 +492,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should read a project with all its todos", async () => {
-			
-
 			const project = await adapter.findFirst({
 				model: "project",
 				where: [{ field: "id", value: "project-1" }],
@@ -532,8 +508,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should read a user with all their todos", async () => {
-			
-
 			const user = await adapter.findFirst({
 				model: "user",
 				where: [{ field: "id", value: "user-1" }],
@@ -548,8 +522,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should list todos with filtering and relationships", async () => {
-			
-
 			const todos = await adapter.findMany({
 				model: "todo",
 				where: [{ field: "completed", value: 0 }], // SQLite uses 0 for false
@@ -560,7 +532,7 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 			expect(todos).toBeDefined();
 			expect(Array.isArray(todos)).toBe(true);
 			expect(todos.length).toBeGreaterThan(0);
-			
+
 			// All should be incomplete (SQLite stores false as 0)
 			for (const todo of todos) {
 				expect(todo.completed).toBeFalsy();
@@ -571,8 +543,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 	describe("Update Operations", () => {
 		it("should update a todo", async () => {
-			
-
 			const updated = await adapter.update({
 				model: "todo",
 				where: [{ field: "id", value: "todo-2" }],
@@ -588,8 +558,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should update a todo's relationships", async () => {
-			
-
 			const updated = await adapter.update({
 				model: "todo",
 				where: [{ field: "id", value: "todo-2" }],
@@ -613,8 +581,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should update a project", async () => {
-			
-
 			const updated = await adapter.update({
 				model: "project",
 				where: [{ field: "id", value: "project-1" }],
@@ -631,8 +597,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 	describe("Delete Operations", () => {
 		it("should delete a comment", async () => {
-			
-
 			await adapter.delete({
 				model: "comment",
 				where: [{ field: "id", value: "comment-3" }],
@@ -648,8 +612,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should count todos", async () => {
-			
-
 			const count = await adapter.count({
 				model: "todo",
 				where: [{ field: "completed", value: 0 }], // SQLite uses 0 for false
@@ -659,8 +621,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should count all records of each type", async () => {
-			
-
 			const userCount = await adapter.count({ model: "user" });
 			const projectCount = await adapter.count({ model: "project" });
 			const todoCount = await adapter.count({ model: "todo" });
@@ -675,19 +635,17 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 	describe("Complex Queries", () => {
 		it("should query todos with nested relationships", async () => {
-			
-
 			const todos = await adapter.findMany({
 				model: "todo",
 				where: [{ field: "projectId", value: "project-1" }],
-				include: { 
-					include: ["user", "project", "priority", "comments", "subtasks"] 
+				include: {
+					include: ["user", "project", "priority", "comments", "subtasks"],
 				},
 			});
 
 			expect(todos).toBeDefined();
 			expect(Array.isArray(todos)).toBe(true);
-			
+
 			for (const todo of todos) {
 				expect(todo.project).toBeDefined();
 				expect(todo.project.id).toBe("project-1");
@@ -698,8 +656,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should handle pagination with relationships", async () => {
-			
-
 			const page1 = await adapter.findMany({
 				model: "todo",
 				limit: 2,
@@ -723,8 +679,6 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 		});
 
 		it("should query with multiple filters", async () => {
-			
-
 			const todos = await adapter.findMany({
 				model: "todo",
 				where: [
@@ -736,7 +690,7 @@ describe("Comprehensive TODO CRUD with Complex Relationships", () => {
 
 			expect(todos).toBeDefined();
 			expect(Array.isArray(todos)).toBe(true);
-			
+
 			for (const todo of todos) {
 				expect(todo.completed).toBeFalsy();
 				expect(todo.userId).toBe("user-1");

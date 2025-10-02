@@ -194,7 +194,9 @@ describe("Plugin System", () => {
 			plugins: [upload],
 		});
 
-		expect(crudInstance.context.pluginManager.getPlugin("upload")).toBeDefined();
+		expect(
+			crudInstance.context.pluginManager.getPlugin("upload"),
+		).toBeDefined();
 		expect(crudInstance.api.uploadFile).toBeDefined();
 		expect(crudInstance.api.getFile).toBeDefined();
 		expect(crudInstance.api.downloadFile).toBeDefined();
@@ -233,7 +235,9 @@ describe("Plugin System", () => {
 			crudInstance.context.pluginManager.getPlugin("validation"),
 		).toBeDefined();
 		expect(crudInstance.context.pluginManager.getPlugin("cache")).toBeDefined();
-		expect(crudInstance.context.pluginManager.getPlugin("upload")).toBeDefined();
+		expect(
+			crudInstance.context.pluginManager.getPlugin("upload"),
+		).toBeDefined();
 	});
 
 	it("should allow plugins to add resources", () => {

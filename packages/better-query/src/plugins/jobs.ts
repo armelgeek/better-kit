@@ -104,7 +104,9 @@ function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
 	// Handle cron expressions (simplified implementation)
 	// Format: minute hour day month dayOfWeek
 	// Example: "*/5 * * * *" = every 5 minutes
-	const cronMatch = schedule.match(/^(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)$/);
+	const cronMatch = schedule.match(
+		/^(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)\s+(\*|[\d,\-\/]+)$/,
+	);
 	if (cronMatch) {
 		return parseCronExpression(schedule, from);
 	}
@@ -118,7 +120,13 @@ function parseSchedule(schedule: string, from: Date = new Date()): Date | null {
  */
 function parseCronExpression(cron: string, from: Date): Date {
 	const parts = cron.split(" ");
-	const [minutePart = "*", hourPart = "*", dayPart = "*", monthPart = "*", weekdayPart = "*"] = parts;
+	const [
+		minutePart = "*",
+		hourPart = "*",
+		dayPart = "*",
+		monthPart = "*",
+		weekdayPart = "*",
+	] = parts;
 
 	const next = new Date(from);
 	next.setSeconds(0);

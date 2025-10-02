@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { betterQuery } from "../query";
-import { realtimePlugin } from "../plugins/realtime";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
+import { realtimePlugin } from "../plugins/realtime";
+import { betterQuery } from "../query";
 
 describe("Realtime Plugin - Integration", () => {
 	it("should integrate with betterQuery and provide endpoints when enabled", () => {

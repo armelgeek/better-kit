@@ -3,15 +3,15 @@ import { z } from "zod";
 
 /**
  * Comprehensive TODO CRUD Examples for Drizzle and Prisma Adapters
- * 
+ *
  * This file demonstrates how to use Better Query with both Drizzle ORM and Prisma
  * for a complete TODO application with complex relationships.
- * 
+ *
  * NOTE: These are example/documentation tests. To run them in a real project:
  * 1. Install the required dependencies
  * 2. Set up your database schema
  * 3. Initialize the appropriate adapter
- * 
+ *
  * Relationships demonstrated:
  * - User hasMany Todos, Projects, Comments
  * - Project belongsTo User, hasMany Todos

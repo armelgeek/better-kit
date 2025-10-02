@@ -117,5 +117,5 @@ export const navMenu = [
 		name: "docs",
 
 		path: "/docs/installation",
-	}
+	},
 ];
