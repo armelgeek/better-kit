@@ -262,7 +262,23 @@ export const contents: Content[] = [
 					</svg>
 				),
 			},
-
+			{
+				href: "/docs/concepts/jobs",
+				title: "Jobs & Schedules",
+				icon: () => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
+						/>
+					</svg>
+				),
+			},
 			{
 				href: "/docs/concepts/middleware",
 				title: "Middlewares",
@@ -450,6 +466,23 @@ export const contents: Content[] = [
 						<path
 							fill="currentColor"
 							d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 10v2h-2v-2zm0-8l5 5h-5z"
+						/>
+					</svg>
+				),
+			},
+			{
+				title: "Jobs & Schedules",
+				href: "/docs/plugins/jobs",
+				icon: () => (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="1.2em"
+						height="1.2em"
+						viewBox="0 0 24 24"
+					>
+						<path
+							fill="currentColor"
+							d="M12 20a8 8 0 0 0 8-8a8 8 0 0 0-8-8a8 8 0 0 0-8 8a8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10a10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67l-.75 1.23L11 13V7z"
 						/>
 					</svg>
 				),
