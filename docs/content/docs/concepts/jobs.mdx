@@ -1,0 +1,362 @@
+---
+title: Jobs & Schedules
+description: Understand background job processing and task scheduling in Better Query
+---
+
+Jobs and schedules are a fundamental concept in Better Query that enable you to run tasks outside the normal request-response cycle. They allow you to automate recurring tasks, defer heavy processing, and ensure critical operations always execute reliably.
+
+## What Are Jobs?
+
+A **job** is a unit of work that runs in the background, separate from your API endpoints. Unlike traditional API calls that must complete within the request-response lifecycle, jobs can:
+
+- Run at scheduled times (e.g., every hour, daily at midnight)
+- Execute once at a later time (deferred execution)
+- Retry automatically if they fail
+- Process data without blocking user requests
+
+Think of jobs as tasks you delegate to a background worker, freeing your API to respond quickly to users.
+
+## What Are Schedules?
+
+A **schedule** defines when and how often a job should run. Better Query supports two scheduling formats:
+
+### Interval-Based Schedules
+
+Simple time intervals for regular execution:
+
+- `5s` - Every 5 seconds
+- `10m` - Every 10 minutes  
+- `2h` - Every 2 hours
+- `1d` - Every day
+
+### Cron Expressions
+
+More complex scheduling patterns using standard cron syntax:
+
+- `*/15 * * * *` - Every 15 minutes
+- `0 2 * * *` - Daily at 2:00 AM
+- `0 9 * * 1` - Every Monday at 9:00 AM
+- `0 0 1 * *` - First day of each month
+
+Jobs can also run **once** without a schedule for deferred one-time tasks.
+
+## Why Use Background Jobs?
+
+### 1. **Performance**
+
+Background jobs keep your API fast by moving time-consuming tasks out of the request cycle:
+
+```ts
+// ❌ Without Jobs: User waits for email to send
+app.post("/signup", async (req, res) => {
+  await createUser(req.body);
+  await sendWelcomeEmail(user); // Blocks response
+  res.json({ success: true });
+});
+
+// ✅ With Jobs: Instant response, email sent in background
+app.post("/signup", async (req, res) => {
+  await createUser(req.body);
+  await scheduleJob("sendWelcome", { userId: user.id }); // Async
+  res.json({ success: true }); // Returns immediately
+});
+```
+
+### 2. **Reliability**
+
+Jobs automatically retry on failure, ensuring critical tasks complete:
+
+- Failed payment processing? Job retries with exponential backoff
+- Email service down? Job queues and tries again
+- Database timeout? Job automatically reattempts
+
+### 3. **Automation**
+
+Eliminate manual maintenance with scheduled recurring tasks:
+
+- Clean up old records every night
+- Generate reports every Monday
+- Sync external data every 15 minutes
+- Send reminder emails daily
+
+### 4. **Scalability**
+
+Process heavy workloads without impacting user experience:
+
+- Generate large exports without blocking the UI
+- Process uploaded files asynchronously
+- Batch update thousands of records
+- Run analytics on historical data
+
+## When to Use Jobs vs API Endpoints
+
+| Use Jobs When | Use API Endpoints When |
+|---------------|------------------------|
+| Task takes > 5 seconds | Response needed immediately |
+| Task should retry on failure | User needs instant feedback |
+| Task runs on a schedule | User triggers the action |
+| Task processes large datasets | Processing is lightweight |
+| Task depends on external services | Data is already available |
+
+### Real-World Examples
+
+#### ✅ Good Use Cases for Jobs
+
+```ts
+// Clean up old sessions - runs daily
+jobsPlugin({
+  handlers: {
+    cleanup: async () => {
+      await db.sessions.deleteMany({
+        where: { expiresAt: { lt: new Date() } }
+      });
+    }
+  }
+});
+
+// Process uploaded video - defer heavy work
+await client.$post("/jobs", {
+  body: {
+    name: "Process Video Upload",
+    handler: "processVideo",
+    data: { videoId: "abc123" }
+  }
+});
+
+// Send weekly digest - scheduled automation
+await client.$post("/jobs", {
+  body: {
+    name: "Weekly Digest",
+    handler: "sendDigest",
+    schedule: "0 8 * * 1" // Every Monday at 8 AM
+  }
+});
+```
+
+#### ❌ Poor Use Cases (Use API Endpoints Instead)
+
+```ts
+// Getting user profile - needs immediate response
+// ❌ Don't use a job
+await client.$post("/jobs", {
+  body: { handler: "getProfile" }
+});
+
+// ✅ Use direct API call
+const profile = await client.$get("/users/me");
+```
+
+## Core Concepts
+
+### Job Status Lifecycle
+
+Jobs progress through several states:
+
+1. **pending** - Waiting to execute
+2. **running** - Currently executing
+3. **completed** - Finished successfully (one-time jobs)
+4. **failed** - Failed after all retries
+5. **cancelled** - Manually stopped
+
+Scheduled jobs return to `pending` after completion, waiting for their next run.
+
+### Job Handlers
+
+A **handler** is the function that executes when a job runs:
+
+```ts
+const handlers = {
+  // Handler name: async function
+  sendEmail: async (data) => {
+    await emailService.send({
+      to: data.recipient,
+      subject: data.subject,
+      body: data.body
+    });
+    return { sent: true };
+  }
+};
+```
+
+Handlers receive job data and return results, which are saved in the execution history.
+
+### Retry Logic
+
+When a job fails, Better Query automatically retries:
+
+- **Configurable attempts**: Set max retries per job
+- **Error tracking**: Last error message saved for debugging
+- **Failure handling**: Jobs marked as `failed` after exhausting retries
+
+```ts
+// Job will retry up to 5 times on failure
+await client.$post("/jobs", {
+  body: {
+    name: "Critical Task",
+    handler: "processPayment",
+    maxAttempts: 5,
+    data: { orderId: "123" }
+  }
+});
+```
+
+### Execution History
+
+Track every job run for monitoring and debugging:
+
+- Start and completion times
+- Success or failure status
+- Error messages for failed runs
+- Results returned by handlers
+- Execution duration in milliseconds
+
+```ts
+// View job history
+const history = await client.$get(`/jobs/${jobId}/history`);
+
+// Analyze performance
+const avgDuration = history.data.reduce(
+  (sum, run) => sum + run.duration, 0
+) / history.data.length;
+```
+
+## Common Patterns
+
+### Cleanup Tasks
+
+Remove old or expired data automatically:
+
+```ts
+{
+  handler: "cleanup",
+  schedule: "0 2 * * *", // Daily at 2 AM
+  data: { days: 30 } // Delete records older than 30 days
+}
+```
+
+### Data Synchronization
+
+Keep external data in sync:
+
+```ts
+{
+  handler: "syncExternalData",
+  schedule: "*/15 * * * *", // Every 15 minutes
+  data: { source: "api.example.com" }
+}
+```
+
+### Report Generation
+
+Generate reports on a schedule:
+
+```ts
+{
+  handler: "generateReport",
+  schedule: "0 9 * * 1", // Every Monday at 9 AM
+  data: { type: "weekly", recipients: ["team@example.com"] }
+}
+```
+
+### Deferred Processing
+
+Handle time-consuming uploads asynchronously:
+
+```ts
+{
+  handler: "processUpload",
+  // No schedule = runs once
+  data: { fileId: "abc123", action: "transcode" }
+}
+```
+
+## Architecture
+
+### Job Runner
+
+The job runner is a background process that:
+
+1. **Polls** the database for pending jobs
+2. **Executes** jobs whose `nextRunAt` has passed
+3. **Updates** job status and schedules next run
+4. **Records** execution history for monitoring
+
+```ts
+jobsPlugin({
+  autoStart: true,       // Start runner with application
+  pollInterval: 60000,   // Check for jobs every 60 seconds
+});
+```
+
+### Database Schema
+
+Jobs are stored in two tables:
+
+**jobs** - Job definitions and status
+- Name, handler, schedule
+- Status, attempts, next run time
+- Configuration and metadata
+
+**job_history** - Execution records (optional)
+- Job ID reference
+- Start and completion times
+- Status, errors, results
+- Performance metrics
+
+## Integration with Other Concepts
+
+### Hooks
+
+Use hooks to trigger jobs from resource operations:
+
+```ts
+createResource({
+  name: "user",
+  hooks: {
+    afterCreate: async (user) => {
+      // Send welcome email as background job
+      await scheduleJob("sendWelcome", { userId: user.id });
+    }
+  }
+});
+```
+
+### Middleware
+
+Add middleware to protect job endpoints:
+
+```ts
+jobsPlugin({
+  middleware: [
+    requireAuth,    // Only authenticated users
+    requireAdmin    // Only admins can manage jobs
+  ]
+});
+```
+
+### Plugins
+
+Jobs work alongside other Better Query plugins:
+
+- **Audit Plugin**: Track changes made by job handlers
+- **Cache Plugin**: Cache job results for quick retrieval
+- **Validation Plugin**: Validate job data before execution
+
+## Best Practices
+
+1. **Design for Idempotency** - Make handlers safe to run multiple times
+2. **Use Descriptive Names** - Name jobs clearly for easy monitoring
+3. **Set Appropriate Intervals** - Don't poll external APIs too frequently
+4. **Monitor Failures** - Check job history regularly for issues
+5. **Limit Retries** - Don't retry indefinitely; investigate persistent failures
+6. **Clean Up History** - Archive or delete old execution records periodically
+
+## Next Steps
+
+Now that you understand jobs and schedules concepts, learn how to implement them:
+
+- [Jobs & Schedules Plugin](/docs/plugins/jobs) - Complete implementation guide
+- [Hooks](/docs/concepts/hooks) - Trigger jobs from resource operations
+- [Database](/docs/concepts/database) - Understand job storage and persistence
+
+Jobs and schedules are essential for building robust, scalable applications with Better Query. They handle background processing, automation, and reliability seamlessly.
