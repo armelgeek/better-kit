@@ -1,12 +1,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createPlugin } from "./manager";
+import { createPlugin } from "../plugins/manager";
 import {
 	LocalStorageAdapter,
 	type StorageAdapter,
 	uploadPlugin,
-} from "./upload";
+} from "../plugins/upload";
 
 describe("Upload Plugin", () => {
 	const testUploadDir = "./test-uploads";

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createResource } from "./utils/schema";
+import { createResource } from "../utils/schema";
 
 // Simple product schema for testing
 const productSchema = z.object({

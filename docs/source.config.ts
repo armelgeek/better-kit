@@ -21,20 +21,6 @@ export const changelogCollection = defineCollections({
 	}),
 });
 
-export const blogCollection = defineCollections({
-	type: "doc",
-	dir: "./content/blogs",
-	schema: z.object({
-		title: z.string(),
-		description: z.string(),
-		date: z.date(),
-		author: z.object({
-			name: z.string(),
-		}),
-		image: z.string(),
-		tags: z.array(z.string()),
-	}),
-});
 
 const generator = createGenerator();
 

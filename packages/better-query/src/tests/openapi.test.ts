@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { adiemus } from "../../crud";
-import { openApiPlugin } from "./index";
+import { openApiPlugin } from "../plugins/openapi/index";
 
 describe("OpenAPI Plugin", () => {
 	let crud: any;

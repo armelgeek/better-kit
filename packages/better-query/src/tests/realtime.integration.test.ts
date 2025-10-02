@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { betterQuery } from "../query";
-import { realtimePlugin } from "./realtime";
+import { realtimePlugin } from "../plugins/realtime";
 import { z } from "zod";
 
 describe("Realtime Plugin - Integration", () => {

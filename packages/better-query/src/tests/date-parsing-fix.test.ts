@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createResource, withId } from "../src/index";
+import { createResource, withId } from "../index";
 
 describe("Date parsing fix for todo app", () => {
 	const todoSchema = withId({

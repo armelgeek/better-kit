@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { adiemus } from "../src";
-import { createResource } from "../src";
+import { adiemus } from "..";
+import { createResource } from "..";
 
 // Define a test schema since we no longer have predefined ones
 const testProductSchema = z.object({

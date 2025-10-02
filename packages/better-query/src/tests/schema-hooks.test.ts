@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createResource } from "./schema";
+import { createResource } from "../utils/schema";
 
 describe("createResource with hooks", () => {
 	const testSchema = z.object({

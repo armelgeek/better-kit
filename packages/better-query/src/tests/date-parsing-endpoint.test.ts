@@ -2,8 +2,8 @@ import Database from "better-sqlite3";
 import { Kysely, SqliteDialect } from "kysely";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { KyselyQueryAdapter } from "./adapters/kysely";
-import { betterQuery, createResource, withId } from "./index";
+import { KyselyQueryAdapter } from "../adapters/kysely";
+import { betterQuery, createResource, withId } from "../index";
 
 describe("Date parsing endpoint integration", () => {
 	const todoSchema = withId({

@@ -9,7 +9,6 @@ import Link from "next/link";
 import { Highlight, themes } from "prism-react-renderer";
 import { useEffect, useId, useState } from "react";
 import useMeasure from "react-use-measure";
-import { Builder } from "../builder";
 import { GradientBG } from "./gradient-bg";
 import { Spotlight } from "./spotlight";
 const tabs: { name: "query.ts" | "client.ts"; code: string }[] = [
@@ -153,7 +152,6 @@ export default function Hero() {
 										>
 											Get Started
 										</Link>
-										<Builder />
 									</div>
 								</>
 							}
@@ -310,26 +308,7 @@ function CodePreview() {
 										)}
 									</Highlight>
 								</motion.div>
-								<motion.div layout className="self-end">
-									<Link
-										href="https://demo.better-kit.com"
-										target="_blank"
-										className="shadow-md  border shadow-primary-foreground mb-4 ml-auto mr-4 mt-auto flex cursor-pointer items-center gap-2 px-3 py-1 transition-all ease-in-out hover:opacity-70"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="1em"
-											height="1em"
-											viewBox="0 0 24 24"
-										>
-											<path
-												fill="currentColor"
-												d="M10 20H8V4h2v2h2v3h2v2h2v2h-2v2h-2v3h-2z"
-											></path>
-										</svg>
-										<p className="text-sm">Demo</p>
-									</Link>
-								</motion.div>
+								
 							</div>
 						</div>
 					</div>

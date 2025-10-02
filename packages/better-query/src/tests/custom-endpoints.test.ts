@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { adiemus, createCrudEndpoint, createResource } from "./index";
+import { adiemus, createCrudEndpoint, createResource } from "../index";
 
 const testSchema = z.object({
 	id: z.string().optional(),

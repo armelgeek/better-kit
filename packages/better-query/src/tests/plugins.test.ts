@@ -7,7 +7,7 @@ import {
 	createPlugin,
 	uploadPlugin,
 	validationPlugin,
-} from "../src/index";
+} from "../index";
 
 describe("Plugin System", () => {
 	let crudInstance: any;

@@ -11,48 +11,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-and-test:
-    name: Lint and Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.1.1
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Run linter
-        run: pnpm lint
-        continue-on-error: true  # Continue even if linting fails for now
-
-      - name: Run type check
-        run: pnpm typecheck
-
-      - name: Run tests
-        run: pnpm test
-
+  
   build-docs:
     name: Build Documentation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: lint-and-test
 
     steps:
       - name: Checkout

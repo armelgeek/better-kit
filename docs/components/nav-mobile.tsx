@@ -219,17 +219,5 @@ export const navMenu: {
 	{
 		name: "docs",
 		path: "/docs",
-	},
-	{
-		name: "changelogs",
-		path: "/changelogs",
-	},
-	{
-		name: "blogs",
-		path: "/blog",
-	},
-	{
-		name: "community",
-		path: "/community",
-	},
+	}
 ];
