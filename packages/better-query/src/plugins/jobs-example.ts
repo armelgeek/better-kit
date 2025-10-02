@@ -1,6 +1,6 @@
 /**
  * Example: Using the Jobs Plugin with Better Query
- * 
+ *
  * This example demonstrates how to use the jobs and schedules plugin
  * for background task processing and scheduled jobs.
  */

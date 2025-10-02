@@ -21,7 +21,6 @@ export const changelogCollection = defineCollections({
 	}),
 });
 
-
 const generator = createGenerator();
 
 export default defineConfig({

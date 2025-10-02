@@ -9,5 +9,3 @@ export let source = loader({
 });
 
 source = { ...source, pageTree: getPageTree() };
-
-

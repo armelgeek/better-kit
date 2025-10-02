@@ -219,5 +219,5 @@ export const navMenu: {
 	{
 		name: "docs",
 		path: "/docs",
-	}
+	},
 ];

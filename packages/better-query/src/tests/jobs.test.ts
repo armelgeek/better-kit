@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { createJobHandler, jobsPlugin } from "../plugins/jobs";
 import { betterQuery } from "../query";
-import { jobsPlugin, createJobHandler } from "../plugins/jobs";
 
 describe("Jobs Plugin", () => {
 	let queryInstance: any;

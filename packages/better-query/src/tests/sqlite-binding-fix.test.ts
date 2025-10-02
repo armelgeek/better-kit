@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { adiemus } from "./crud";
 import { productSchema } from "../schemas";
+import { adiemus } from "./crud";
 
 describe("SQLite Data Binding Fix Integration Test", () => {
 	it("should handle product creation with complex data types without SQLite binding errors", async () => {
