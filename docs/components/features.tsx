@@ -43,14 +43,6 @@ const features = [
 	},
 	{
 		id: 4,
-		label: "Better Auth Integration",
-		title: "Seamless <strong>authentication</strong> integration.",
-		description:
-			"Native integration with Better Auth for user permissions, role-based access control, and session management.",
-		icon: ShieldCheckIcon,
-	},
-	{
-		id: 5,
 		label: "Client Libraries",
 		title: "<strong>Client libraries</strong> for React and Vanilla JS.",
 		description:
@@ -58,7 +50,7 @@ const features = [
 		icon: RabbitIcon,
 	},
 	{
-		id: 6,
+		id: 5,
 		label: "Plugin Ecosystem",
 		title: "Extensible with <strong>plugins</strong>.",
 		description:
