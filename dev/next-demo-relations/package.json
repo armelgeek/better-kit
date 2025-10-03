@@ -1,0 +1,40 @@
+{
+  "name": "next-demo-relations",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js demo with Drizzle and Prisma showing relationships (hasMany, belongsTo, etc.)",
+  "scripts": {
+    "dev": "next dev -p 3005",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:drizzle:generate": "drizzle-kit generate",
+    "db:drizzle:push": "drizzle-kit push",
+    "db:prisma:generate": "prisma generate",
+    "db:prisma:push": "prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "better-query": "workspace:*",
+    "better-sqlite3": "^11.1.2",
+    "drizzle-orm": "^0.33.0",
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "zod": "^3.22.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.0.0",
+    "drizzle-kit": "^0.24.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "postcss": "^8.0.0",
+    "prisma": "^5.0.0",
+    "tailwindcss": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
