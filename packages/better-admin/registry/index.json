@@ -1,0 +1,20 @@
+{
+	"components": [
+		{
+			"name": "data-table",
+			"description": "A powerful data table component with sorting, filtering, and pagination"
+		},
+		{
+			"name": "crud-form",
+			"description": "A flexible CRUD form builder with validation"
+		},
+		{
+			"name": "resource-list",
+			"description": "A reusable list component for displaying resources"
+		},
+		{
+			"name": "example-card",
+			"description": "A simple example card component with no dependencies"
+		}
+	]
+}

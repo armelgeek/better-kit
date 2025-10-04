@@ -9,6 +9,7 @@ Better Kit is a comprehensive TypeScript monorepo containing production-ready li
 | Package | Description | Version | Status |
 |---------|-------------|---------|--------|
 | [**better-query**](./packages/better-query) | Type-safe CRUD generator with auto-generated REST APIs | `0.0.1` | 🚧 Beta |
+| [**better-admin**](./packages/better-admin) | CLI for installing admin components with shadcn/ui dependencies | `0.0.1` | 🚧 Beta |
 | [**shared**](./packages/shared) | Shared utilities and types | `0.0.1` | 🚧 Beta |
 
 ## ✨ Key Features
@@ -37,6 +38,25 @@ const query = betterQuery({
 // PUT    /api/query/user/:id - Update user  
 // DELETE /api/query/user/:id - Delete user
 ```
+
+### 🎨 **Better Admin** - Component CLI with Auto Dependencies
+```bash
+# Initialize Better Admin
+npx better-admin init
+
+# Install admin components with automatic shadcn/ui dependency resolution
+npx better-admin add data-table
+# Automatically installs: table, button, input, dropdown-menu, select
+# Plus: @tanstack/react-table
+
+# List all available components
+npx better-admin list
+```
+
+**Available Components:**
+- 📊 **data-table** - Sorting, filtering, pagination
+- 📝 **crud-form** - Form builder with validation
+- 📋 **resource-list** - Display resources with actions
 
 ## 🚀 Quick Start
 
@@ -68,6 +88,7 @@ pnpm dev
 ## 📚 Documentation
 
 - 📖 **[Better Query Docs](./packages/better-query/README.md)** - CRUD operations and API generation
+- 🎨 **[Better Admin Docs](./packages/better-admin/README.md)** - Component CLI with dependency management
 - 📋 **[Complete Documentation](./documentation/README.md)** - Comprehensive guides
 - 💡 **[Examples](./examples/)** - Working code examples
 - 🎯 **[TODO List](./TODO.md)** - Planned improvements and features
@@ -79,6 +100,7 @@ pnpm dev
 better-kit/
 ├── packages/
 │   ├── better-query/     # CRUD generator core
+│   ├── better-admin/     # Component CLI tool
 │   └── shared/           # Shared utilities
 ├── dev/                  # Development apps
 │   ├── next-app/         # Next.js example

@@ -1,0 +1,255 @@
+---
+title: Better Admin
+description: CLI tool for installing admin components with automatic dependency resolution
+---
+
+# Better Admin
+
+Better Admin is a CLI tool that helps you build admin interfaces quickly by providing reusable components with automatic shadcn/ui dependency resolution.
+
+## Features
+
+- 🎯 **Easy Installation**: Install components via CLI with a single command
+- 🔍 **Automatic Dependencies**: Detects and installs shadcn/ui dependencies automatically
+- 📦 **Component Registry**: Browse and install from a curated collection of admin components
+- ⚙️ **Configurable**: Customize paths, aliases, and styles to match your project
+
+## Quick Start
+
+### Installation
+
+Initialize Better Admin in your project:
+
+```bash title="Terminal"
+npx better-admin init
+```
+
+This creates a `better-admin.json` configuration file in your project root.
+
+### Adding Components
+
+Install your first component:
+
+```bash title="Terminal"
+npx better-admin add data-table
+```
+
+The CLI will automatically:
+1. ✓ Detect required shadcn/ui dependencies
+2. ✓ Install missing shadcn/ui components
+3. ✓ Install npm dependencies
+4. ✓ Copy the component into your project
+
+### List Available Components
+
+See all available components:
+
+```bash title="Terminal"
+npx better-admin list
+```
+
+## Available Components
+
+### data-table
+
+A powerful data table component with sorting, filtering, and pagination built on @tanstack/react-table.
+
+**Dependencies:**
+- shadcn/ui: table, button, input, dropdown-menu, select
+- npm: @tanstack/react-table
+
+**Usage:**
+```tsx
+import { DataTable } from "@/components/ui/data-table";
+
+const columns = [
+  {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+  },
+];
+
+export function MyTable() {
+  return (
+    <DataTable 
+      columns={columns} 
+      data={users}
+      searchKey="name"
+    />
+  );
+}
+```
+
+### crud-form
+
+A flexible CRUD form builder with validation using react-hook-form and zod.
+
+**Dependencies:**
+- shadcn/ui: form, input, button, label, select, textarea
+- npm: react-hook-form, @hookform/resolvers, zod
+
+**Usage:**
+```tsx
+import { CrudForm } from "@/components/ui/crud-form";
+
+const fields = [
+  {
+    name: "name",
+    label: "Name",
+    type: "text",
+    required: true,
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    required: true,
+  },
+];
+
+export function MyForm() {
+  return (
+    <CrudForm 
+      fields={fields}
+      onSubmit={async (data) => {
+        console.log(data);
+      }}
+      submitLabel="Create User"
+    />
+  );
+}
+```
+
+### resource-list
+
+A reusable list component for displaying resources with actions.
+
+**Dependencies:**
+- shadcn/ui: card, button, badge
+
+**Usage:**
+```tsx
+import { ResourceList } from "@/components/ui/resource-list";
+
+export function MyList() {
+  return (
+    <ResourceList
+      items={resources}
+      renderTitle={(item) => item.name}
+      renderDescription={(item) => item.description}
+      renderBadge={(item) => (
+        <Badge>{item.status}</Badge>
+      )}
+      actions={[
+        {
+          label: "Edit",
+          onClick: (item) => console.log("Edit", item),
+        },
+        {
+          label: "Delete",
+          variant: "destructive",
+          onClick: (item) => console.log("Delete", item),
+        },
+      ]}
+    />
+  );
+}
+```
+
+## Configuration
+
+The `better-admin.json` file configures paths and aliases:
+
+```json title="better-admin.json"
+{
+  "$schema": "https://better-admin.dev/schema.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/app/globals.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui"
+  }
+}
+```
+
+## CLI Commands
+
+### init
+
+Initialize Better Admin in your project.
+
+```bash title="Terminal"
+npx better-admin init
+
+# Skip prompts and use defaults
+npx better-admin init --yes
+```
+
+### add
+
+Add a component to your project.
+
+```bash title="Terminal"
+npx better-admin add <component>
+
+# Overwrite existing files
+npx better-admin add data-table --overwrite
+
+# Install to custom path
+npx better-admin add data-table --path ./custom/path
+
+# Skip confirmation prompts
+npx better-admin add data-table --yes
+```
+
+### list
+
+List all available components.
+
+```bash title="Terminal"
+npx better-admin list
+```
+
+## How It Works
+
+1. **Component Metadata**: Each component has a JSON file defining its dependencies
+2. **Dependency Detection**: The CLI reads the component metadata to identify required dependencies
+3. **Automatic Installation**: Missing shadcn/ui components are installed automatically
+4. **File Copying**: Component files are copied to your project with correct import paths
+
+## Integration with Better Query
+
+Better Admin components work seamlessly with Better Query. Use the data-table component with Better Query's CRUD hooks:
+
+```tsx
+import { useQuery } from "better-query/react";
+import { DataTable } from "@/components/ui/data-table";
+
+export function UsersTable() {
+  const { data: users } = useQuery("user").list();
+
+  return (
+    <DataTable 
+      columns={columns} 
+      data={users || []}
+    />
+  );
+}
+```
+
+## Next Steps
+
+- [Better Query Documentation](/docs/introduction)
+- [shadcn/ui Documentation](https://ui.shadcn.com)
