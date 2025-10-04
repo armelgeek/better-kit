@@ -77,10 +77,18 @@ interface Registry {
 ```
 
 **Categories:**
-- `data-display`: Components for displaying data (tables, lists, cards)
-- `forms`: Form components for CRUD operations
-- `layout`: Layout and structural components
-- `feedback`: Loading states, errors, notifications
+- `data-display`: Components for displaying data (tables, lists, cards) - 11 components
+- `forms`: Form components for CRUD operations - 17 components
+- `layout`: Layout and structural components - 9 components
+- `feedback`: Loading states, errors, notifications - 5 components
+- `buttons`: Action buttons for common operations - 14 components
+- `fields`: Field components for displaying and editing data - 9 components
+- `views`: Auto-generated view components (guessers) - 3 components
+- `auth`: Authentication and login components - 2 components
+- `ui`: Common UI components and utilities - 4 components
+- `toolbars`: Toolbar and action bar components - 2 components
+
+**Total: 76 components**
 
 ### Component Metadata
 

@@ -55,307 +55,1088 @@
 	"components": [
 		{
 			"name": "data-table",
-			"description": "A powerful data table with sorting, filtering, pagination, and bulk actions"
+			"description": "A powerful data table with sorting, filtering, pagination, and bulk actions",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "list",
-			"description": "List view component with filtering, pagination, and export"
+			"description": "List view component with filtering, pagination, and export",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "list-guesser",
-			"description": "Automatically generates list views based on data structure"
+			"description": "Automatically generates list views based on data structure",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "text-field",
-			"description": "Display text data in a formatted way"
+			"description": "Display text data in a formatted way",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "number-field",
-			"description": "Display numeric data with formatting options"
+			"description": "Display numeric data with formatting options",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "date-field",
-			"description": "Display dates with formatting and localization"
+			"description": "Display dates with formatting and localization",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "email-field",
-			"description": "Display email addresses with mailto links"
+			"description": "Display email addresses with mailto links",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "url-field",
-			"description": "Display URLs with clickable links"
+			"description": "Display URLs with clickable links",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "badge-field",
-			"description": "Display status badges and tags"
+			"description": "Display status badges and tags",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "file-field",
-			"description": "Display file information with download links"
+			"description": "Display file information with download links",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "record-field",
-			"description": "Display nested record data"
+			"description": "Display nested record data",
+			"category": "data-display",
+			"dependencies": {
+				"shadcn": [
+					"table",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "form",
-			"description": "Base form component with validation and submission"
+			"description": "Base form component with validation and submission",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"create",
+					"update"
+				],
+				"hook": "useQuery(\"resource\").create() / update()",
+				"example": "const { data } = useQuery(\"resource\").create() / update();\n// Use in component"
+			}
 		},
 		{
 			"name": "simple-form",
-			"description": "Simplified form layout for common use cases"
+			"description": "Simplified form layout for common use cases",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"create",
+					"update"
+				],
+				"hook": "useQuery(\"resource\").create() / update()",
+				"example": "const { data } = useQuery(\"resource\").create() / update();\n// Use in component"
+			}
 		},
 		{
 			"name": "text-input",
-			"description": "Text input field with validation"
+			"description": "Text input field with validation",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "number-input",
-			"description": "Number input field with formatting"
+			"description": "Number input field with formatting",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "boolean-input",
-			"description": "Checkbox/toggle for boolean values"
+			"description": "Checkbox/toggle for boolean values",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "select-input",
-			"description": "Dropdown select input"
+			"description": "Dropdown select input",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "radio-button-group-input",
-			"description": "Radio button group for single selection"
+			"description": "Radio button group for single selection",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "file-input",
-			"description": "File upload input with preview"
+			"description": "File upload input with preview",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "array-input",
-			"description": "Input for array/list data"
+			"description": "Input for array/list data",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "autocomplete-input",
-			"description": "Autocomplete search input"
+			"description": "Autocomplete search input",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "autocomplete-array-input",
-			"description": "Autocomplete for multiple selections"
+			"description": "Autocomplete for multiple selections",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "reference-input",
-			"description": "Input for selecting related records"
+			"description": "Input for selecting related records",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"reference\").list()",
+				"example": "const { data } = useQuery(\"reference\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "reference-array-input",
-			"description": "Input for selecting multiple related records"
+			"description": "Input for selecting multiple related records",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"reference\").list()",
+				"example": "const { data } = useQuery(\"reference\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "simple-form-iterator",
-			"description": "Repeatable form fields for arrays"
+			"description": "Repeatable form fields for arrays",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "filter-form",
-			"description": "Form for filtering list data"
+			"description": "Form for filtering list data",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "search-input",
-			"description": "Search input with debouncing"
+			"description": "Search input with debouncing",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "field-toggle",
-			"description": "Toggle field visibility"
+			"description": "Toggle field visibility",
+			"category": "forms",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"label",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "admin",
-			"description": "Main admin application wrapper"
+			"description": "Main admin application wrapper",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "layout",
-			"description": "Base layout component with sidebar and navigation"
+			"description": "Base layout component with sidebar and navigation",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "app-sidebar",
-			"description": "Collapsible sidebar navigation"
+			"description": "Collapsible sidebar navigation",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "breadcrumb",
-			"description": "Breadcrumb navigation trail"
+			"description": "Breadcrumb navigation trail",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "list-pagination",
-			"description": "Pagination controls for lists"
+			"description": "Pagination controls for lists",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "show",
-			"description": "Show/detail view component"
+			"description": "Show/detail view component",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"get"
+				],
+				"hook": "useQuery(\"resource\").read(id)",
+				"example": "const { data } = useQuery(\"resource\").read(id);\n// Use in component"
+			}
 		},
 		{
 			"name": "simple-show-layout",
-			"description": "Simplified show layout"
+			"description": "Simplified show layout",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"get"
+				],
+				"hook": "useQuery(\"resource\").read(id)",
+				"example": "const { data } = useQuery(\"resource\").read(id);\n// Use in component"
+			}
 		},
 		{
 			"name": "create",
-			"description": "Create/new record view"
+			"description": "Create/new record view",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"create"
+				],
+				"hook": "useQuery(\"resource\").create()",
+				"example": "const { data } = useQuery(\"resource\").create();\n// Use in component"
+			}
 		},
 		{
 			"name": "edit",
-			"description": "Edit record view"
+			"description": "Edit record view",
+			"category": "layout",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"get",
+					"update"
+				],
+				"hook": "useQuery(\"resource\").read(id) / update()",
+				"example": "const { data } = useQuery(\"resource\").read(id) / update();\n// Use in component"
+			}
 		},
 		{
 			"name": "loading",
-			"description": "Loading spinner and states"
+			"description": "Loading spinner and states",
+			"category": "feedback",
+			"dependencies": {
+				"shadcn": [
+					"alert",
+					"toast"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "error",
-			"description": "Error display component"
+			"description": "Error display component",
+			"category": "feedback",
+			"dependencies": {
+				"shadcn": [
+					"alert",
+					"toast"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "notification",
-			"description": "Toast notifications"
+			"description": "Toast notifications",
+			"category": "feedback",
+			"dependencies": {
+				"shadcn": [
+					"alert",
+					"toast"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "spinner",
-			"description": "Loading spinner"
+			"description": "Loading spinner",
+			"category": "feedback",
+			"dependencies": {
+				"shadcn": [
+					"alert",
+					"toast"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "confirm",
-			"description": "Confirmation dialog"
+			"description": "Confirmation dialog",
+			"category": "feedback",
+			"dependencies": {
+				"shadcn": [
+					"alert",
+					"toast"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "create-button",
-			"description": "Button to navigate to create view"
+			"description": "Button to navigate to create view",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "edit-button",
-			"description": "Button to navigate to edit view"
+			"description": "Button to navigate to edit view",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "show-button",
-			"description": "Button to navigate to show view"
+			"description": "Button to navigate to show view",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "delete-button",
-			"description": "Button to delete records with confirmation"
+			"description": "Button to delete records with confirmation",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"delete"
+				],
+				"hook": "useQuery(\"resource\").delete(id)",
+				"example": "const { data } = useQuery(\"resource\").delete(id);\n// Use in component"
+			}
 		},
 		{
 			"name": "export-button",
-			"description": "Button to export data"
+			"description": "Button to export data",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "refresh-button",
-			"description": "Button to refresh data"
+			"description": "Button to refresh data",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "cancel-button",
-			"description": "Button to cancel forms"
+			"description": "Button to cancel forms",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "bulk-delete-button",
-			"description": "Button for bulk delete operations"
+			"description": "Button for bulk delete operations",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"delete"
+				],
+				"hook": "useQuery(\"resource\").delete()",
+				"example": "const { data } = useQuery(\"resource\").delete();\n// Use in component"
+			}
 		},
 		{
 			"name": "bulk-export-button",
-			"description": "Button for bulk export"
+			"description": "Button for bulk export",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "sort-button",
-			"description": "Button to sort columns"
+			"description": "Button to sort columns",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "toggle-filter-button",
-			"description": "Button to toggle filter visibility"
+			"description": "Button to toggle filter visibility",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "columns-button",
-			"description": "Button to toggle column visibility"
+			"description": "Button to toggle column visibility",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "icon-button-with-tooltip",
-			"description": "Icon button with tooltip"
+			"description": "Icon button with tooltip",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "locales-menu-button",
-			"description": "Language selection menu"
+			"description": "Language selection menu",
+			"category": "buttons",
+			"dependencies": {
+				"shadcn": [
+					"button",
+					"tooltip"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "reference-field",
-			"description": "Display related record data"
+			"description": "Display related record data",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "reference-array-field",
-			"description": "Display multiple related records"
+			"description": "Display multiple related records",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "reference-many-field",
-			"description": "Display many-to-many relationships"
+			"description": "Display many-to-many relationships",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "reference-many-count",
-			"description": "Count of related records"
+			"description": "Count of related records",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"reference\").list()",
+				"example": "const { data } = useQuery(\"reference\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "array-field",
-			"description": "Display array data"
+			"description": "Display array data",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "select-field",
-			"description": "Display select/enum values"
+			"description": "Display select/enum values",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "single-field-list",
-			"description": "List with single field display"
+			"description": "List with single field display",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "count",
-			"description": "Display count of records"
+			"description": "Display count of records",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "input-helper-text",
-			"description": "Helper text for inputs"
+			"description": "Helper text for inputs",
+			"category": "fields",
+			"dependencies": {
+				"shadcn": [
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "edit-guesser",
-			"description": "Auto-generate edit views"
+			"description": "Auto-generate edit views",
+			"category": "views",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"get",
+					"update"
+				],
+				"hook": "useQuery(\"resource\").read(id) / update()",
+				"example": "const { data } = useQuery(\"resource\").read(id) / update();\n// Use in component"
+			}
 		},
 		{
 			"name": "list-guesser",
-			"description": "Automatically generates list views based on data structure"
+			"description": "Automatically generates list views based on data structure",
+			"category": "views",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"list"
+				],
+				"hook": "useQuery(\"resource\").list()",
+				"example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+			}
 		},
 		{
 			"name": "show-guesser",
-			"description": "Auto-generate show views"
+			"description": "Auto-generate show views",
+			"category": "views",
+			"dependencies": {
+				"shadcn": [
+					"card",
+					"separator"
+				],
+				"npm": []
+			},
+			"betterQuery": {
+				"operations": [
+					"get"
+				],
+				"hook": "useQuery(\"resource\").read(id)",
+				"example": "const { data } = useQuery(\"resource\").read(id);\n// Use in component"
+			}
 		},
 		{
 			"name": "authentication",
-			"description": "Authentication provider"
+			"description": "Authentication provider",
+			"category": "auth",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"button",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "login-page",
-			"description": "Login page component"
+			"description": "Login page component",
+			"category": "auth",
+			"dependencies": {
+				"shadcn": [
+					"form",
+					"input",
+					"button",
+					"card"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "theme-provider",
-			"description": "Theme context provider"
+			"description": "Theme context provider",
+			"category": "ui",
+			"dependencies": {
+				"shadcn": [
+					"dropdown-menu",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "theme-mode-toggle",
-			"description": "Dark/light mode toggle"
+			"description": "Dark/light mode toggle",
+			"category": "ui",
+			"dependencies": {
+				"shadcn": [
+					"dropdown-menu",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "user-menu",
-			"description": "User profile menu"
+			"description": "User profile menu",
+			"category": "ui",
+			"dependencies": {
+				"shadcn": [
+					"dropdown-menu",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "saved-queries",
-			"description": "Saved query filters"
+			"description": "Saved query filters",
+			"category": "ui",
+			"dependencies": {
+				"shadcn": [
+					"dropdown-menu",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "bulk-actions-toolbar",
-			"description": "Toolbar for bulk actions"
+			"description": "Toolbar for bulk actions",
+			"category": "toolbars",
+			"dependencies": {
+				"shadcn": [
+					"toolbar",
+					"button"
+				],
+				"npm": []
+			}
 		},
 		{
 			"name": "ready",
-			"description": "Ready state indicator"
+			"description": "Ready state indicator",
+			"category": "toolbars",
+			"dependencies": {
+				"shadcn": [
+					"toolbar",
+					"button"
+				],
+				"npm": []
+			}
 		}
 	]
 }
