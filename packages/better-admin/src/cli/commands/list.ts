@@ -1,5 +1,5 @@
-import { Command } from "commander";
 import chalk from "chalk";
+import { Command } from "commander";
 import ora from "ora";
 import { configExists, readConfig } from "../utils/config.js";
 import { fetchRegistry, getComponentsList } from "../utils/registry.js";
@@ -13,8 +13,9 @@ export const listCommand = new Command("list")
 			const cwd = process.cwd();
 
 			// Read config if exists
-			let registryUrl = "https://raw.githubusercontent.com/armelgeek/better-kit/master/packages/better-admin/registry";
-			
+			let registryUrl =
+				"https://raw.githubusercontent.com/armelgeek/better-kit/master/packages/better-admin/registry";
+
 			if (await configExists(cwd)) {
 				const config = await readConfig(cwd);
 				if (config?.registry) {
@@ -24,7 +25,7 @@ export const listCommand = new Command("list")
 
 			// Fetch registry
 			const spinner = ora("Fetching component registry...").start();
-			
+
 			try {
 				const registry = await fetchRegistry(registryUrl);
 				spinner.succeed(chalk.green("Registry fetched"));
@@ -40,20 +41,25 @@ export const listCommand = new Command("list")
 					if (component.description) {
 						console.log(chalk.dim(`    ${component.description}`));
 					}
-					if (component.dependencies?.shadcn && component.dependencies.shadcn.length > 0) {
-						console.log(chalk.dim(`    Dependencies: ${component.dependencies.shadcn.join(", ")}`));
+					if (
+						component.dependencies?.shadcn &&
+						component.dependencies.shadcn.length > 0
+					) {
+						console.log(
+							chalk.dim(
+								`    Dependencies: ${component.dependencies.shadcn.join(", ")}`,
+							),
+						);
 					}
 					console.log();
 				}
 
 				console.log(chalk.bold("💡 Usage:\n"));
 				console.log(chalk.dim("   npx better-admin add <component-name>\n"));
-
 			} catch (error) {
 				spinner.fail(chalk.red("Failed to fetch registry"));
 				throw error;
 			}
-
 		} catch (error) {
 			console.error(chalk.red("\n❌ Failed to list components"));
 			console.error(error);

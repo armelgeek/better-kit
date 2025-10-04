@@ -11,6 +11,10 @@
 		{
 			"name": "resource-list",
 			"description": "A reusable list component for displaying resources"
+		},
+		{
+			"name": "example-card",
+			"description": "A simple example card component with no dependencies"
 		}
 	]
 }

@@ -1,17 +1,21 @@
-import fs from "fs-extra";
 import path from "path";
-import type { BetterAdminConfig } from "../types.js";
+import fs from "fs-extra";
+import type { BetterAdminConfig } from "../../types.js";
 
 const CONFIG_FILE = "better-admin.json";
 
-export async function configExists(cwd: string = process.cwd()): Promise<boolean> {
+export async function configExists(
+	cwd: string = process.cwd(),
+): Promise<boolean> {
 	const configPath = path.join(cwd, CONFIG_FILE);
 	return fs.pathExists(configPath);
 }
 
-export async function readConfig(cwd: string = process.cwd()): Promise<BetterAdminConfig | null> {
+export async function readConfig(
+	cwd: string = process.cwd(),
+): Promise<BetterAdminConfig | null> {
 	const configPath = path.join(cwd, CONFIG_FILE);
-	
+
 	if (!(await fs.pathExists(configPath))) {
 		return null;
 	}
@@ -25,7 +29,10 @@ export async function readConfig(cwd: string = process.cwd()): Promise<BetterAdm
 	}
 }
 
-export async function writeConfig(config: BetterAdminConfig, cwd: string = process.cwd()): Promise<void> {
+export async function writeConfig(
+	config: BetterAdminConfig,
+	cwd: string = process.cwd(),
+): Promise<void> {
 	const configPath = path.join(cwd, CONFIG_FILE);
 	await fs.writeJson(configPath, config, { spaces: 2 });
 }
@@ -47,6 +54,7 @@ export function getDefaultConfig(): BetterAdminConfig {
 			utils: "@/lib/utils",
 			ui: "@/components/ui",
 		},
-		registry: "https://raw.githubusercontent.com/armelgeek/better-kit/master/packages/better-admin/registry",
+		registry:
+			"https://raw.githubusercontent.com/armelgeek/better-kit/master/packages/better-admin/registry",
 	};
 }

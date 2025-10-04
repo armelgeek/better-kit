@@ -1,8 +1,12 @@
-import { Command } from "commander";
-import prompts from "prompts";
 import chalk from "chalk";
+import { Command } from "commander";
 import ora from "ora";
-import { configExists, getDefaultConfig, writeConfig } from "../utils/config.js";
+import prompts from "prompts";
+import {
+	configExists,
+	getDefaultConfig,
+	writeConfig,
+} from "../utils/config.js";
 import { isShadcnInstalled } from "../utils/installer.js";
 
 export const initCommand = new Command("init")
@@ -83,16 +87,24 @@ export const initCommand = new Command("init")
 			// Write config
 			const spinner = ora("Writing configuration...").start();
 			await writeConfig(config, cwd);
-			spinner.succeed(chalk.green("Configuration written to better-admin.json"));
+			spinner.succeed(
+				chalk.green("Configuration written to better-admin.json"),
+			);
 
 			// Check if shadcn is installed
 			const shadcnInstalled = await isShadcnInstalled(cwd);
-			
-			console.log("\n" + chalk.bold("✅ Better Admin initialized successfully!\n"));
-			
+
+			console.log(
+				"\n" + chalk.bold("✅ Better Admin initialized successfully!\n"),
+			);
+
 			if (!shadcnInstalled) {
 				console.log(chalk.yellow("⚠️  shadcn/ui doesn't seem to be installed."));
-				console.log(chalk.dim("   When you add components, shadcn/ui components will be installed automatically.\n"));
+				console.log(
+					chalk.dim(
+						"   When you add components, shadcn/ui components will be installed automatically.\n",
+					),
+				);
 			}
 
 			console.log(chalk.bold("📦 Next steps:\n"));
@@ -100,7 +112,6 @@ export const initCommand = new Command("init")
 			console.log(chalk.cyan("     npx better-admin add data-table\n"));
 			console.log("  2. List available components:");
 			console.log(chalk.cyan("     npx better-admin list\n"));
-
 		} catch (error) {
 			console.error(chalk.red("\n❌ Failed to initialize Better Admin"));
 			console.error(error);

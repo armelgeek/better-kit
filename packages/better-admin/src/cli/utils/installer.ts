@@ -1,10 +1,12 @@
+import path from "path";
 import { execa } from "execa";
 import fs from "fs-extra";
-import path from "path";
 
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
-export async function detectPackageManager(cwd: string = process.cwd()): Promise<PackageManager> {
+export async function detectPackageManager(
+	cwd: string = process.cwd(),
+): Promise<PackageManager> {
 	// Check for lock files
 	if (await fs.pathExists(path.join(cwd, "pnpm-lock.yaml"))) {
 		return "pnpm";
@@ -41,7 +43,9 @@ export async function installDependencies(
 	await execa(packageManager, args, { cwd, stdio: "inherit" });
 }
 
-export async function isShadcnInstalled(cwd: string = process.cwd()): Promise<boolean> {
+export async function isShadcnInstalled(
+	cwd: string = process.cwd(),
+): Promise<boolean> {
 	// Check if shadcn components directory exists
 	const componentsPaths = [
 		path.join(cwd, "components/ui"),
@@ -65,10 +69,14 @@ export async function installShadcnComponents(
 
 	try {
 		// Install shadcn components using npx
-		await execa("npx", ["shadcn@latest", "add", ...components, "--yes", "--overwrite"], {
-			cwd,
-			stdio: "inherit",
-		});
+		await execa(
+			"npx",
+			["shadcn@latest", "add", ...components, "--yes", "--overwrite"],
+			{
+				cwd,
+				stdio: "inherit",
+			},
+		);
 	} catch (error) {
 		throw new Error(`Failed to install shadcn components: ${error}`);
 	}

@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
-import { betterQuery, createResource } from 'better-query';
-import { z } from 'zod';
+import { PrismaClient } from "@prisma/client";
+import { betterQuery, createResource } from "better-query";
+import { z } from "zod";
 
 /**
  * Better Query with Prisma ORM
- * 
+ *
  * This demonstrates how to use Better Query with Prisma ORM
  * and define complex relationships including:
  * - hasMany (User → Todos, Projects, Comments)
@@ -18,172 +18,176 @@ const prisma = new PrismaClient();
 
 // Define Zod schemas for validation (same as Drizzle)
 const userSchema = z.object({
-  id: z.string().optional(),
-  email: z.string().email(),
-  name: z.string().min(1),
-  avatar: z.string().url().optional().nullable(),
-  role: z.enum(['admin', 'user', 'guest']).default('user'),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	email: z.string().email(),
+	name: z.string().min(1),
+	avatar: z.string().url().optional().nullable(),
+	role: z.enum(["admin", "user", "guest"]).default("user"),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 const projectSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1),
-  description: z.string().optional().nullable(),
-  status: z.enum(['active', 'archived', 'completed']).default('active'),
-  ownerId: z.string(),
-  startDate: z.date().optional().nullable(),
-  endDate: z.date().optional().nullable(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	name: z.string().min(1),
+	description: z.string().optional().nullable(),
+	status: z.enum(["active", "archived", "completed"]).default("active"),
+	ownerId: z.string(),
+	startDate: z.date().optional().nullable(),
+	endDate: z.date().optional().nullable(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 const prioritySchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1),
-  level: z.number().int().min(1).max(5),
-  color: z.string().optional().nullable(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	name: z.string().min(1),
+	level: z.number().int().min(1).max(5),
+	color: z.string().optional().nullable(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 const todoSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1),
-  description: z.string().optional().nullable(),
-  completed: z.boolean().default(false),
-  userId: z.string(),
-  projectId: z.string().optional().nullable(),
-  priorityId: z.string().optional().nullable(),
-  parentId: z.string().optional().nullable(),
-  sortOrder: z.number().int().default(0),
-  dueDate: z.date().optional().nullable(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	title: z.string().min(1),
+	description: z.string().optional().nullable(),
+	completed: z.boolean().default(false),
+	userId: z.string(),
+	projectId: z.string().optional().nullable(),
+	priorityId: z.string().optional().nullable(),
+	parentId: z.string().optional().nullable(),
+	sortOrder: z.number().int().default(0),
+	dueDate: z.date().optional().nullable(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 const tagSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1),
-  color: z.string().optional().nullable(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	name: z.string().min(1),
+	color: z.string().optional().nullable(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 const todoTagSchema = z.object({
-  id: z.string().optional(),
-  todoId: z.string(),
-  tagId: z.string(),
-  createdAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	todoId: z.string(),
+	tagId: z.string(),
+	createdAt: z.date().default(() => new Date()),
 });
 
 const commentSchema = z.object({
-  id: z.string().optional(),
-  content: z.string().min(1),
-  todoId: z.string(),
-  userId: z.string(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+	id: z.string().optional(),
+	content: z.string().min(1),
+	todoId: z.string(),
+	userId: z.string(),
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
 });
 
 // Create resources with relationships
 const userResource = createResource({
-  name: 'user',
-  schema: userSchema,
-  relationships: {
-    todos: { type: 'hasMany', target: 'todo', foreignKey: 'userId' },
-    projects: { type: 'hasMany', target: 'project', foreignKey: 'ownerId' },
-    comments: { type: 'hasMany', target: 'comment', foreignKey: 'userId' },
-  },
+	name: "user",
+	schema: userSchema,
+	relationships: {
+		todos: { type: "hasMany", target: "todo", foreignKey: "userId" },
+		projects: { type: "hasMany", target: "project", foreignKey: "ownerId" },
+		comments: { type: "hasMany", target: "comment", foreignKey: "userId" },
+	},
 });
 
 const projectResource = createResource({
-  name: 'project',
-  schema: projectSchema,
-  relationships: {
-    owner: { type: 'belongsTo', target: 'user', foreignKey: 'ownerId' },
-    todos: { type: 'hasMany', target: 'todo', foreignKey: 'projectId' },
-  },
+	name: "project",
+	schema: projectSchema,
+	relationships: {
+		owner: { type: "belongsTo", target: "user", foreignKey: "ownerId" },
+		todos: { type: "hasMany", target: "todo", foreignKey: "projectId" },
+	},
 });
 
 const priorityResource = createResource({
-  name: 'priority',
-  schema: prioritySchema,
-  relationships: {
-    todos: { type: 'hasMany', target: 'todo', foreignKey: 'priorityId' },
-  },
+	name: "priority",
+	schema: prioritySchema,
+	relationships: {
+		todos: { type: "hasMany", target: "todo", foreignKey: "priorityId" },
+	},
 });
 
 const todoResource = createResource({
-  name: 'todo',
-  schema: todoSchema,
-  relationships: {
-    user: { type: 'belongsTo', target: 'user', foreignKey: 'userId' },
-    project: { type: 'belongsTo', target: 'project', foreignKey: 'projectId' },
-    priority: { type: 'belongsTo', target: 'priority', foreignKey: 'priorityId' },
-    parent: { type: 'belongsTo', target: 'todo', foreignKey: 'parentId' },
-    subtasks: { type: 'hasMany', target: 'todo', foreignKey: 'parentId' },
-    comments: { type: 'hasMany', target: 'comment', foreignKey: 'todoId' },
-    tags: { 
-      type: 'belongsToMany', 
-      target: 'tag', 
-      through: 'todo_tags',
-      foreignKey: 'todoId',
-      targetKey: 'tagId'
-    },
-  },
+	name: "todo",
+	schema: todoSchema,
+	relationships: {
+		user: { type: "belongsTo", target: "user", foreignKey: "userId" },
+		project: { type: "belongsTo", target: "project", foreignKey: "projectId" },
+		priority: {
+			type: "belongsTo",
+			target: "priority",
+			foreignKey: "priorityId",
+		},
+		parent: { type: "belongsTo", target: "todo", foreignKey: "parentId" },
+		subtasks: { type: "hasMany", target: "todo", foreignKey: "parentId" },
+		comments: { type: "hasMany", target: "comment", foreignKey: "todoId" },
+		tags: {
+			type: "belongsToMany",
+			target: "tag",
+			through: "todo_tags",
+			foreignKey: "todoId",
+			targetKey: "tagId",
+		},
+	},
 });
 
 const tagResource = createResource({
-  name: 'tag',
-  schema: tagSchema,
-  relationships: {
-    todos: {
-      type: 'belongsToMany',
-      target: 'todo',
-      through: 'todo_tags',
-      foreignKey: 'tagId',
-      targetKey: 'todoId'
-    },
-  },
+	name: "tag",
+	schema: tagSchema,
+	relationships: {
+		todos: {
+			type: "belongsToMany",
+			target: "todo",
+			through: "todo_tags",
+			foreignKey: "tagId",
+			targetKey: "todoId",
+		},
+	},
 });
 
 const todoTagResource = createResource({
-  name: 'todo_tags',
-  schema: todoTagSchema,
-  relationships: {
-    todo: { type: 'belongsTo', target: 'todo', foreignKey: 'todoId' },
-    tag: { type: 'belongsTo', target: 'tag', foreignKey: 'tagId' },
-  },
+	name: "todo_tags",
+	schema: todoTagSchema,
+	relationships: {
+		todo: { type: "belongsTo", target: "todo", foreignKey: "todoId" },
+		tag: { type: "belongsTo", target: "tag", foreignKey: "tagId" },
+	},
 });
 
 const commentResource = createResource({
-  name: 'comment',
-  schema: commentSchema,
-  relationships: {
-    todo: { type: 'belongsTo', target: 'todo', foreignKey: 'todoId' },
-    user: { type: 'belongsTo', target: 'user', foreignKey: 'userId' },
-  },
+	name: "comment",
+	schema: commentSchema,
+	relationships: {
+		todo: { type: "belongsTo", target: "todo", foreignKey: "todoId" },
+		user: { type: "belongsTo", target: "user", foreignKey: "userId" },
+	},
 });
 
 // Initialize Better Query with Prisma adapter
 export const queryPrisma = betterQuery({
-  basePath: '/api/prisma',
-  database: {
-    provider: 'sqlite',
-    url: 'file:./prisma/prisma-demo.db',
-    autoMigrate: true,
-  },
-  resources: [
-    userResource,
-    projectResource,
-    priorityResource,
-    todoResource,
-    tagResource,
-    todoTagResource,
-    commentResource,
-  ],
+	basePath: "/api/prisma",
+	database: {
+		provider: "sqlite",
+		url: "file:./prisma/prisma-demo.db",
+		autoMigrate: true,
+	},
+	resources: [
+		userResource,
+		projectResource,
+		priorityResource,
+		todoResource,
+		tagResource,
+		todoTagResource,
+		commentResource,
+	],
 });
 
 export type User = z.infer<typeof userSchema>;

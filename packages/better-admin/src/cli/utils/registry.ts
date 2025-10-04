@@ -1,15 +1,28 @@
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs-extra";
 import fetch from "node-fetch";
-import type { ComponentMetadata, Registry } from "../types.js";
+import type { ComponentMetadata, Registry } from "../../types.js";
+
+async function readLocalOrRemote(url: string): Promise<any> {
+	// Check if it's a file URL
+	if (url.startsWith("file://")) {
+		const filePath = fileURLToPath(url);
+		const content = await fs.readFile(filePath, "utf8");
+		return JSON.parse(content);
+	}
+
+	// Otherwise fetch from HTTP
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch: ${response.statusText}`);
+	}
+	return await response.json();
+}
 
 export async function fetchRegistry(registryUrl: string): Promise<Registry> {
 	try {
-		const response = await fetch(`${registryUrl}/index.json`);
-		
-		if (!response.ok) {
-			throw new Error(`Failed to fetch registry: ${response.statusText}`);
-		}
-
-		return await response.json() as Registry;
+		return await readLocalOrRemote(`${registryUrl}/index.json`);
 	} catch (error) {
 		throw new Error(`Failed to fetch registry: ${error}`);
 	}
@@ -20,13 +33,9 @@ export async function fetchComponent(
 	componentName: string,
 ): Promise<ComponentMetadata> {
 	try {
-		const response = await fetch(`${registryUrl}/components/${componentName}.json`);
-		
-		if (!response.ok) {
-			throw new Error(`Component '${componentName}' not found`);
-		}
-
-		return await response.json() as ComponentMetadata;
+		return await readLocalOrRemote(
+			`${registryUrl}/components/${componentName}.json`,
+		);
 	} catch (error) {
 		throw new Error(`Failed to fetch component '${componentName}': ${error}`);
 	}
