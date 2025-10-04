@@ -5,8 +5,6 @@
  * This adapter allows admin components to work seamlessly with better-auth.
  */
 
-import type { InferSessionFromAuth } from "better-auth";
-
 export interface AuthProviderOptions {
 	/**
 	 * The better-auth client instance

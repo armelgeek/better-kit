@@ -1,11 +1,13 @@
 # Better Admin
 
-A CLI tool for installing Better Admin components with automatic shadcn/ui dependency resolution and first-class Better Query integration.
+A CLI tool for installing Better Admin components with automatic shadcn/ui dependency resolution and first-class Better Query and Better Auth integration.
 
-**✨ 76 Production-Ready Components** organized into 10 categories, all with Better Query integration.
+**✨ 76 Production-Ready Components** organized into 10 categories, with integrated providers for authentication and data operations.
 
 ## Features
 
+- 🔐 **Better Auth Provider**: First-class integration with better-auth for authentication
+- 📊 **Better Query Provider**: Built-in data provider for better-query integration
 - 🎯 **Better Query Native**: Components designed specifically for Better Query patterns
 - 📦 **Automatic Dependencies**: Auto-installs shadcn/ui components and npm packages
 - 🗂️ **76 Components**: Complete admin component library across 10 categories
@@ -24,6 +26,34 @@ npx better-admin init
 ```
 
 This creates a `better-admin.json` configuration file with sensible defaults.
+
+## Providers
+
+Better Admin includes providers for authentication and data operations that integrate with better-auth and better-query:
+
+### Auth Provider
+
+```typescript
+import { createBetterAuthProvider } from "better-admin";
+import { authClient } from "./auth-client";
+
+export const authProvider = createBetterAuthProvider({
+  authClient,
+});
+```
+
+### Data Provider
+
+```typescript
+import { createBetterQueryProvider } from "better-admin";
+import { query } from "./query";
+
+export const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+});
+```
+
+See the [documentation](./docs/content/docs/better-admin/) for detailed setup guides.
 
 ## Quick Start
 
