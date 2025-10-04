@@ -1,20 +1,32 @@
 {
-	"name": "resource-list",
-	"type": "components:ui",
-	"description": "A reusable list component for displaying resources with actions",
-	"dependencies": {
-		"shadcn": ["card", "button", "badge"],
-		"npm": []
-	},
-	"registryDependencies": [],
-	"files": [
-		{
-			"path": "components/ui/resource-list.tsx",
-			"content": "\"use client\";\n\nimport * as React from \"react\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n\tCard,\n\tCardContent,\n\tCardDescription,\n\tCardFooter,\n\tCardHeader,\n\tCardTitle,\n} from \"@/components/ui/card\";\nimport { Badge } from \"@/components/ui/badge\";\n\ninterface ResourceAction {\n\tlabel: string;\n\tonClick: (item: any) => void;\n\tvariant?: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\";\n}\n\ninterface ResourceListProps<T> {\n\titems: T[];\n\trenderTitle: (item: T) => React.ReactNode;\n\trenderDescription?: (item: T) => React.ReactNode;\n\trenderBadge?: (item: T) => React.ReactNode;\n\tactions?: ResourceAction[];\n\temptyMessage?: string;\n}\n\nexport function ResourceList<T>({\n\titems,\n\trenderTitle,\n\trenderDescription,\n\trenderBadge,\n\tactions = [],\n\temptyMessage = \"No items found\",\n}: ResourceListProps<T>) {\n\tif (items.length === 0) {\n\t\treturn (\n\t\t\t<div className=\"flex h-[450px] items-center justify-center rounded-md border border-dashed\">\n\t\t\t\t<div className=\"text-center\">\n\t\t\t\t\t<p className=\"text-sm text-muted-foreground\">{emptyMessage}</p>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t);\n\t}\n\n\treturn (\n\t\t<div className=\"grid gap-4 md:grid-cols-2 lg:grid-cols-3\">\n\t\t\t{items.map((item, index) => (\n\t\t\t\t<Card key={index}>\n\t\t\t\t\t<CardHeader>\n\t\t\t\t\t\t<div className=\"flex items-start justify-between\">\n\t\t\t\t\t\t\t<CardTitle className=\"text-lg\">{renderTitle(item)}</CardTitle>\n\t\t\t\t\t\t\t{renderBadge && <div>{renderBadge(item)}</div>}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t{renderDescription && (\n\t\t\t\t\t\t\t<CardDescription>{renderDescription(item)}</CardDescription>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</CardHeader>\n\t\t\t\t\t{actions.length > 0 && (\n\t\t\t\t\t\t<CardFooter className=\"flex gap-2\">\n\t\t\t\t\t\t\t{actions.map((action, actionIndex) => (\n\t\t\t\t\t\t\t\t<Button\n\t\t\t\t\t\t\t\t\tkey={actionIndex}\n\t\t\t\t\t\t\t\t\tvariant={action.variant || \"default\"}\n\t\t\t\t\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\t\t\t\t\tonClick={() => action.onClick(item)}\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{action.label}\n\t\t\t\t\t\t\t\t</Button>\n\t\t\t\t\t\t\t))}\n\t\t\t\t\t\t</CardFooter>\n\t\t\t\t\t)}\n\t\t\t\t</Card>\n\t\t\t))}\n\t\t\t</div>\n\t);\n}\n",
-			"type": "components:ui"
-		}
-	],
-	"tailwind": {
-		"config": {}
-	}
+  "name": "resource-list",
+  "type": "components:ui",
+  "description": "A reusable list component for displaying resources with actions",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "button",
+      "badge"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/ui/resource-list.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n\tCard,\n\tCardContent,\n\tCardDescription,\n\tCardFooter,\n\tCardHeader,\n\tCardTitle,\n} from \"@/components/ui/card\";\nimport { Badge } from \"@/components/ui/badge\";\n\ninterface ResourceAction {\n\tlabel: string;\n\tonClick: (item: any) => void;\n\tvariant?: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\";\n}\n\ninterface ResourceListProps<T> {\n\titems: T[];\n\trenderTitle: (item: T) => React.ReactNode;\n\trenderDescription?: (item: T) => React.ReactNode;\n\trenderBadge?: (item: T) => React.ReactNode;\n\tactions?: ResourceAction[];\n\temptyMessage?: string;\n}\n\nexport function ResourceList<T>({\n\titems,\n\trenderTitle,\n\trenderDescription,\n\trenderBadge,\n\tactions = [],\n\temptyMessage = \"No items found\",\n}: ResourceListProps<T>) {\n\tif (items.length === 0) {\n\t\treturn (\n\t\t\t<div className=\"flex h-[450px] items-center justify-center rounded-md border border-dashed\">\n\t\t\t\t<div className=\"text-center\">\n\t\t\t\t\t<p className=\"text-sm text-muted-foreground\">{emptyMessage}</p>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t);\n\t}\n\n\treturn (\n\t\t<div className=\"grid gap-4 md:grid-cols-2 lg:grid-cols-3\">\n\t\t\t{items.map((item, index) => (\n\t\t\t\t<Card key={index}>\n\t\t\t\t\t<CardHeader>\n\t\t\t\t\t\t<div className=\"flex items-start justify-between\">\n\t\t\t\t\t\t\t<CardTitle className=\"text-lg\">{renderTitle(item)}</CardTitle>\n\t\t\t\t\t\t\t{renderBadge && <div>{renderBadge(item)}</div>}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t{renderDescription && (\n\t\t\t\t\t\t\t<CardDescription>{renderDescription(item)}</CardDescription>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</CardHeader>\n\t\t\t\t\t{actions.length > 0 && (\n\t\t\t\t\t\t<CardFooter className=\"flex gap-2\">\n\t\t\t\t\t\t\t{actions.map((action, actionIndex) => (\n\t\t\t\t\t\t\t\t<Button\n\t\t\t\t\t\t\t\t\tkey={actionIndex}\n\t\t\t\t\t\t\t\t\tvariant={action.variant || \"default\"}\n\t\t\t\t\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\t\t\t\t\tonClick={() => action.onClick(item)}\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{action.label}\n\t\t\t\t\t\t\t\t</Button>\n\t\t\t\t\t\t\t))}\n\t\t\t\t\t\t</CardFooter>\n\t\t\t\t\t)}\n\t\t\t\t</Card>\n\t\t\t))}\n\t\t\t</div>\n\t);\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "category": "data-display",
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"resource\").list()",
+    "example": "See documentation for full example"
+  }
 }
