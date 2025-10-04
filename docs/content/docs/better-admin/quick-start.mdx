@@ -1,0 +1,349 @@
+---
+title: Quick Start
+description: Get started with better-admin in minutes
+---
+
+# Quick Start
+
+Get your admin interface up and running in minutes with better-admin, better-auth, and better-query.
+
+## Prerequisites
+
+- Node.js 18+ installed
+- A Next.js 14+ project (or other React framework)
+- Basic familiarity with TypeScript
+
+## Installation
+
+### 1. Install Dependencies
+
+```bash title="Terminal"
+npm install better-auth better-query better-admin
+```
+
+### 2. Initialize Better Admin
+
+```bash title="Terminal"
+npx better-admin init
+```
+
+This creates a `better-admin.json` configuration file.
+
+### 3. Install shadcn/ui
+
+If you haven't already, initialize shadcn/ui:
+
+```bash title="Terminal"
+npx shadcn@latest init
+```
+
+## Setup Authentication
+
+### 1. Create Database Connection
+
+```typescript title="lib/db.ts"
+import Database from "better-sqlite3";
+
+export const db = new Database("app.db");
+```
+
+### 2. Setup Better Auth Server
+
+```typescript title="lib/auth.ts"
+import { betterAuth } from "better-auth";
+import { db } from "./db";
+
+export const auth = betterAuth({
+  database: db,
+  emailAndPassword: {
+    enabled: true,
+  },
+});
+```
+
+### 3. Create Auth Client
+
+```typescript title="lib/auth-client.ts"
+import { createAuthClient } from "better-auth/react";
+
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;
+```
+
+### 4. Create Auth Provider
+
+```typescript title="lib/admin-auth.ts"
+import { createBetterAuthProvider } from "better-admin";
+import { authClient } from "./auth-client";
+
+export const authProvider = createBetterAuthProvider({
+  authClient,
+});
+```
+
+## Setup Data Provider
+
+### 1. Define Resources
+
+```typescript title="lib/query.ts"
+import { betterQuery, createResource } from "better-query";
+import { auth } from "./auth";
+import { db } from "./db";
+
+const userResource = createResource({
+  name: "user",
+  schema: {
+    id: { type: "string", primary: true },
+    name: { type: "string", required: true },
+    email: { type: "string", required: true },
+    role: { type: "string" },
+  },
+  middlewares: [
+    {
+      handler: async (context) => {
+        const session = await auth.api.getSession({
+          headers: context.request.headers,
+        });
+        if (session) context.user = session.user;
+      },
+    },
+  ],
+  permissions: {
+    create: async (context) => !!context.user,
+    read: async (context) => !!context.user,
+    update: async (context) => {
+      const user = context.user as any;
+      return user?.role === "admin";
+    },
+    delete: async (context) => {
+      const user = context.user as any;
+      return user?.role === "admin";
+    },
+  },
+});
+
+export const query = betterQuery({
+  database: db,
+  resources: [userResource],
+});
+```
+
+### 2. Create Data Provider
+
+```typescript title="lib/admin-data.ts"
+import { createBetterQueryProvider } from "better-admin";
+import { query } from "./query";
+
+export const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+});
+```
+
+## Add Admin Components
+
+### 1. Install Data Table Component
+
+```bash title="Terminal"
+npx better-admin add data-table
+```
+
+### 2. Install Form Component
+
+```bash title="Terminal"
+npx better-admin add crud-form
+```
+
+## Create Admin Pages
+
+### 1. Login Page
+
+```tsx title="app/login/page.tsx"
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await authClient.signIn.email({ email, password });
+    if (!result.error) router.push("/admin");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto mt-8 space-y-4">
+      <Input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <Button type="submit" className="w-full">Sign In</Button>
+    </form>
+  );
+}
+```
+
+### 2. Admin Layout with Auth Protection
+
+```tsx title="app/admin/layout.tsx"
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useBetterAuth } from "better-admin";
+import { authClient } from "@/lib/auth-client";
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useBetterAuth(authClient);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) router.push("/login");
+  }, [user, isLoading, router]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return null;
+
+  return <div className="p-8">{children}</div>;
+}
+```
+
+### 3. Users List Page
+
+```tsx title="app/admin/users/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+export default function UsersPage() {
+  const { list } = useBetterQuery("user", query);
+  const { data, isLoading } = list.useQuery();
+
+  const columns = [
+    { accessorKey: "name", header: "Name" },
+    { accessorKey: "email", header: "Email" },
+  ];
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">Users</h1>
+        <Button asChild>
+          <Link href="/admin/users/create">Create User</Link>
+        </Button>
+      </div>
+      <DataTable columns={columns} data={data || []} />
+    </div>
+  );
+}
+```
+
+### 4. Create User Page
+
+```tsx title="app/admin/users/create/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { CrudForm } from "@/components/ui/crud-form";
+import { useRouter } from "next/navigation";
+
+export default function CreateUserPage() {
+  const { create } = useBetterQuery("user", query);
+  const router = useRouter();
+
+  const fields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+  ];
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Create User</h1>
+      <CrudForm
+        fields={fields}
+        onSubmit={async (data) => {
+          await create.mutateAsync(data);
+          router.push("/admin/users");
+        }}
+        submitLabel="Create"
+      />
+    </div>
+  );
+}
+```
+
+## Environment Variables
+
+Create a `.env.local` file:
+
+```bash title=".env.local"
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-secret-key-here
+DATABASE_URL=sqlite:app.db
+```
+
+## Run Your App
+
+Start the development server:
+
+```bash title="Terminal"
+npm run dev
+```
+
+Visit:
+- http://localhost:3000/login - Login page
+- http://localhost:3000/admin/users - Users list (after login)
+
+## Next Steps
+
+- [Auth Provider](/docs/better-admin/auth-provider) - Learn more about authentication
+- [Data Provider](/docs/better-admin/data-provider) - Learn more about data operations
+- [Components](/docs/better-admin/components) - Browse all available components
+- [Examples](https://github.com/armelgeek/better-kit/tree/master/packages/better-admin/examples) - See complete examples
+
+## Common Issues
+
+### "Cannot find module 'better-auth'"
+
+Install better-auth: `npm install better-auth`
+
+### "Database not found"
+
+Make sure your database file path is correct in `lib/db.ts`
+
+### Components not found
+
+Run `npx better-admin add <component>` to install the component
+
+### TypeScript errors
+
+Make sure you have TypeScript 5.0+ installed: `npm install -D typescript@latest`
+
+## Support
+
+- [GitHub Issues](https://github.com/armelgeek/better-kit/issues)
+- [Documentation](/docs/better-admin/introduction)

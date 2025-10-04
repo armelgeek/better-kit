@@ -1,0 +1,359 @@
+---
+title: API Reference
+description: Complete API reference for better-admin providers
+---
+
+# API Reference
+
+Complete reference for all better-admin APIs, including providers, hooks, and utilities.
+
+## Authentication Provider
+
+### createBetterAuthProvider
+
+Creates an authentication provider that integrates better-auth with better-admin.
+
+```typescript
+function createBetterAuthProvider(
+  options: AuthProviderOptions
+): AuthProvider
+```
+
+**Parameters:**
+
+- `options.authClient` (required) - The better-auth client instance
+- `options.onError` (optional) - Error handler function `(error: Error) => void`
+
+**Returns:** `AuthProvider`
+
+**Example:**
+
+```typescript
+import { createBetterAuthProvider } from "better-admin";
+import { authClient } from "./auth-client";
+
+const authProvider = createBetterAuthProvider({
+  authClient,
+  onError: (error) => {
+    console.error("Auth error:", error);
+  },
+});
+```
+
+### AuthProvider Interface
+
+```typescript
+interface AuthProvider {
+  login: (params: { email: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+  checkError: (error: any) => Promise<void>;
+  getIdentity: () => Promise<User | null>;
+  getPermissions?: () => Promise<any>;
+}
+```
+
+**Methods:**
+
+- `login` - Authenticate a user with email and password
+- `logout` - Sign out the current user
+- `checkAuth` - Verify if the user is authenticated
+- `checkError` - Handle API errors (401, 403)
+- `getIdentity` - Get the current user's identity
+- `getPermissions` - Get the current user's permissions
+
+### useBetterAuth
+
+React hook to access authentication state.
+
+```typescript
+function useBetterAuth(authClient: any): {
+  user: User | null;
+  isLoading: boolean;
+  error: Error | null;
+  signIn: Function;
+  signOut: Function;
+  signUp: Function;
+}
+```
+
+**Parameters:**
+
+- `authClient` (required) - The better-auth client instance
+
+**Returns:**
+
+- `user` - Current authenticated user or null
+- `isLoading` - Loading state
+- `error` - Error object if any
+- `signIn` - Function to sign in
+- `signOut` - Function to sign out
+- `signUp` - Function to sign up
+
+**Example:**
+
+```typescript
+import { useBetterAuth } from "better-admin";
+import { authClient } from "./auth-client";
+
+function MyComponent() {
+  const { user, isLoading, signOut } = useBetterAuth(authClient);
+  
+  if (isLoading) return <div>Loading...</div>;
+  
+  return (
+    <div>
+      <p>Welcome {user?.name}</p>
+      <button onClick={() => signOut()}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+## Data Provider
+
+### createBetterQueryProvider
+
+Creates a data provider that integrates better-query with better-admin.
+
+```typescript
+function createBetterQueryProvider(
+  options: DataProviderOptions
+): DataProvider
+```
+
+**Parameters:**
+
+- `options.queryClient` (required) - The better-query instance
+- `options.onError` (optional) - Error handler function `(error: Error) => void`
+
+**Returns:** `DataProvider`
+
+**Example:**
+
+```typescript
+import { createBetterQueryProvider } from "better-admin";
+import { query } from "./query";
+
+const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+  onError: (error) => {
+    console.error("Data error:", error);
+  },
+});
+```
+
+### DataProvider Interface
+
+```typescript
+interface DataProvider {
+  getList: <T>(resource: string, params: ListParams) => Promise<ListResult<T>>;
+  getOne: <T>(resource: string, params: GetOneParams) => Promise<T>;
+  getMany: <T>(resource: string, params: GetManyParams) => Promise<T[]>;
+  create: <T>(resource: string, params: CreateParams<T>) => Promise<T>;
+  update: <T>(resource: string, params: UpdateParams<T>) => Promise<T>;
+  delete: <T>(resource: string, params: DeleteParams) => Promise<T>;
+  deleteMany: (resource: string, params: DeleteManyParams) => Promise<void>;
+}
+```
+
+**Methods:**
+
+- `getList` - Get a paginated list of resources
+- `getOne` - Get a single resource by ID
+- `getMany` - Get multiple resources by IDs
+- `create` - Create a new resource
+- `update` - Update an existing resource
+- `delete` - Delete a resource
+- `deleteMany` - Delete multiple resources
+
+### ListParams
+
+```typescript
+interface ListParams {
+  pagination?: {
+    page: number;
+    perPage: number;
+  };
+  sort?: {
+    field: string;
+    order: "ASC" | "DESC";
+  };
+  filter?: Record<string, any>;
+}
+```
+
+### useBetterQuery
+
+React hook to use better-query operations.
+
+```typescript
+function useBetterQuery(resource: string, queryClient: any): {
+  list: (params?: any) => UseQueryResult;
+  get: (params: any) => UseQueryResult;
+  create: () => UseMutationResult;
+  update: () => UseMutationResult;
+  remove: () => UseMutationResult;
+  count: (params?: any) => UseQueryResult;
+}
+```
+
+**Parameters:**
+
+- `resource` (required) - The resource name (e.g., "user", "post")
+- `queryClient` (required) - The better-query instance
+
+**Returns:**
+
+- `list` - Query hook for listing resources
+- `get` - Query hook for getting a single resource
+- `create` - Mutation hook for creating resources
+- `update` - Mutation hook for updating resources
+- `remove` - Mutation hook for deleting resources
+- `count` - Query hook for counting resources
+
+**Example:**
+
+```typescript
+import { useBetterQuery } from "better-admin";
+import { query } from "./query";
+
+function UsersList() {
+  const { list, remove } = useBetterQuery("user", query);
+  const { data, isLoading } = list.useQuery();
+  
+  const handleDelete = async (id: string) => {
+    await remove.mutateAsync({ where: { id } });
+  };
+  
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          {user.name}
+          <button onClick={() => handleDelete(user.id)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Type Definitions
+
+### User
+
+```typescript
+interface User {
+  id: string;
+  email?: string;
+  name?: string;
+  image?: string;
+  [key: string]: any;
+}
+```
+
+### ListResult
+
+```typescript
+interface ListResult<T = any> {
+  data: T[];
+  total: number;
+}
+```
+
+### CreateParams
+
+```typescript
+interface CreateParams<T = any> {
+  data: T;
+}
+```
+
+### UpdateParams
+
+```typescript
+interface UpdateParams<T = any> {
+  id: string | number;
+  data: T;
+  previousData?: T;
+}
+```
+
+### DeleteParams
+
+```typescript
+interface DeleteParams {
+  id: string | number;
+  previousData?: any;
+}
+```
+
+## Error Handling
+
+All providers support error handling through the `onError` callback:
+
+```typescript
+const provider = createBetterAuthProvider({
+  authClient,
+  onError: (error) => {
+    // Custom error handling
+    console.error(error);
+    toast.error(error.message);
+    analytics.track("error", { message: error.message });
+  },
+});
+```
+
+## TypeScript Support
+
+All APIs are fully typed with TypeScript. When using with TypeScript, you get:
+
+- Full type inference from schemas
+- Autocomplete for all methods
+- Type-safe parameters and return values
+- Compile-time error checking
+
+**Example:**
+
+```typescript
+interface UserSchema {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+}
+
+const { list } = useBetterQuery("user", query);
+const { data } = list.useQuery();
+// data is inferred as UserSchema[]
+```
+
+## Best Practices
+
+1. **Single Provider Instance**: Create provider instances once and reuse them
+2. **Error Handling**: Always provide `onError` handlers
+3. **Type Safety**: Use TypeScript for full type inference
+4. **Resource Names**: Use consistent resource naming across your app
+5. **Permissions**: Define permissions at the resource level in better-query
+
+## Migration from react-admin
+
+Better Admin providers are designed to be compatible with react-admin patterns:
+
+```typescript
+// react-admin
+import { AuthProvider } from "ra-core";
+import simpleRestProvider from "ra-data-simple-rest";
+
+// better-admin
+import { createBetterAuthProvider, createBetterQueryProvider } from "better-admin";
+```
+
+See the [Migration Guide](/docs/better-admin/migration) for complete migration instructions.
+
+## Next Steps
+
+- [Quick Start](/docs/better-admin/quick-start) - Get started quickly
+- [Auth Provider Guide](/docs/better-admin/auth-provider) - Detailed authentication guide
+- [Data Provider Guide](/docs/better-admin/data-provider) - Detailed data operations guide

@@ -1,0 +1,296 @@
+---
+title: Components
+description: Pre-built admin components with better-query integration
+---
+
+# Admin Components
+
+Better Admin provides 76 production-ready components organized into 10 categories. All components are designed to work seamlessly with better-query and better-auth.
+
+## Overview
+
+Components in Better Admin follow the patterns from [shadcn-admin-kit](https://marmelab.com/shadcn-admin-kit/) while integrating deeply with better-query and better-auth instead of react-admin.
+
+## Installation
+
+Install components using the Better Admin CLI:
+
+```bash title="Terminal"
+npx better-admin add data-table
+```
+
+The CLI automatically:
+- Installs required shadcn/ui components
+- Installs npm dependencies
+- Copies the component to your project
+
+## Component Categories
+
+### Data Display
+
+Components for displaying data from better-query:
+
+- **data-table** - Powerful table with sorting, filtering, pagination
+- **list** - List view with filtering and export
+- **text-field** - Formatted text display
+- **number-field** - Numeric data with formatting
+- **date-field** - Date formatting and localization
+- **email-field** - Email addresses with mailto links
+- **url-field** - Clickable URLs
+- **badge-field** - Status badges and tags
+- **file-field** - File information with download links
+- **record-field** - Nested record data
+
+### Forms
+
+Form components with validation and better-query mutations:
+
+- **form** - Base form with validation
+- **simple-form** - Simplified form layout
+- **text-input** - Text input with validation
+- **number-input** - Number input with formatting
+- **boolean-input** - Checkbox/toggle for booleans
+- **select-input** - Dropdown select
+- **radio-button-group-input** - Radio button group
+- **file-input** - File upload with preview
+- **array-input** - Array/list data input
+- **autocomplete-input** - Autocomplete search
+- **reference-input** - Select related records
+- **filter-form** - Filtering form
+
+### Layout
+
+Structural components for admin interfaces:
+
+- **admin** - Main admin wrapper
+- **layout** - Base layout with sidebar
+- **app-sidebar** - Collapsible navigation
+- **breadcrumb** - Navigation trail
+- **list-pagination** - Pagination controls
+- **show** - Detail view component
+- **create** - Create record view
+- **edit** - Edit record view
+
+## Usage Examples
+
+### Data Table
+
+```tsx
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { DataTable } from "@/components/ui/data-table";
+
+export function UsersTable() {
+  const { list } = useBetterQuery("user", query);
+  const { data, isLoading } = list.useQuery();
+
+  if (isLoading) return <div>Loading...</div>;
+
+  const columns = [
+    { accessorKey: "name", header: "Name" },
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "role", header: "Role" },
+  ];
+
+  return <DataTable columns={columns} data={data || []} />;
+}
+```
+
+### CRUD Form
+
+```tsx
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { CrudForm } from "@/components/ui/crud-form";
+
+export function UserForm({ id }: { id?: string }) {
+  const { get, create, update } = useBetterQuery("user", query);
+  const { data } = id ? get.useQuery({ where: { id } }) : { data: null };
+
+  const fields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      options: [
+        { value: "user", label: "User" },
+        { value: "admin", label: "Admin" },
+      ],
+    },
+  ];
+
+  return (
+    <CrudForm
+      fields={fields}
+      defaultValues={data}
+      onSubmit={async (formData) => {
+        if (id) {
+          await update.mutateAsync({ where: { id }, data: formData });
+        } else {
+          await create.mutateAsync(formData);
+        }
+      }}
+      submitLabel={id ? "Update" : "Create"}
+    />
+  );
+}
+```
+
+### List with Filters
+
+```tsx
+import { useState } from "react";
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { DataTable } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
+
+export function UsersListWithSearch() {
+  const [search, setSearch] = useState("");
+  const { list } = useBetterQuery("user", query);
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search } },
+          { email: { contains: search } },
+        ],
+      }
+    : {};
+
+  const { data, isLoading } = list.useQuery({ where });
+
+  return (
+    <div>
+      <Input
+        placeholder="Search..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <DataTable columns={columns} data={data || []} />
+    </div>
+  );
+}
+```
+
+## Authentication Integration
+
+Components work seamlessly with better-auth:
+
+```tsx
+import { useBetterAuth } from "better-admin";
+import { authClient } from "@/lib/auth-client";
+
+export function UserMenu() {
+  const { user, signOut } = useBetterAuth(authClient);
+
+  return (
+    <div>
+      <span>{user?.name}</span>
+      <button onClick={() => signOut()}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+## Component Patterns
+
+### List-Detail Pattern
+
+```tsx
+// List page
+export function UsersList() {
+  const { list } = useBetterQuery("user", query);
+  const { data } = list.useQuery();
+
+  return (
+    <div>
+      {data?.map((user) => (
+        <Link key={user.id} href={`/admin/users/${user.id}`}>
+          {user.name}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// Detail page
+export function UserDetail({ id }: { id: string }) {
+  const { get } = useBetterQuery("user", query);
+  const { data } = get.useQuery({ where: { id } });
+
+  return (
+    <div>
+      <h1>{data?.name}</h1>
+      <p>{data?.email}</p>
+      <Link href={`/admin/users/${id}/edit`}>Edit</Link>
+    </div>
+  );
+}
+```
+
+### Master-Detail Pattern
+
+```tsx
+export function UsersWithPosts({ userId }: { userId: string }) {
+  const { get: getUser } = useBetterQuery("user", query);
+  const { list: listPosts } = useBetterQuery("post", query);
+
+  const { data: user } = getUser.useQuery({ where: { id: userId } });
+  const { data: posts } = listPosts.useQuery({
+    where: { authorId: userId },
+  });
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <h2>User Details</h2>
+        <p>{user?.name}</p>
+        <p>{user?.email}</p>
+      </div>
+      <div>
+        <h2>Posts</h2>
+        {posts?.map((post) => (
+          <div key={post.id}>{post.title}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## Customization
+
+All components are fully customizable since they're copied to your project:
+
+```tsx
+// Customize the data-table component
+import { DataTable as BaseDataTable } from "@/components/ui/data-table";
+
+export function CustomDataTable(props) {
+  return (
+    <BaseDataTable
+      {...props}
+      className="custom-styling"
+      // Add custom features
+    />
+  );
+}
+```
+
+## Best Practices
+
+1. **Use TypeScript** - Full type safety with better-query schemas
+2. **Handle Loading States** - Always show loading indicators
+3. **Error Handling** - Display user-friendly error messages
+4. **Permissions** - Check user permissions before showing actions
+5. **Optimistic Updates** - Use for better UX
+6. **Debounce Search** - Prevent excessive API calls
+
+## Next Steps
+
+- [Auth Provider](/docs/better-admin/auth-provider) - Set up authentication
+- [Data Provider](/docs/better-admin/data-provider) - Set up data operations
+- [CLI Reference](/docs/better-admin/cli) - Learn CLI commands

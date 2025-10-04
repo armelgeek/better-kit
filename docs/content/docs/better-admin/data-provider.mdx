@@ -1,0 +1,543 @@
+---
+title: Data Provider
+description: Integrate better-query with better-admin for data operations
+---
+
+# Data Provider
+
+Better Admin uses **better-query** for data operations instead of ra-core or ra-data-simple-rest. This provides a type-safe, flexible data layer that works seamlessly with your admin interface.
+
+## Overview
+
+The data provider is a bridge between better-query and your admin components. It handles:
+
+- List operations with pagination and filtering
+- CRUD operations (Create, Read, Update, Delete)
+- Bulk operations
+- Query caching and invalidation
+
+## Installation
+
+First, install better-query:
+
+```bash title="Terminal"
+npm install better-query
+```
+
+## Setup
+
+### 1. Configure Better Query
+
+Create your better-query instance with resources:
+
+```typescript title="lib/query.ts"
+import { betterQuery, createResource } from "better-query";
+import { auth } from "./auth";
+import Database from "better-sqlite3";
+
+const db = new Database("app.db");
+
+// Define your resources
+const userResource = createResource({
+  name: "user",
+  schema: {
+    id: { type: "string", primary: true },
+    name: { type: "string", required: true },
+    email: { type: "string", required: true },
+    role: { type: "string" },
+    createdAt: { type: "date" },
+  },
+  middlewares: [
+    {
+      handler: async (context) => {
+        // Add authentication to all requests
+        const session = await auth.api.getSession({
+          headers: context.request.headers,
+        });
+        if (session) {
+          context.user = session.user;
+        }
+      },
+    },
+  ],
+  permissions: {
+    create: async (context) => !!context.user,
+    read: async (context) => !!context.user,
+    update: async (context) => {
+      const user = context.user as any;
+      return user?.role === "admin" || context.existingData?.id === user?.id;
+    },
+    delete: async (context) => {
+      const user = context.user as any;
+      return user?.role === "admin";
+    },
+  },
+});
+
+const postResource = createResource({
+  name: "post",
+  schema: {
+    id: { type: "string", primary: true },
+    title: { type: "string", required: true },
+    content: { type: "string" },
+    authorId: { type: "string", required: true },
+    published: { type: "boolean", default: false },
+    createdAt: { type: "date" },
+  },
+});
+
+export const query = betterQuery({
+  database: db,
+  resources: [userResource, postResource],
+});
+```
+
+### 2. Create Data Provider
+
+Use the `createBetterQueryProvider` function:
+
+```typescript title="lib/admin-data.ts"
+import { createBetterQueryProvider } from "better-admin";
+import { query } from "./query";
+
+export const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+  onError: (error) => {
+    console.error("Data error:", error);
+    // Handle error (e.g., show notification)
+  },
+});
+```
+
+## API Reference
+
+### createBetterQueryProvider
+
+Creates a data provider that integrates better-query with better-admin.
+
+**Parameters:**
+
+- `options.queryClient` - The better-query instance
+- `options.onError` - Optional error handler function
+
+**Returns:** `DataProvider`
+
+### DataProvider Interface
+
+The data provider implements the following interface:
+
+```typescript
+interface DataProvider {
+  getList: <T>(resource: string, params: ListParams) => Promise<ListResult<T>>;
+  getOne: <T>(resource: string, params: GetOneParams) => Promise<T>;
+  getMany: <T>(resource: string, params: GetManyParams) => Promise<T[]>;
+  create: <T>(resource: string, params: CreateParams<T>) => Promise<T>;
+  update: <T>(resource: string, params: UpdateParams<T>) => Promise<T>;
+  delete: <T>(resource: string, params: DeleteParams) => Promise<T>;
+  deleteMany: (resource: string, params: DeleteManyParams) => Promise<void>;
+}
+```
+
+## Usage Patterns
+
+### List View with Pagination
+
+```tsx title="app/admin/users/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { DataTable } from "@/components/ui/data-table";
+import { useState } from "react";
+
+export default function UsersListPage() {
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+
+  const { list } = useBetterQuery("user", query);
+  const { data, isLoading, error } = list.useQuery({
+    skip: (page - 1) * perPage,
+    take: perPage,
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const columns = [
+    { accessorKey: "name", header: "Name" },
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "role", header: "Role" },
+  ];
+
+  return (
+    <div>
+      <h1>Users</h1>
+      <DataTable columns={columns} data={data || []} />
+      <Pagination page={page} onChange={setPage} />
+    </div>
+  );
+}
+```
+
+### Create Form
+
+```tsx title="app/admin/users/create/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { CrudForm } from "@/components/ui/crud-form";
+import { useRouter } from "next/navigation";
+
+export default function UserCreatePage() {
+  const { create } = useBetterQuery("user", query);
+  const router = useRouter();
+
+  const fields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      options: [
+        { value: "user", label: "User" },
+        { value: "admin", label: "Admin" },
+      ],
+    },
+  ];
+
+  return (
+    <div>
+      <h1>Create User</h1>
+      <CrudForm
+        fields={fields}
+        onSubmit={async (data) => {
+          await create.mutateAsync(data);
+          router.push("/admin/users");
+        }}
+        submitLabel="Create User"
+      />
+    </div>
+  );
+}
+```
+
+### Edit Form
+
+```tsx title="app/admin/users/[id]/edit/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { CrudForm } from "@/components/ui/crud-form";
+import { useRouter } from "next/navigation";
+
+export default function UserEditPage({ params }: { params: { id: string } }) {
+  const { get, update } = useBetterQuery("user", query);
+  const { data, isLoading } = get.useQuery({ where: { id: params.id } });
+  const router = useRouter();
+
+  if (isLoading) return <div>Loading...</div>;
+
+  const fields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      options: [
+        { value: "user", label: "User" },
+        { value: "admin", label: "Admin" },
+      ],
+    },
+  ];
+
+  return (
+    <div>
+      <h1>Edit User</h1>
+      <CrudForm
+        fields={fields}
+        defaultValues={data}
+        onSubmit={async (formData) => {
+          await update.mutateAsync({
+            where: { id: params.id },
+            data: formData,
+          });
+          router.push("/admin/users");
+        }}
+        submitLabel="Update User"
+      />
+    </div>
+  );
+}
+```
+
+### Delete Operation
+
+```tsx title="components/delete-user-button.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { Button } from "@/components/ui/button";
+
+export function DeleteUserButton({ userId }: { userId: string }) {
+  const { remove } = useBetterQuery("user", query);
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    try {
+      await remove.mutateAsync({ where: { id: userId } });
+      // Refresh the list or redirect
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  return (
+    <Button variant="destructive" onClick={handleDelete}>
+      Delete
+    </Button>
+  );
+}
+```
+
+## Advanced Patterns
+
+### Filtering and Search
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/data-table";
+
+export default function UsersListWithSearch() {
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState<string | null>(null);
+
+  const { list } = useBetterQuery("user", query);
+  
+  // Build filter object
+  const where: any = {};
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { email: { contains: search } },
+    ];
+  }
+  if (role) {
+    where.role = role;
+  }
+
+  const { data, isLoading } = list.useQuery({ where });
+
+  return (
+    <div>
+      <div className="flex gap-4 mb-4">
+        <Input
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select value={role || ""} onChange={(e) => setRole(e.target.value || null)}>
+          <option value="">All Roles</option>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <DataTable columns={columns} data={data || []} />
+      )}
+    </div>
+  );
+}
+```
+
+### Relationships
+
+Better Query supports relationships between resources:
+
+```tsx
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+
+export function UserWithPosts({ userId }: { userId: string }) {
+  const { get: getUser } = useBetterQuery("user", query);
+  const { list: listPosts } = useBetterQuery("post", query);
+
+  const { data: user } = getUser.useQuery({ where: { id: userId } });
+  const { data: posts } = listPosts.useQuery({
+    where: { authorId: userId },
+  });
+
+  return (
+    <div>
+      <h2>{user?.name}</h2>
+      <h3>Posts</h3>
+      <ul>
+        {posts?.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Bulk Operations
+
+```tsx
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { Button } from "@/components/ui/button";
+
+export function BulkDeleteButton({ selectedIds }: { selectedIds: string[] }) {
+  const { remove } = useBetterQuery("user", query);
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.length} users?`)) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        selectedIds.map((id) => remove.mutateAsync({ where: { id } }))
+      );
+    } catch (error) {
+      console.error("Bulk delete failed:", error);
+    }
+  };
+
+  return (
+    <Button
+      variant="destructive"
+      onClick={handleBulkDelete}
+      disabled={selectedIds.length === 0}
+    >
+      Delete {selectedIds.length} Selected
+    </Button>
+  );
+}
+```
+
+## Optimistic Updates
+
+Better Query supports optimistic updates for better UX:
+
+```tsx
+const { update } = useBetterQuery("user", query);
+
+await update.mutateAsync(
+  {
+    where: { id: userId },
+    data: { name: newName },
+  },
+  {
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["user", userId] });
+
+      // Snapshot previous value
+      const previous = queryClient.getQueryData(["user", userId]);
+
+      // Optimistically update
+      queryClient.setQueryData(["user", userId], (old: any) => ({
+        ...old,
+        name: newName,
+      }));
+
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(["user", userId], context.previous);
+      }
+    },
+  }
+);
+```
+
+## Error Handling
+
+The data provider includes built-in error handling:
+
+```typescript
+export const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+  onError: (error) => {
+    // Custom error handling
+    console.error("Data error:", error);
+    
+    // Show notification
+    toast.error(error.message);
+    
+    // Track errors
+    analytics.track("data_error", {
+      message: error.message,
+    });
+  },
+});
+```
+
+## Migration from react-admin
+
+If you're migrating from react-admin, the data provider interface is compatible:
+
+```typescript
+// Before (react-admin)
+import simpleRestProvider from "ra-data-simple-rest";
+const dataProvider = simpleRestProvider("http://api.example.com");
+
+// After (better-admin)
+import { createBetterQueryProvider } from "better-admin";
+const dataProvider = createBetterQueryProvider({ queryClient: query });
+```
+
+Key differences:
+
+1. **Type Safety**: Full TypeScript support with schema validation
+2. **Permissions**: Built-in permission system at the resource level
+3. **Relationships**: Native support for relationships
+4. **Offline Support**: Built-in caching with React Query
+5. **No REST API Required**: Direct database access or any backend
+
+## Best Practices
+
+1. **Resource Definition**: Define clear schemas for all resources
+2. **Permissions**: Always implement permission checks
+3. **Error Handling**: Provide an `onError` handler
+4. **Caching**: Leverage React Query's caching capabilities
+5. **Type Safety**: Use TypeScript for full type inference
+6. **Middleware**: Use middleware for cross-cutting concerns (auth, logging, etc.)
+
+## Performance Tips
+
+1. **Pagination**: Always paginate large lists
+2. **Selective Fields**: Only fetch fields you need
+3. **Caching**: Configure appropriate cache times
+4. **Debouncing**: Debounce search inputs
+5. **Optimistic Updates**: Use for better UX
+
+## Next Steps
+
+- [Auth Provider](/docs/better-admin/auth-provider) - Set up authentication
+- [Components](/docs/better-admin/components) - Browse available admin components
+- [Better Query Documentation](/docs/introduction) - Learn more about better-query
