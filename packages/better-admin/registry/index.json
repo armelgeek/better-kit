@@ -1,4 +1,27 @@
 {
+	"version": "1.0.0",
+	"categories": [
+		{
+			"id": "data-display",
+			"name": "Data Display",
+			"description": "Components for displaying data from better-query"
+		},
+		{
+			"id": "forms",
+			"name": "Forms",
+			"description": "Form components with validation and better-query mutations"
+		},
+		{
+			"id": "layout",
+			"name": "Layout",
+			"description": "Layout components for admin interfaces"
+		},
+		{
+			"id": "feedback",
+			"name": "Feedback",
+			"description": "Loading states, notifications, and error handling"
+		}
+	],
 	"components": [
 		{
 			"name": "data-table",

@@ -1,20 +1,36 @@
 {
-	"name": "data-table",
-	"type": "components:ui",
-	"description": "A powerful data table component with sorting, filtering, and pagination built on top of shadcn/ui table components",
-	"dependencies": {
-		"shadcn": ["table", "button", "input", "dropdown-menu", "select"],
-		"npm": ["@tanstack/react-table"]
-	},
-	"registryDependencies": [],
-	"files": [
-		{
-			"path": "components/ui/data-table.tsx",
-			"content": "\"use client\";\n\nimport * as React from \"react\";\nimport {\n\tColumnDef,\n\tColumnFiltersState,\n\tSortingState,\n\tVisibilityState,\n\tflexRender,\n\tgetCoreRowModel,\n\tgetFilteredRowModel,\n\tgetPaginationRowModel,\n\tgetSortedRowModel,\n\tuseReactTable,\n} from \"@tanstack/react-table\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport {\n\tTable,\n\tTableBody,\n\tTableCell,\n\tTableHead,\n\tTableHeader,\n\tTableRow,\n} from \"@/components/ui/table\";\n\ninterface DataTableProps<TData, TValue> {\n\tcolumns: ColumnDef<TData, TValue>[];\n\tdata: TData[];\n\tsearchKey?: string;\n\tsearchPlaceholder?: string;\n}\n\nexport function DataTable<TData, TValue>({\n\tcolumns,\n\tdata,\n\tsearchKey = \"name\",\n\tsearchPlaceholder = \"Search...\",\n}: DataTableProps<TData, TValue>) {\n\tconst [sorting, setSorting] = React.useState<SortingState>([]);\n\tconst [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);\n\tconst [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});\n\tconst [rowSelection, setRowSelection] = React.useState({});\n\n\tconst table = useReactTable({\n\t\tdata,\n\t\tcolumns,\n\t\tonSortingChange: setSorting,\n\t\tonColumnFiltersChange: setColumnFilters,\n\t\tgetCoreRowModel: getCoreRowModel(),\n\t\tgetPaginationRowModel: getPaginationRowModel(),\n\t\tgetSortedRowModel: getSortedRowModel(),\n\t\tgetFilteredRowModel: getFilteredRowModel(),\n\t\tonColumnVisibilityChange: setColumnVisibility,\n\t\tonRowSelectionChange: setRowSelection,\n\t\tstate: {\n\t\t\tsorting,\n\t\t\tcolumnFilters,\n\t\t\tcolumnVisibility,\n\t\t\trowSelection,\n\t\t},\n\t});\n\n\treturn (\n\t\t<div className=\"w-full\">\n\t\t\t<div className=\"flex items-center py-4\">\n\t\t\t\t<Input\n\t\t\t\t\tplaceholder={searchPlaceholder}\n\t\t\t\t\tvalue={(table.getColumn(searchKey)?.getFilterValue() as string) ?? \"\"}\n\t\t\t\t\tonChange={(event) =>\n\t\t\t\t\t\ttable.getColumn(searchKey)?.setFilterValue(event.target.value)\n\t\t\t\t\t}\n\t\t\t\t\tclassName=\"max-w-sm\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div className=\"rounded-md border\">\n\t\t\t\t<Table>\n\t\t\t\t\t<TableHeader>\n\t\t\t\t\t\t{table.getHeaderGroups().map((headerGroup) => (\n\t\t\t\t\t\t\t<TableRow key={headerGroup.id}>\n\t\t\t\t\t\t\t\t{headerGroup.headers.map((header) => {\n\t\t\t\t\t\t\t\t\treturn (\n\t\t\t\t\t\t\t\t\t\t<TableHead key={header.id}>\n\t\t\t\t\t\t\t\t\t\t\t{header.isPlaceholder\n\t\t\t\t\t\t\t\t\t\t\t\t? null\n\t\t\t\t\t\t\t\t\t\t\t\t: flexRender(\n\t\t\t\t\t\t\t\t\t\t\t\t\t\theader.column.columnDef.header,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\theader.getContext(),\n\t\t\t\t\t\t\t\t\t\t\t\t  )}\n\t\t\t\t\t\t\t\t\t\t</TableHead>\n\t\t\t\t\t\t\t\t\t);\n\t\t\t\t\t\t\t\t})}\n\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t))}\n\t\t\t\t\t</TableHeader>\n\t\t\t\t\t<TableBody>\n\t\t\t\t\t\t{table.getRowModel().rows?.length ? (\n\t\t\t\t\t\t\ttable.getRowModel().rows.map((row) => (\n\t\t\t\t\t\t\t\t<TableRow\n\t\t\t\t\t\t\t\t\tkey={row.id}\n\t\t\t\t\t\t\t\t\tdata-state={row.getIsSelected() && \"selected\"}\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{row.getVisibleCells().map((cell) => (\n\t\t\t\t\t\t\t\t\t\t<TableCell key={cell.id}>\n\t\t\t\t\t\t\t\t\t\t\t{flexRender(cell.column.columnDef.cell, cell.getContext())}\n\t\t\t\t\t\t\t\t\t\t</TableCell>\n\t\t\t\t\t\t\t\t\t))}\n\t\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t\t))\n\t\t\t\t\t\t) : (\n\t\t\t\t\t\t\t<TableRow>\n\t\t\t\t\t\t\t\t<TableCell colSpan={columns.length} className=\"h-24 text-center\">\n\t\t\t\t\t\t\t\t\tNo results.\n\t\t\t\t\t\t\t\t</TableCell>\n\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</TableBody>\n\t\t\t\t</Table>\n\t\t\t</div>\n\t\t\t<div className=\"flex items-center justify-end space-x-2 py-4\">\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"outline\"\n\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\tonClick={() => table.previousPage()}\n\t\t\t\t\tdisabled={!table.getCanPreviousPage()}\n\t\t\t\t>\n\t\t\t\t\tPrevious\n\t\t\t\t</Button>\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"outline\"\n\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\tonClick={() => table.nextPage()}\n\t\t\t\t\tdisabled={!table.getCanNextPage()}\n\t\t\t\t>\n\t\t\t\t\tNext\n\t\t\t\t</Button>\n\t\t\t</div>\n\t\t</div>\n\t);\n}\n",
-			"type": "components:ui"
-		}
-	],
-	"tailwind": {
-		"config": {}
-	}
+  "name": "data-table",
+  "type": "components:ui",
+  "description": "A powerful data table component with sorting, filtering, and pagination built on top of shadcn/ui table components",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "button",
+      "input",
+      "dropdown-menu",
+      "select"
+    ],
+    "npm": [
+      "@tanstack/react-table"
+    ]
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/ui/data-table.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport {\n\tColumnDef,\n\tColumnFiltersState,\n\tSortingState,\n\tVisibilityState,\n\tflexRender,\n\tgetCoreRowModel,\n\tgetFilteredRowModel,\n\tgetPaginationRowModel,\n\tgetSortedRowModel,\n\tuseReactTable,\n} from \"@tanstack/react-table\";\nimport { Button } from \"@/components/ui/button\";\nimport { Input } from \"@/components/ui/input\";\nimport {\n\tTable,\n\tTableBody,\n\tTableCell,\n\tTableHead,\n\tTableHeader,\n\tTableRow,\n} from \"@/components/ui/table\";\n\ninterface DataTableProps<TData, TValue> {\n\tcolumns: ColumnDef<TData, TValue>[];\n\tdata: TData[];\n\tsearchKey?: string;\n\tsearchPlaceholder?: string;\n}\n\nexport function DataTable<TData, TValue>({\n\tcolumns,\n\tdata,\n\tsearchKey = \"name\",\n\tsearchPlaceholder = \"Search...\",\n}: DataTableProps<TData, TValue>) {\n\tconst [sorting, setSorting] = React.useState<SortingState>([]);\n\tconst [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);\n\tconst [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});\n\tconst [rowSelection, setRowSelection] = React.useState({});\n\n\tconst table = useReactTable({\n\t\tdata,\n\t\tcolumns,\n\t\tonSortingChange: setSorting,\n\t\tonColumnFiltersChange: setColumnFilters,\n\t\tgetCoreRowModel: getCoreRowModel(),\n\t\tgetPaginationRowModel: getPaginationRowModel(),\n\t\tgetSortedRowModel: getSortedRowModel(),\n\t\tgetFilteredRowModel: getFilteredRowModel(),\n\t\tonColumnVisibilityChange: setColumnVisibility,\n\t\tonRowSelectionChange: setRowSelection,\n\t\tstate: {\n\t\t\tsorting,\n\t\t\tcolumnFilters,\n\t\t\tcolumnVisibility,\n\t\t\trowSelection,\n\t\t},\n\t});\n\n\treturn (\n\t\t<div className=\"w-full\">\n\t\t\t<div className=\"flex items-center py-4\">\n\t\t\t\t<Input\n\t\t\t\t\tplaceholder={searchPlaceholder}\n\t\t\t\t\tvalue={(table.getColumn(searchKey)?.getFilterValue() as string) ?? \"\"}\n\t\t\t\t\tonChange={(event) =>\n\t\t\t\t\t\ttable.getColumn(searchKey)?.setFilterValue(event.target.value)\n\t\t\t\t\t}\n\t\t\t\t\tclassName=\"max-w-sm\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<div className=\"rounded-md border\">\n\t\t\t\t<Table>\n\t\t\t\t\t<TableHeader>\n\t\t\t\t\t\t{table.getHeaderGroups().map((headerGroup) => (\n\t\t\t\t\t\t\t<TableRow key={headerGroup.id}>\n\t\t\t\t\t\t\t\t{headerGroup.headers.map((header) => {\n\t\t\t\t\t\t\t\t\treturn (\n\t\t\t\t\t\t\t\t\t\t<TableHead key={header.id}>\n\t\t\t\t\t\t\t\t\t\t\t{header.isPlaceholder\n\t\t\t\t\t\t\t\t\t\t\t\t? null\n\t\t\t\t\t\t\t\t\t\t\t\t: flexRender(\n\t\t\t\t\t\t\t\t\t\t\t\t\t\theader.column.columnDef.header,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\theader.getContext(),\n\t\t\t\t\t\t\t\t\t\t\t\t  )}\n\t\t\t\t\t\t\t\t\t\t</TableHead>\n\t\t\t\t\t\t\t\t\t);\n\t\t\t\t\t\t\t\t})}\n\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t))}\n\t\t\t\t\t</TableHeader>\n\t\t\t\t\t<TableBody>\n\t\t\t\t\t\t{table.getRowModel().rows?.length ? (\n\t\t\t\t\t\t\ttable.getRowModel().rows.map((row) => (\n\t\t\t\t\t\t\t\t<TableRow\n\t\t\t\t\t\t\t\t\tkey={row.id}\n\t\t\t\t\t\t\t\t\tdata-state={row.getIsSelected() && \"selected\"}\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{row.getVisibleCells().map((cell) => (\n\t\t\t\t\t\t\t\t\t\t<TableCell key={cell.id}>\n\t\t\t\t\t\t\t\t\t\t\t{flexRender(cell.column.columnDef.cell, cell.getContext())}\n\t\t\t\t\t\t\t\t\t\t</TableCell>\n\t\t\t\t\t\t\t\t\t))}\n\t\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t\t))\n\t\t\t\t\t\t) : (\n\t\t\t\t\t\t\t<TableRow>\n\t\t\t\t\t\t\t\t<TableCell colSpan={columns.length} className=\"h-24 text-center\">\n\t\t\t\t\t\t\t\t\tNo results.\n\t\t\t\t\t\t\t\t</TableCell>\n\t\t\t\t\t\t\t</TableRow>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</TableBody>\n\t\t\t\t</Table>\n\t\t\t</div>\n\t\t\t<div className=\"flex items-center justify-end space-x-2 py-4\">\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"outline\"\n\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\tonClick={() => table.previousPage()}\n\t\t\t\t\tdisabled={!table.getCanPreviousPage()}\n\t\t\t\t>\n\t\t\t\t\tPrevious\n\t\t\t\t</Button>\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"outline\"\n\t\t\t\t\tsize=\"sm\"\n\t\t\t\t\tonClick={() => table.nextPage()}\n\t\t\t\t\tdisabled={!table.getCanNextPage()}\n\t\t\t\t>\n\t\t\t\t\tNext\n\t\t\t\t</Button>\n\t\t\t</div>\n\t\t</div>\n\t);\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "category": "data-display",
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"resource\").list()",
+    "example": "See documentation for full example"
+  }
 }

@@ -1,20 +1,40 @@
 {
-	"name": "crud-form",
-	"type": "components:ui",
-	"description": "A flexible CRUD form builder with validation using react-hook-form and zod",
-	"dependencies": {
-		"shadcn": ["form", "input", "button", "label", "select", "textarea"],
-		"npm": ["react-hook-form", "@hookform/resolvers", "zod"]
-	},
-	"registryDependencies": [],
-	"files": [
-		{
-			"path": "components/ui/crud-form.tsx",
-			"content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useForm } from \"react-hook-form\";\nimport { zodResolver } from \"@hookform/resolvers/zod\";\nimport * as z from \"zod\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n\tForm,\n\tFormControl,\n\tFormDescription,\n\tFormField,\n\tFormItem,\n\tFormLabel,\n\tFormMessage,\n} from \"@/components/ui/form\";\nimport { Input } from \"@/components/ui/input\";\n\ninterface Field {\n\tname: string;\n\tlabel: string;\n\ttype: \"text\" | \"email\" | \"password\" | \"number\";\n\tplaceholder?: string;\n\tdescription?: string;\n\trequired?: boolean;\n}\n\ninterface CrudFormProps {\n\tfields: Field[];\n\tdefaultValues?: Record<string, any>;\n\tonSubmit: (data: Record<string, any>) => void | Promise<void>;\n\tsubmitLabel?: string;\n\tisLoading?: boolean;\n}\n\nexport function CrudForm({\n\tfields,\n\tdefaultValues = {},\n\tonSubmit,\n\tsubmitLabel = \"Submit\",\n\tisLoading = false,\n}: CrudFormProps) {\n\t// Build dynamic schema\n\tconst schemaShape: Record<string, z.ZodTypeAny> = {};\n\t\n\tfor (const field of fields) {\n\t\tlet fieldSchema: z.ZodTypeAny;\n\t\t\n\t\tswitch (field.type) {\n\t\t\tcase \"email\":\n\t\t\t\tfieldSchema = z.string().email(\"Invalid email address\");\n\t\t\t\tbreak;\n\t\t\tcase \"number\":\n\t\t\t\tfieldSchema = z.coerce.number();\n\t\t\t\tbreak;\n\t\t\tdefault:\n\t\t\t\tfieldSchema = z.string();\n\t\t}\n\t\t\n\t\tif (field.required) {\n\t\t\tfieldSchema = fieldSchema.min(1, `${field.label} is required`);\n\t\t} else {\n\t\t\tfieldSchema = fieldSchema.optional();\n\t\t}\n\t\t\n\t\tschemaShape[field.name] = fieldSchema;\n\t}\n\t\n\tconst formSchema = z.object(schemaShape);\n\ttype FormValues = z.infer<typeof formSchema>;\n\t\n\tconst form = useForm<FormValues>({\n\t\tresolver: zodResolver(formSchema),\n\t\tdefaultValues,\n\t});\n\t\n\tconst handleSubmit = async (data: FormValues) => {\n\t\tawait onSubmit(data);\n\t};\n\t\n\treturn (\n\t\t<Form {...form}>\n\t\t\t<form onSubmit={form.handleSubmit(handleSubmit)} className=\"space-y-4\">\n\t\t\t\t{fields.map((field) => (\n\t\t\t\t\t<FormField\n\t\t\t\t\t\tkey={field.name}\n\t\t\t\t\t\tcontrol={form.control}\n\t\t\t\t\t\tname={field.name as any}\n\t\t\t\t\t\trender={({ field: formField }) => (\n\t\t\t\t\t\t\t<FormItem>\n\t\t\t\t\t\t\t\t<FormLabel>{field.label}</FormLabel>\n\t\t\t\t\t\t\t\t<FormControl>\n\t\t\t\t\t\t\t\t\t<Input\n\t\t\t\t\t\t\t\t\t\ttype={field.type}\n\t\t\t\t\t\t\t\t\t\tplaceholder={field.placeholder}\n\t\t\t\t\t\t\t\t\t\t{...formField}\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</FormControl>\n\t\t\t\t\t\t\t\t{field.description && (\n\t\t\t\t\t\t\t\t\t<FormDescription>{field.description}</FormDescription>\n\t\t\t\t\t\t\t\t)}\n\t\t\t\t\t\t\t\t<FormMessage />\n\t\t\t\t\t\t\t</FormItem>\n\t\t\t\t\t\t)}\n\t\t\t\t\t/>\n\t\t\t\t))}\n\t\t\t\t<Button type=\"submit\" disabled={isLoading}>\n\t\t\t\t\t{isLoading ? \"Submitting...\" : submitLabel}\n\t\t\t\t</Button>\n\t\t\t</form>\n\t\t</Form>\n\t);\n}\n",
-			"type": "components:ui"
-		}
-	],
-	"tailwind": {
-		"config": {}
-	}
+  "name": "crud-form",
+  "type": "components:ui",
+  "description": "A flexible CRUD form builder with validation using react-hook-form and zod",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "button",
+      "label",
+      "select",
+      "textarea"
+    ],
+    "npm": [
+      "react-hook-form",
+      "@hookform/resolvers",
+      "zod"
+    ]
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/ui/crud-form.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\nimport { useForm } from \"react-hook-form\";\nimport { zodResolver } from \"@hookform/resolvers/zod\";\nimport * as z from \"zod\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n\tForm,\n\tFormControl,\n\tFormDescription,\n\tFormField,\n\tFormItem,\n\tFormLabel,\n\tFormMessage,\n} from \"@/components/ui/form\";\nimport { Input } from \"@/components/ui/input\";\n\ninterface Field {\n\tname: string;\n\tlabel: string;\n\ttype: \"text\" | \"email\" | \"password\" | \"number\";\n\tplaceholder?: string;\n\tdescription?: string;\n\trequired?: boolean;\n}\n\ninterface CrudFormProps {\n\tfields: Field[];\n\tdefaultValues?: Record<string, any>;\n\tonSubmit: (data: Record<string, any>) => void | Promise<void>;\n\tsubmitLabel?: string;\n\tisLoading?: boolean;\n}\n\nexport function CrudForm({\n\tfields,\n\tdefaultValues = {},\n\tonSubmit,\n\tsubmitLabel = \"Submit\",\n\tisLoading = false,\n}: CrudFormProps) {\n\t// Build dynamic schema\n\tconst schemaShape: Record<string, z.ZodTypeAny> = {};\n\t\n\tfor (const field of fields) {\n\t\tlet fieldSchema: z.ZodTypeAny;\n\t\t\n\t\tswitch (field.type) {\n\t\t\tcase \"email\":\n\t\t\t\tfieldSchema = z.string().email(\"Invalid email address\");\n\t\t\t\tbreak;\n\t\t\tcase \"number\":\n\t\t\t\tfieldSchema = z.coerce.number();\n\t\t\t\tbreak;\n\t\t\tdefault:\n\t\t\t\tfieldSchema = z.string();\n\t\t}\n\t\t\n\t\tif (field.required) {\n\t\t\tfieldSchema = fieldSchema.min(1, `${field.label} is required`);\n\t\t} else {\n\t\t\tfieldSchema = fieldSchema.optional();\n\t\t}\n\t\t\n\t\tschemaShape[field.name] = fieldSchema;\n\t}\n\t\n\tconst formSchema = z.object(schemaShape);\n\ttype FormValues = z.infer<typeof formSchema>;\n\t\n\tconst form = useForm<FormValues>({\n\t\tresolver: zodResolver(formSchema),\n\t\tdefaultValues,\n\t});\n\t\n\tconst handleSubmit = async (data: FormValues) => {\n\t\tawait onSubmit(data);\n\t};\n\t\n\treturn (\n\t\t<Form {...form}>\n\t\t\t<form onSubmit={form.handleSubmit(handleSubmit)} className=\"space-y-4\">\n\t\t\t\t{fields.map((field) => (\n\t\t\t\t\t<FormField\n\t\t\t\t\t\tkey={field.name}\n\t\t\t\t\t\tcontrol={form.control}\n\t\t\t\t\t\tname={field.name as any}\n\t\t\t\t\t\trender={({ field: formField }) => (\n\t\t\t\t\t\t\t<FormItem>\n\t\t\t\t\t\t\t\t<FormLabel>{field.label}</FormLabel>\n\t\t\t\t\t\t\t\t<FormControl>\n\t\t\t\t\t\t\t\t\t<Input\n\t\t\t\t\t\t\t\t\t\ttype={field.type}\n\t\t\t\t\t\t\t\t\t\tplaceholder={field.placeholder}\n\t\t\t\t\t\t\t\t\t\t{...formField}\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t</FormControl>\n\t\t\t\t\t\t\t\t{field.description && (\n\t\t\t\t\t\t\t\t\t<FormDescription>{field.description}</FormDescription>\n\t\t\t\t\t\t\t\t)}\n\t\t\t\t\t\t\t\t<FormMessage />\n\t\t\t\t\t\t\t</FormItem>\n\t\t\t\t\t\t)}\n\t\t\t\t\t/>\n\t\t\t\t))}\n\t\t\t\t<Button type=\"submit\" disabled={isLoading}>\n\t\t\t\t\t{isLoading ? \"Submitting...\" : submitLabel}\n\t\t\t\t</Button>\n\t\t\t</form>\n\t\t</Form>\n\t);\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "category": "forms",
+  "betterQuery": {
+    "operations": [
+      "create",
+      "update"
+    ],
+    "hook": "useQuery(\"resource\").create / .update",
+    "example": "See documentation for full example"
+  }
 }

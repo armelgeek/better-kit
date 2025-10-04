@@ -1,20 +1,21 @@
 {
-	"name": "example-card",
-	"type": "components:ui",
-	"description": "A simple example card component with no dependencies",
-	"dependencies": {
-		"shadcn": [],
-		"npm": []
-	},
-	"registryDependencies": [],
-	"files": [
-		{
-			"path": "components/ui/example-card.tsx",
-			"content": "\"use client\";\n\nimport * as React from \"react\";\n\ninterface ExampleCardProps {\n\ttitle: string;\n\tchildren?: React.ReactNode;\n}\n\nexport function ExampleCard({ title, children }: ExampleCardProps) {\n\treturn (\n\t\t<div className=\"border rounded-lg p-4 shadow-sm\">\n\t\t\t<h3 className=\"text-lg font-semibold mb-2\">{title}</h3>\n\t\t\t<div>{children}</div>\n\t\t</div>\n\t);\n}\n",
-			"type": "components:ui"
-		}
-	],
-	"tailwind": {
-		"config": {}
-	}
+  "name": "example-card",
+  "type": "components:ui",
+  "description": "A simple example card component with no dependencies",
+  "dependencies": {
+    "shadcn": [],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/ui/example-card.tsx",
+      "content": "\"use client\";\n\nimport * as React from \"react\";\n\ninterface ExampleCardProps {\n\ttitle: string;\n\tchildren?: React.ReactNode;\n}\n\nexport function ExampleCard({ title, children }: ExampleCardProps) {\n\treturn (\n\t\t<div className=\"border rounded-lg p-4 shadow-sm\">\n\t\t\t<h3 className=\"text-lg font-semibold mb-2\">{title}</h3>\n\t\t\t<div>{children}</div>\n\t\t</div>\n\t);\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "category": "layout"
 }
