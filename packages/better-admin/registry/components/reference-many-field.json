@@ -1,0 +1,23 @@
+{
+  "name": "reference-many-field",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Display many-to-many relationships",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/reference-many-field.tsx",
+      "content": "import { ReactNode } from \"react\";\nimport {\n  ReferenceManyFieldBase,\n  useListContext,\n  RaRecord,\n  UseReferenceManyFieldControllerParams,\n  ListControllerResult,\n} from \"ra-core\";\n\nexport const ReferenceManyField = <\n  RecordType extends RaRecord = RaRecord,\n  ReferenceRecordType extends RaRecord = RaRecord,\n>(\n  props: ReferenceManyFieldProps<RecordType, ReferenceRecordType>,\n) => {\n  const { children, empty, error, loading, pagination, render, ...rest } =\n    props;\n\n  return (\n    <ReferenceManyFieldBase {...rest}>\n      <ReferenceManyFieldView<ReferenceRecordType>\n        empty={empty}\n        error={error}\n        loading={loading}\n        pagination={pagination}\n        render={render}\n      >\n        {children}\n      </ReferenceManyFieldView>\n    </ReferenceManyFieldBase>\n  );\n};\n\nexport interface ReferenceManyFieldProps<\n  RecordType extends RaRecord = RaRecord,\n  ReferenceRecordType extends RaRecord = RaRecord,\n> extends UseReferenceManyFieldControllerParams<\n      RecordType,\n      ReferenceRecordType\n    >,\n    ReferenceManyFieldViewProps<ReferenceRecordType> {}\n\nconst ReferenceManyFieldView = <\n  ReferenceRecordType extends RaRecord = RaRecord,\n>(\n  props: ReferenceManyFieldViewProps<ReferenceRecordType>,\n) => {\n  const {\n    children,\n    empty,\n    error: errorElement,\n    loading,\n    pagination,\n    render,\n  } = props;\n  const listContext = useListContext();\n  const {\n    isPending,\n    error,\n    total,\n    hasPreviousPage,\n    hasNextPage,\n    data,\n    filterValues,\n  } = listContext;\n\n  if (isPending && loading !== false) {\n    return loading;\n  }\n  if (error && errorElement !== false) {\n    return errorElement;\n  }\n  if (\n    (total === 0 ||\n      (total == null &&\n        hasPreviousPage === false &&\n        hasNextPage === false &&\n        // @ts-expect-error FIXME total may be undefined when using partial pagination but the ListControllerResult type is wrong about it\n        data.length === 0 &&\n        // the user didn't set any filters\n        !Object.keys(filterValues).length)) &&\n    empty !== false\n  ) {\n    return empty;\n  }\n\n  return (\n    <>\n      {render && render(listContext)}\n      {children}\n      {pagination}\n    </>\n  );\n};\n\nexport interface ReferenceManyFieldViewProps<\n  ReferenceRecordType extends RaRecord = RaRecord,\n> {\n  children?: ReactNode;\n  empty?: ReactNode;\n  error?: ReactNode;\n  loading?: ReactNode;\n  pagination?: ReactNode;\n  render?: (props: ListControllerResult<ReferenceRecordType>) => ReactNode;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

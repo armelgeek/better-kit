@@ -1,0 +1,30 @@
+{
+  "name": "count",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Display count of records",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/count.tsx",
+      "content": "import {\n  useResourceContext,\n  useGetList,\n  useTimeout,\n  useCreatePath,\n  SortPayload,\n} from \"ra-core\";\nimport { CircleX, LoaderCircle } from \"lucide-react\";\n\nimport { Link } from \"react-router\";\n\n/**\n * Fetch and render the number of records of a given resource\n *\n * Relies on dataProvider.getList() returning a total property\n *\n * @example // Display the number of records in the current resource (based on ResourceContext)\n * <Count />\n *\n * @example // Display the number of posts\n * <Count resource=\"posts\" />\n *\n * @example // Display the number of published posts\n * <Count resource=\"posts\" filter={{ is_published: true }}/>\n *\n * @example // Display the number of posts, with a custom Typography variant\n * <Count resource=\"posts\" variant=\"h1\" />\n *\n * @see ReferenceManyCount for a similar component which fetches the number of records related to the current one\n */\nexport const Count = (props: CountProps) => {\n  const {\n    filter,\n    sort,\n    link,\n    // eslint-disable-next-line @typescript-eslint/no-unused-vars\n    resource: resourceFromProps,\n    timeout = 1000,\n    ...rest\n  } = props;\n  const resource = useResourceContext(props);\n  if (!resource) {\n    throw new Error(\n      \"The Count component must be used inside a ResourceContext or must be passed a resource prop.\"\n    );\n  }\n  const oneSecondHasPassed = useTimeout(timeout);\n  const createPath = useCreatePath();\n\n  const { total, isPending, error } = useGetList(resource, {\n    filter,\n    sort,\n    pagination: { perPage: 1, page: 1 },\n  });\n\n  const body = isPending ? (\n    oneSecondHasPassed ? (\n      <LoaderCircle className=\"animate-spin\" />\n    ) : (\n      \"\"\n    )\n  ) : error ? (\n    <CircleX color=\"error\" />\n  ) : (\n    total\n  );\n\n  return link ? (\n    <Link\n      to={{\n        pathname: createPath({ resource, type: \"list\" }),\n        search: filter ? `filter=${JSON.stringify(filter)}` : undefined,\n      }}\n      onClick={(e) => e.stopPropagation()}\n      {...rest}\n    >\n      {body}\n    </Link>\n  ) : (\n    <span {...rest}>{body}</span>\n  );\n};\n\nexport interface CountProps {\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  filter?: any;\n  sort?: SortPayload;\n  link?: boolean;\n  resource?: string;\n  timeout?: number;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"resource\").list()",
+    "example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+  }
+}

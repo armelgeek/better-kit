@@ -1,0 +1,31 @@
+{
+  "name": "show",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Show/detail view component",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/show.tsx",
+      "content": "import {\n  Breadcrumb,\n  BreadcrumbItem,\n  BreadcrumbPage,\n} from \"@/components/admin/breadcrumb\";\nimport {\n  ShowBase,\n  Translate,\n  useCreatePath,\n  useHasDashboard,\n  useShowContext,\n  useGetRecordRepresentation,\n  useGetResourceLabel,\n  useResourceContext,\n  useResourceDefinition,\n  type ShowBaseProps,\n} from \"ra-core\";\nimport { ReactNode } from \"react\";\nimport { Link } from \"react-router\";\nimport { cn } from \"@/lib/utils\";\nimport { EditButton } from \"@/components/admin/edit-button\";\n\nexport interface ShowProps\n  extends ShowViewProps,\n    Omit<ShowBaseProps, \"children\"> {}\n\nexport const Show = ({\n  disableAuthentication,\n  id,\n  queryOptions,\n  resource,\n  actions,\n  title,\n  children,\n  className,\n  render,\n  loading,\n}: ShowProps) => (\n  <ShowBase\n    id={id}\n    resource={resource}\n    queryOptions={queryOptions}\n    disableAuthentication={disableAuthentication}\n    render={render}\n    loading={loading}\n  >\n    <ShowView title={title} actions={actions} className={className}>\n      {children}\n    </ShowView>\n  </ShowBase>\n);\n\nexport interface ShowViewProps {\n  actions?: ReactNode;\n  title?: ReactNode | string | false;\n  children: ReactNode;\n  className?: string;\n  emptyWhileLoading?: boolean;\n}\n\nexport const ShowView = ({\n  actions,\n  title,\n  children,\n  className,\n  emptyWhileLoading,\n}: ShowViewProps) => {\n  const context = useShowContext();\n\n  const resource = useResourceContext();\n  if (!resource) {\n    throw new Error(\n      \"The ShowView component must be used within a ResourceContextProvider\",\n    );\n  }\n  const getResourceLabel = useGetResourceLabel();\n  const listLabel = getResourceLabel(resource, 2);\n  const createPath = useCreatePath();\n  const listLink = createPath({\n    resource,\n    type: \"list\",\n  });\n\n  const getRecordRepresentation = useGetRecordRepresentation(resource);\n  const recordRepresentation = getRecordRepresentation(context.record);\n\n  const { hasEdit } = useResourceDefinition({ resource });\n  const hasDashboard = useHasDashboard();\n\n  if (context.isLoading || !context.record) {\n    return null;\n  }\n  if (!context.record && emptyWhileLoading) {\n    return null;\n  }\n\n  return (\n    <>\n      <Breadcrumb>\n        {hasDashboard && (\n          <BreadcrumbItem>\n            <Link to=\"/\">\n              <Translate i18nKey=\"ra.page.dashboard\">Home</Translate>\n            </Link>\n          </BreadcrumbItem>\n        )}\n        <BreadcrumbItem>\n          <Link to={listLink}>{listLabel}</Link>\n        </BreadcrumbItem>\n        <BreadcrumbPage>{recordRepresentation}</BreadcrumbPage>\n      </Breadcrumb>\n      <div\n        className={cn(\n          \"flex justify-between items-start flex-wrap gap-2 my-2\",\n          className,\n        )}\n      >\n        <h2 className=\"text-2xl font-bold tracking-tight\">\n          {title !== undefined ? title : context.defaultTitle}\n        </h2>\n        {actions ?? (\n          <div className=\"flex justify-end items-center\">\n            {hasEdit ? <EditButton /> : null}\n          </div>\n        )}\n      </div>\n      <div className=\"my-2\">{children}</div>\n    </>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "get"
+    ],
+    "hook": "useQuery(\"resource\").read(id)",
+    "example": "const { data } = useQuery(\"resource\").read(id);\n// Use in component"
+  }
+}

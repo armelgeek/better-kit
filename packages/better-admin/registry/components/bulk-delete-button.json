@@ -1,0 +1,31 @@
+{
+  "name": "bulk-delete-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button for bulk delete operations",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/bulk-delete-button.tsx",
+      "content": "/* eslint-disable @typescript-eslint/no-explicit-any */\nimport { Button } from \"@/components/ui/button\";\nimport { Trash } from \"lucide-react\";\nimport {\n  Translate,\n  useDeleteMany,\n  useListContext,\n  useNotify,\n  useRefresh,\n  useResourceContext,\n  useTranslate,\n  type MutationMode,\n  type RaRecord,\n  type UseDeleteManyOptions,\n} from \"ra-core\";\nimport { cn } from \"@/lib/utils\";\nimport { ReactNode } from \"react\";\n\nexport interface BulkDeleteButtonProps<\n  RecordType extends RaRecord = any,\n  MutationOptionsError = unknown,\n> extends React.HTMLAttributes<HTMLButtonElement> {\n  mutationMode?: MutationMode;\n  label?: string;\n  resource?: string;\n  className?: string;\n  icon?: ReactNode;\n  mutationOptions?: UseDeleteManyOptions<RecordType, MutationOptionsError> & {\n    meta?: any;\n  };\n}\n\nexport const BulkDeleteButton = <\n  RecordType extends RaRecord = any,\n  MutationOptionsError = unknown,\n>(\n  props: BulkDeleteButtonProps<RecordType, MutationOptionsError>,\n) => {\n  const {\n    mutationMode = \"undoable\",\n    icon = defaultIcon,\n    label,\n    className,\n    mutationOptions = {},\n  } = props;\n  const { meta: mutationMeta, ...otherMutationOptions } = mutationOptions;\n  const resource = useResourceContext(props);\n  const [deleteMany, { isPending }] = useDeleteMany<\n    RecordType,\n    MutationOptionsError\n  >();\n  const { selectedIds, onUnselectItems } = useListContext();\n  const notify = useNotify();\n  const refresh = useRefresh();\n  const translate = useTranslate();\n  const handleClick = (e: React.MouseEvent) => {\n    stopPropagation(e);\n    deleteMany(\n      resource,\n      { ids: selectedIds, meta: mutationMeta },\n      {\n        mutationMode,\n        onSuccess: () => {\n          onUnselectItems();\n          notify(`resources.${resource}.notifications.deleted`, {\n            messageArgs: {\n              smart_count: selectedIds.length,\n              _: translate(\"ra.notification.deleted\", {\n                smart_count: selectedIds.length,\n                _: `${selectedIds.length} elements deleted`,\n              }),\n            },\n            undoable: mutationMode === \"undoable\",\n          });\n        },\n        onError: (error: MutationOptionsError) => {\n          const errorMessage =\n            typeof error === \"string\" ? error : (error as any)?.message;\n          notify(errorMessage || \"ra.notification.http_error\", {\n            type: \"error\",\n            messageArgs: { _: errorMessage },\n          });\n          refresh();\n        },\n        ...otherMutationOptions,\n      },\n    );\n  };\n  return (\n    <Button\n      variant=\"destructive\"\n      type=\"button\"\n      onClick={handleClick}\n      disabled={isPending}\n      className={cn(\"h-9\", className)}\n    >\n      {icon}\n      <Translate i18nKey={label ?? \"ra.action.delete\"}>\n        {label ?? \"Delete\"}\n      </Translate>\n    </Button>\n  );\n};\n\nconst defaultIcon = <Trash />;\n\n// useful to prevent click bubbling in a datagrid with rowClick\nconst stopPropagation = (e: React.MouseEvent) => e.stopPropagation();\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "delete"
+    ],
+    "hook": "useQuery(\"resource\").delete()",
+    "example": "const { data } = useQuery(\"resource\").delete();\n// Use in component"
+  }
+}

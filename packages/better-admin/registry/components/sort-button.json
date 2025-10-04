@@ -1,0 +1,24 @@
+{
+  "name": "sort-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to sort columns",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/sort-button.tsx",
+      "content": "import * as React from \"react\";\nimport { memo } from \"react\";\nimport { ArrowUpDown, ChevronDown } from \"lucide-react\";\nimport {\n  shallowEqual,\n  useListSortContext,\n  useTranslate,\n  useTranslateLabel,\n} from \"ra-core\";\nimport { useIsMobile } from \"@/hooks/use-mobile\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from \"@/components/ui/dropdown-menu\";\nimport {\n  Tooltip,\n  TooltipContent,\n  TooltipProvider,\n  TooltipTrigger,\n} from \"@/components/ui/tooltip\";\n\ntype ButtonProps = React.ComponentProps<typeof Button>;\n\nconst SortButtonComponent = (props: SortButtonProps) => {\n  const {\n    fields,\n    label = \"ra.sort.sort_by\",\n    icon = defaultIcon,\n    resource: resourceProp,\n    ...rest\n  } = props;\n  const { resource: resourceFromContext, sort, setSort } = useListSortContext();\n  const resource = resourceProp || resourceFromContext;\n  const translate = useTranslate();\n  const translateLabel = useTranslateLabel();\n  const isMobile = useIsMobile();\n  const [open, setOpen] = React.useState(false);\n\n  const handleChangeSort = (field: string) => {\n    setSort({\n      field,\n      order: field === sort.field ? inverseOrder(sort.order) : \"ASC\",\n    });\n    setOpen(false);\n  };\n\n  const fieldLabel = translateLabel({\n    resource,\n    source: sort.field,\n  });\n  const buttonLabel = translate(label, {\n    field: fieldLabel,\n    field_lower_first:\n      typeof fieldLabel === \"string\"\n        ? fieldLabel.charAt(0).toLowerCase() + fieldLabel.slice(1)\n        : undefined,\n    order: translate(`ra.sort.${sort.order}`),\n    _: label,\n  });\n\n  return (\n    <DropdownMenu open={open} onOpenChange={setOpen}>\n      {isMobile ? (\n        <TooltipProvider>\n          <Tooltip>\n            <DropdownMenuTrigger asChild>\n              <TooltipTrigger asChild>\n                <Button\n                  variant=\"outline\"\n                  size=\"icon\"\n                  aria-label={buttonLabel}\n                  {...rest}\n                >\n                  {icon}\n                </Button>\n              </TooltipTrigger>\n            </DropdownMenuTrigger>\n            <TooltipContent>\n              <p>{buttonLabel}</p>\n            </TooltipContent>\n          </Tooltip>\n        </TooltipProvider>\n      ) : (\n        <DropdownMenuTrigger asChild>\n          <Button variant=\"outline\" size=\"sm\" className=\"h-9\" {...rest}>\n            {icon}\n            <span className=\"ml-2\">{buttonLabel}</span>\n            <ChevronDown className=\"ml-2 h-4 w-4\" />\n          </Button>\n        </DropdownMenuTrigger>\n      )}\n      <DropdownMenuContent align=\"start\">\n        {fields.map((field) => (\n          <DropdownMenuItem key={field} onClick={() => handleChangeSort(field)}>\n            {translateLabel({\n              resource,\n              source: field,\n            })}{\" \"}\n            {translate(\n              `ra.sort.${\n                sort.field === field ? inverseOrder(sort.order) : \"ASC\"\n              }`,\n            )}\n          </DropdownMenuItem>\n        ))}\n      </DropdownMenuContent>\n    </DropdownMenu>\n  );\n};\n\nconst defaultIcon = <ArrowUpDown className=\"h-4 w-4\" />;\n\nconst inverseOrder = (sort: string) => (sort === \"ASC\" ? \"DESC\" : \"ASC\");\n\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nconst arePropsEqual = (prevProps: any, nextProps: any) =>\n  shallowEqual(prevProps.fields, nextProps.fields);\n\nexport interface SortButtonProps extends ButtonProps {\n  fields: string[];\n  icon?: React.ReactNode;\n  label?: string;\n  resource?: string;\n}\n\nexport const SortButton = memo(SortButtonComponent, arePropsEqual);\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

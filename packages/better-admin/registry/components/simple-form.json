@@ -1,0 +1,34 @@
+{
+  "name": "simple-form",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Simplified form layout for common use cases",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/simple-form.tsx",
+      "content": "import * as React from \"react\";\nimport { Children, ReactNode } from \"react\";\nimport { Form, type FormProps } from \"ra-core\";\nimport { cn } from \"@/lib/utils\";\nimport { CancelButton } from \"@/components/admin/cancel-button\";\nimport { SaveButton } from \"@/components/admin/form\";\n\nexport const SimpleForm = ({\n  children,\n  className,\n  toolbar = defaultFormToolbar,\n  ...rest\n}: {\n  children: ReactNode;\n  className?: string;\n  toolbar?: ReactNode;\n} & FormProps) => (\n  <Form\n    className={cn(`flex flex-col gap-4 w-full max-w-lg`, className)}\n    {...rest}\n  >\n    {children}\n    {toolbar}\n  </Form>\n);\n\nexport const FormToolbar = ({\n  children,\n  className,\n  ...rest\n}: FormToolbarProps) => (\n  <div\n    {...rest}\n    className={cn(\n      \"sticky pt-4 pb-4 md:block md:pt-2 md:pb-0 bottom-0 bg-linear-to-b from-transparent to-background to-10%\",\n      className,\n    )}\n    role=\"toolbar\"\n  >\n    {Children.count(children) === 0 ? (\n      <div className=\"flex flex-row gap-2 justify-end\">\n        <CancelButton />\n        <SaveButton />\n      </div>\n    ) : (\n      children\n    )}\n  </div>\n);\n\nexport interface FormToolbarProps extends React.HTMLAttributes<HTMLDivElement> {\n  children?: ReactNode;\n  className?: string;\n}\n\nconst defaultFormToolbar = <FormToolbar />;\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "create",
+      "update"
+    ],
+    "hook": "useQuery(\"resource\").create() / update()",
+    "example": "const { data } = useQuery(\"resource\").create() / update();\n// Use in component"
+  }
+}

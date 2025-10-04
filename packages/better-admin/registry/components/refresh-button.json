@@ -1,0 +1,24 @@
+{
+  "name": "refresh-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to refresh data",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/refresh-button.tsx",
+      "content": "import { useRefresh, useLoading } from \"ra-core\";\nimport { Button } from \"@/components/ui/button\";\nimport { LoaderCircle, RotateCw } from \"lucide-react\";\n\nexport const RefreshButton = () => {\n  const refresh = useRefresh();\n  const loading = useLoading();\n\n  const handleRefresh = () => {\n    refresh();\n  };\n\n  return (\n    <Button\n      onClick={handleRefresh}\n      variant=\"ghost\"\n      size=\"icon\"\n      className=\"hidden sm:inline-flex\"\n    >\n      {loading ? <LoaderCircle className=\"animate-spin\" /> : <RotateCw />}\n    </Button>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

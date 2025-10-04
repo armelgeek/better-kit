@@ -1,0 +1,32 @@
+{
+  "name": "edit-guesser",
+  "type": "components:ui",
+  "category": "views",
+  "description": "Auto-generate edit views",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/edit-guesser.tsx",
+      "content": "/* eslint-disable @typescript-eslint/no-explicit-any */\nimport { ReactNode, useEffect, useState } from \"react\";\nimport {\n  EditBase,\n  InferredElement,\n  useResourceContext,\n  useEditContext,\n  getElementsFromRecords,\n  InferredTypeMap,\n} from \"ra-core\";\nimport { capitalize, singularize } from \"inflection\";\nimport { EditView } from \"@/components/admin/edit\";\nimport { SimpleForm } from \"@/components/admin/simple-form\";\nimport { TextInput } from \"@/components/admin/text-input\";\nimport { BooleanInput } from \"@/components/admin/boolean-input\";\nimport { ReferenceInput } from \"@/components/admin/reference-input\";\nimport { AutocompleteInput } from \"@/components/admin/autocomplete-input\";\nimport { ReferenceArrayInput } from \"@/components/admin/reference-array-input\";\n\nexport const EditGuesser = (props: { enableLog?: boolean }) => {\n  return (\n    <EditBase>\n      <EditViewGuesser {...props} />\n    </EditBase>\n  );\n};\n\nconst EditViewGuesser = (props: { enableLog?: boolean }) => {\n  const resource = useResourceContext();\n\n  if (!resource) {\n    throw new Error(`Cannot use <EditGuesser> outside of a ResourceContext`);\n  }\n\n  const { record } = useEditContext();\n  const [child, setChild] = useState<ReactNode>(null);\n  const { enableLog = process.env.NODE_ENV === \"development\", ...rest } = props;\n\n  useEffect(() => {\n    setChild(null);\n  }, [resource]);\n\n  useEffect(() => {\n    if (record && !child) {\n      const inferredElements = getElementsFromRecords([record], editFieldTypes);\n      const inferredChild = new InferredElement(\n        editFieldTypes.form,\n        null,\n        inferredElements,\n      );\n      setChild(inferredChild.getElement());\n\n      if (!enableLog) return;\n\n      const representation = inferredChild.getRepresentation();\n\n      const components = [\"Edit\"]\n        .concat(\n          Array.from(\n            new Set(\n              Array.from(representation.matchAll(/<([^/\\s>]+)/g))\n                .map((match) => match[1])\n                .filter((component) => component !== \"span\"),\n            ),\n          ),\n        )\n        .sort();\n\n      // eslint-disable-next-line no-console\n      console.log(\n        `Guessed Edit:\n\n${components\n  .map(\n    (component) =>\n      `import { ${component} } from \"@/components/admin/${kebabCase(\n        component,\n      )}\";`,\n  )\n  .join(\"\\n\")}\n\nexport const ${capitalize(singularize(resource))}Edit = () => (\n    <Edit>\n${representation}\n    </Edit>\n);`,\n      );\n    }\n  }, [record, child, resource, enableLog]);\n\n  return <EditView {...rest}>{child}</EditView>;\n};\n\nconst editFieldTypes: InferredTypeMap = {\n  form: {\n    component: (props: any) => <SimpleForm {...props} />,\n    representation: (\n      _props: any,\n      children: { getRepresentation: () => string }[],\n    ) => `        <SimpleForm>\n${children\n  .map((child) => `            ${child.getRepresentation()}`)\n  .join(\"\\n\")}\n        </SimpleForm>`,\n  },\n  reference: {\n    component: (props: any) => (\n      <ReferenceInput source={props.source} reference={props.reference}>\n        <AutocompleteInput />\n      </ReferenceInput>\n    ),\n    representation: (props: any) =>\n      `<ReferenceInput source=\"${props.source}\" reference=\"${props.reference}\">\n                  <AutocompleteInput />\n              </ReferenceInput>`,\n  },\n  referenceArray: {\n    component: (props: any) => <ReferenceArrayInput {...props} />,\n    representation: (props: any) =>\n      `<ReferenceArrayInput source=\"${props.source}\" reference=\"${props.reference}\" />`,\n  },\n  boolean: {\n    component: (props: any) => <BooleanInput {...props} />,\n    representation: (props: any) => `<BooleanInput source=\"${props.source}\" />`,\n  },\n  string: {\n    component: (props: any) => <TextInput {...props} />,\n    representation: (props: any) => `<TextInput source=\"${props.source}\" />`,\n  },\n};\n\nconst kebabCase = (name: string) => {\n  return name\n    .replace(/([a-z])([A-Z])/g, \"$1-$2\")\n    .replace(/([A-Z])([A-Z][a-z])/g, \"$1-$2\")\n    .toLowerCase();\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "get",
+      "update"
+    ],
+    "hook": "useQuery(\"resource\").read(id) / update()",
+    "example": "const { data } = useQuery(\"resource\").read(id) / update();\n// Use in component"
+  }
+}

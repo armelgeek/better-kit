@@ -1,0 +1,23 @@
+{
+  "name": "select-field",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Display select/enum values",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/select-field.tsx",
+      "content": "import { HTMLAttributes } from \"react\";\nimport { ChoicesProps, useChoices, useFieldValue, useTranslate } from \"ra-core\";\n\nimport { FieldProps } from \"@/lib/field.type.ts\";\nimport { genericMemo } from \"@/lib/genericMemo\";\n\n/**\n * Display a value in an enumeration\n *\n * Pass possible options as an array of objects in the 'choices' attribute.\n *\n * @example\n * const choices = [\n *    { id: 'M', name: 'Male' },\n *    { id: 'F', name: 'Female' },\n * ];\n * <SelectField source=\"gender\" choices={choices} />\n *\n * By default, the text is built by\n * - finding a choice where the 'id' property equals the field value\n * - using the 'name' property as the option text\n *\n * You can also customize the properties to use for the value and text,\n * thanks to the 'optionValue' and 'optionText' attributes.\n *\n * @example\n * const choices = [\n *    { _id: 123, full_name: 'Leo Tolstoi', sex: 'M' },\n *    { _id: 456, full_name: 'Jane Austen', sex: 'F' },\n * ];\n * <SelectField source=\"author_id\" choices={choices} optionText=\"full_name\" optionValue=\"_id\" />\n *\n * `optionText` also accepts a function, so you can shape the option text at will:\n * @example\n * const choices = [\n *    { id: 123, first_name: 'Leo', last_name: 'Tolstoi' },\n *    { id: 456, first_name: 'Jane', last_name: 'Austen' },\n * ];\n * const optionRenderer = choice => `${choice.first_name} ${choice.last_name}`;\n * <SelectField source=\"author_id\" choices={choices} optionText={optionRenderer} />\n *\n * `optionText` also accepts a React Element, that can access\n * the related choice through the `useRecordContext` hook. You can use Field components there.\n * @example\n * const choices = [\n *    { id: 123, first_name: 'Leo', last_name: 'Tolstoi' },\n *    { id: 456, first_name: 'Jane', last_name: 'Austen' },\n * ];\n * const FullNameField = () => {\n *     const record = useRecordContext();\n *     return (<Chip>{record.first_name} {record.last_name}</Chip>)\n * };\n * <SelectField source=\"gender\" choices={choices} optionText={<FullNameField />}/>\n *\n * The current choice is translated by default, so you can use translation identifiers as choices:\n * @example\n * const choices = [\n *    { id: 'M', name: 'myroot.gender.male' },\n *    { id: 'F', name: 'myroot.gender.female' },\n * ];\n *\n * However, in some cases (e.g. inside a `<ReferenceField>`), you may not want\n * the choice to be translated. In that case, set the `translateChoice` prop to false.\n * @example\n * <SelectField source=\"gender\" choices={choices} translateChoice={false}/>\n *\n * **Tip**: <ReferenceField> sets `translateChoice` to false by default.\n */\nconst SelectFieldImpl = <\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n>(\n  props: SelectFieldProps<RecordType>,\n) => {\n  const {\n    className,\n    empty,\n    choices,\n    defaultValue,\n    source,\n    record,\n    optionValue = \"id\",\n    optionText = \"name\",\n    translateChoice = true,\n    ...rest\n  } = props;\n  const value = useFieldValue({ defaultValue, source, record });\n\n  const { getChoiceText, getChoiceValue } = useChoices({\n    optionText,\n    optionValue,\n    translateChoice,\n  });\n  const translate = useTranslate();\n\n  const choice = choices\n    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any\n      choices.find((choice: any) => getChoiceValue(choice) === value)\n    : null;\n\n  if (!choice) {\n    if (!empty) {\n      return null;\n    }\n\n    return (\n      <span className={className} {...rest}>\n        {typeof empty === \"string\" ? translate(empty, { _: empty }) : empty}\n      </span>\n    );\n  }\n\n  const choiceText = getChoiceText(choice);\n\n  return (\n    <span className={className} {...rest}>\n      {choiceText}\n    </span>\n  );\n};\n\nSelectFieldImpl.displayName = \"SelectFieldImpl\";\n\nexport const SelectField = genericMemo(SelectFieldImpl);\n\nexport interface SelectFieldProps<\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n> extends Omit<\n      ChoicesProps,\n      \"disableValue\" | \"createValue\" | \"createHintValue\"\n    >,\n    FieldProps<RecordType>,\n    HTMLAttributes<HTMLSpanElement> {}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

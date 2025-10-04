@@ -1,0 +1,23 @@
+{
+  "name": "single-field-list",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "List with single field display",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/single-field-list.tsx",
+      "content": "import {\n  RecordContextProvider,\n  RecordRepresentation,\n  useListContext,\n} from \"ra-core\";\nimport { Badge } from \"@/components/ui/badge\";\n\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nexport const SingleFieldList = <RecordType = any,>({\n  children,\n  render,\n  className,\n}: {\n  children?: React.ReactNode;\n  render?: (record: RecordType, index: number) => React.ReactNode;\n  className?: string;\n}) => {\n  const { data } = useListContext();\n\n  return (\n    <div className={`flex gap-2 ${className}`}>\n      {data?.map((record, index) => (\n        <RecordContextProvider key={index} value={record}>\n          {render ? render(record, index) : children || <DefaultChildren />}\n        </RecordContextProvider>\n      ))}\n    </div>\n  );\n};\n\nconst DefaultChildren = () => (\n  <Badge variant=\"outline\">\n    <RecordRepresentation />\n  </Badge>\n);\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

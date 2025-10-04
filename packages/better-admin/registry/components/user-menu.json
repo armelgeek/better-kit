@@ -1,0 +1,24 @@
+{
+  "name": "user-menu",
+  "type": "components:ui",
+  "category": "ui",
+  "description": "User profile menu",
+  "dependencies": {
+    "shadcn": [
+      "dropdown-menu",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/user-menu.tsx",
+      "content": "import { Children, useCallback, useState } from \"react\";\nimport {\n  Translate,\n  useAuthProvider,\n  useGetIdentity,\n  useLogout,\n  UserMenuContext,\n} from \"ra-core\";\nimport { LogOut } from \"lucide-react\";\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuLabel,\n  DropdownMenuSeparator,\n  DropdownMenuTrigger,\n} from \"@/components/ui/dropdown-menu\";\nimport { Avatar, AvatarFallback, AvatarImage } from \"@/components/ui/avatar\";\nimport { Button } from \"@/components/ui/button\";\n\nexport type UserMenuProps = {\n  children?: React.ReactNode;\n};\n\nexport function UserMenu({ children }: UserMenuProps) {\n  const authProvider = useAuthProvider();\n  const { data: identity } = useGetIdentity();\n  const logout = useLogout();\n\n  const [open, setOpen] = useState(false);\n\n  const handleToggleOpen = useCallback(() => {\n    setOpen((prevOpen) => !prevOpen);\n  }, []);\n\n  const handleClose = useCallback(() => {\n    setOpen(false);\n  }, []);\n\n  if (!authProvider) return null;\n\n  return (\n    <UserMenuContext.Provider value={{ onClose: handleClose }}>\n      <DropdownMenu open={open} onOpenChange={handleToggleOpen}>\n        <DropdownMenuTrigger asChild>\n          <Button\n            variant=\"ghost\"\n            className=\"relative h-8 w-8 ml-2 rounded-full\"\n          >\n            <Avatar className=\"h-8 w-8\">\n              <AvatarImage src={identity?.avatar} role=\"presentation\" />\n              <AvatarFallback>{identity?.fullName?.charAt(0)}</AvatarFallback>\n            </Avatar>\n          </Button>\n        </DropdownMenuTrigger>\n        <DropdownMenuContent className=\"w-56\" align=\"end\" forceMount>\n          <DropdownMenuLabel className=\"font-normal\">\n            <div className=\"flex flex-col space-y-1\">\n              <p className=\"text-sm font-medium leading-none\">\n                {identity?.fullName}\n              </p>\n            </div>\n          </DropdownMenuLabel>\n          <DropdownMenuSeparator />\n          {children}\n          {Children.count(children) > 0 && <DropdownMenuSeparator />}\n          <DropdownMenuItem onClick={() => logout()} className=\"cursor-pointer\">\n            <LogOut />\n            <Translate i18nKey=\"ra.auth.logout\">Log out</Translate>\n          </DropdownMenuItem>\n        </DropdownMenuContent>\n      </DropdownMenu>\n    </UserMenuContext.Provider>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

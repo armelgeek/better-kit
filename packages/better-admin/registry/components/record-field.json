@@ -1,0 +1,24 @@
+{
+  "name": "record-field",
+  "type": "components:ui",
+  "category": "data-display",
+  "description": "Display nested record data",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/record-field.tsx",
+      "content": "/* eslint-disable @typescript-eslint/no-explicit-any */\nimport {\n  createElement,\n  type ReactNode,\n  type ElementType,\n  HTMLAttributes,\n} from \"react\";\nimport {\n  FieldTitle,\n  useRecordContext,\n  useResourceContext,\n  useTranslate,\n  type ExtractRecordPaths,\n  type HintedString,\n} from \"ra-core\";\nimport { cn } from \"@/lib/utils\";\n\nimport { TextField } from \"@/components/admin/text-field\";\n\nexport const RecordField = <\n  RecordType extends Record<string, any> = Record<string, any>,\n>(\n  props: RecordFieldProps<RecordType>,\n) => {\n  const {\n    children,\n    className,\n    empty,\n    field,\n    label,\n    render,\n    resource: _,\n    source,\n    record: recordProp,\n    variant,\n    ...rest\n  } = props;\n  const resource = useResourceContext(props);\n  const record = useRecordContext<RecordType>({ recordProp });\n  const translate = useTranslate();\n\n  if (!source && !label && !render) return null;\n\n  return (\n    <div\n      className={cn(\n        className,\n        \"flex\",\n        variant === \"inline\" ? \"flex-row\" : \"flex-col\",\n      )}\n      {...rest}\n    >\n      {label !== \"\" && label !== false ? (\n        <div\n          className={cn(\n            variant === \"inline\" ? \"block min-w-50\" : \"text-xs\",\n            \"text-muted-foreground\",\n          )}\n        >\n          <FieldTitle\n            label={label}\n            source={source}\n            resource={resource}\n            isRequired={false}\n          />\n        </div>\n      ) : null}\n      {children ? (\n        <span className=\"flex-1\">{children}</span>\n      ) : render ? (\n        record && (\n          <span className=\"flex-1\">\n            {render(record) ||\n              (typeof empty === \"string\"\n                ? translate(empty, { _: empty })\n                : empty)}\n          </span>\n        )\n      ) : field ? (\n        createElement(field, {\n          source,\n          empty,\n          className: \"flex-1\",\n        })\n      ) : source ? (\n        <TextField source={source} empty={empty} className=\"flex-1\" />\n      ) : null}\n    </div>\n  );\n};\n\n// FIXME remove custom type when using TypeScript >= 5.4 as it is now native\ntype NoInfer<T> = T extends infer U ? U : never;\n\nexport interface RecordFieldProps<\n  RecordType extends Record<string, any> = Record<string, any>,\n> extends HTMLAttributes<HTMLDivElement> {\n  children?: ReactNode;\n  className?: string;\n  empty?: ReactNode;\n  field?: ElementType;\n  label?: ReactNode;\n  render?: (record: RecordType) => React.ReactNode;\n  resource?: string;\n  source?: NoInfer<HintedString<ExtractRecordPaths<RecordType>>>;\n  record?: RecordType;\n  variant?: \"default\" | \"inline\";\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

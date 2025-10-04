@@ -1,0 +1,23 @@
+{
+  "name": "input-helper-text",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Helper text for inputs",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/input-helper-text.tsx",
+      "content": "import { useTranslate } from \"ra-core\";\nimport { isValidElement, ReactNode } from \"react\";\nimport { FormDescription } from \"@/components/admin/form\";\n\nexport function InputHelperText({ helperText }: { helperText?: ReactNode }) {\n  const translate = useTranslate();\n\n  if (!helperText) {\n    return null;\n  }\n\n  if (isValidElement(helperText)) {\n    return helperText;\n  }\n\n  return (\n    <FormDescription>\n      {typeof helperText === \"string\"\n        ? translate(helperText, { _: helperText })\n        : helperText}\n    </FormDescription>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

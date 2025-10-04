@@ -72,6 +72,36 @@ export const COMPONENT_CATEGORIES: ComponentCategory[] = [
 		name: "Feedback",
 		description: "Loading states, notifications, and error handling",
 	},
+	{
+		id: "buttons",
+		name: "Buttons",
+		description: "Action buttons for common operations",
+	},
+	{
+		id: "fields",
+		name: "Fields",
+		description: "Field components for displaying and editing data",
+	},
+	{
+		id: "views",
+		name: "Views",
+		description: "Auto-generated view components",
+	},
+	{
+		id: "auth",
+		name: "Authentication",
+		description: "Authentication and login components",
+	},
+	{
+		id: "ui",
+		name: "UI Components",
+		description: "Common UI components and utilities",
+	},
+	{
+		id: "toolbars",
+		name: "Toolbars",
+		description: "Toolbar and action bar components",
+	},
 ];
 
 /**

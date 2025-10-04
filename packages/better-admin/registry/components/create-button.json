@@ -1,0 +1,24 @@
+{
+  "name": "create-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to navigate to create view",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/create-button.tsx",
+      "content": "import React from \"react\";\nimport { buttonVariants } from \"@/components/ui/button\";\nimport { Plus } from \"lucide-react\";\nimport { Translate, useCreatePath, useResourceContext } from \"ra-core\";\nimport { Link } from \"react-router\";\n\nexport type CreateButtonProps = {\n  label?: string;\n  resource?: string;\n};\n\nexport const CreateButton = ({\n  label,\n  resource: targetResource,\n}: CreateButtonProps) => {\n  const resource = useResourceContext();\n  const createPath = useCreatePath();\n  const link = createPath({\n    resource: targetResource ?? resource,\n    type: \"create\",\n  });\n  return (\n    <Link\n      className={buttonVariants({ variant: \"outline\" })}\n      to={link}\n      onClick={stopPropagation}\n    >\n      <Plus />\n      <Translate i18nKey={label ?? \"ra.action.create\"}>\n        {label ?? \"Create\"}\n      </Translate>\n    </Link>\n  );\n};\n\n// useful to prevent click bubbling in a datagrid with rowClick\nconst stopPropagation = (e: React.MouseEvent) => e.stopPropagation();\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

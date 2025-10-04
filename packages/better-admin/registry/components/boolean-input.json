@@ -1,0 +1,26 @@
+{
+  "name": "boolean-input",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Checkbox/toggle for boolean values",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/boolean-input.tsx",
+      "content": "/* eslint-disable @typescript-eslint/no-explicit-any */\nimport React, { useCallback } from \"react\";\nimport { Switch } from \"@/components/ui/switch\";\nimport { FormError, FormField, FormLabel } from \"@/components/admin/form\";\nimport { useInput, FieldTitle } from \"ra-core\";\nimport { InputHelperText } from \"./input-helper-text\";\n\nexport const BooleanInput = (props: BooleanInputProps) => {\n  const {\n    className,\n    defaultValue = false,\n    format,\n    label,\n    helperText,\n    onBlur,\n    onChange,\n    onFocus,\n    readOnly,\n    disabled,\n    parse,\n    resource,\n    source,\n    validate,\n    ...rest\n  } = props;\n  const { id, field, isRequired } = useInput({\n    defaultValue,\n    format,\n    parse,\n    resource,\n    source,\n    onBlur,\n    onChange,\n    type: \"checkbox\",\n    validate,\n    disabled,\n    readOnly,\n    ...rest,\n  });\n\n  const handleChange = useCallback(\n    (checked: boolean) => {\n      field.onChange(checked);\n      // Ensure field is considered as touched\n      field.onBlur();\n    },\n    [field],\n  );\n\n  return (\n    <FormField className={className} id={id} name={field.name}>\n      <div className=\"flex items-center space-x-2\">\n        <Switch\n          id={id}\n          checked={Boolean(field.value)}\n          onFocus={onFocus}\n          onCheckedChange={handleChange}\n        />\n        <FormLabel htmlFor={id}>\n          <FieldTitle\n            label={label}\n            source={source}\n            resource={resource}\n            isRequired={isRequired}\n          />\n        </FormLabel>\n      </div>\n      <InputHelperText helperText={helperText} />\n      <FormError />\n    </FormField>\n  );\n};\n\nexport interface BooleanInputProps {\n  className?: string;\n  defaultValue?: boolean;\n  format?: (value: any) => any;\n  helperText?: React.ReactNode;\n  label?: React.ReactNode;\n  onBlur?: (event: React.FocusEvent<HTMLButtonElement>) => void;\n  onChange?: (value: any) => void;\n  onFocus?: (event: React.FocusEvent<HTMLButtonElement>) => void;\n  readOnly?: boolean;\n  disabled?: boolean;\n  parse?: (value: any) => any;\n  resource?: string;\n  source: string;\n  validate?: any;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

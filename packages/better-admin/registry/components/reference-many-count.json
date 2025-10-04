@@ -1,0 +1,30 @@
+{
+  "name": "reference-many-count",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Count of related records",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/reference-many-count.tsx",
+      "content": "import {\n  RaRecord,\n  SortPayload,\n  useCreatePath,\n  useRecordContext,\n  useReferenceManyFieldController,\n} from \"ra-core\";\nimport { Link } from \"react-router\";\n\nexport const ReferenceManyCount = <RecordType extends RaRecord = RaRecord>(\n  props: ReferenceManyCountProps<RecordType>,\n) => {\n  const {\n    reference,\n    target,\n    filter,\n    sort,\n    link,\n    resource,\n    source = \"id\",\n  } = props;\n  const record = useRecordContext<RecordType>(props);\n  const createPath = useCreatePath();\n\n  const { isLoading, error, total } =\n    useReferenceManyFieldController<RecordType>({\n      filter,\n      sort,\n      page: 1,\n      perPage: 1,\n      record,\n      reference,\n      resource,\n      source,\n      target,\n    });\n\n  const body = isLoading ? \"\" : error ? \"error\" : total;\n\n  return link && record ? (\n    <Link\n      to={{\n        pathname: createPath({ resource: reference, type: \"list\" }),\n        search: `filter=${JSON.stringify({\n          ...(filter || {}),\n          [target]: record[source],\n        })}`,\n      }}\n      onClick={(e) => e.stopPropagation()}\n    >\n      {body}\n    </Link>\n  ) : (\n    <span>{body}</span>\n  );\n};\n\nexport interface ReferenceManyCountProps<\n  RecordType extends RaRecord = RaRecord,\n> {\n  record?: RecordType;\n  reference: string;\n  resource?: string;\n  target: string;\n  source?: string;\n  sort?: SortPayload;\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  filter?: any;\n  link?: boolean;\n  timeout?: number;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"reference\").list()",
+    "example": "const { data } = useQuery(\"reference\").list();\n// Use in component"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "simple-show-layout",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Simplified show layout",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/simple-show-layout.tsx",
+      "content": "import { ReactNode } from \"react\";\n\n/**\n * @deprecated Use a simple div with flex and flex-col instead\n */\nexport const SimpleShowLayout = ({ children }: { children: ReactNode }) => (\n  <div className=\"flex flex-col gap-4\">{children}</div>\n);\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "get"
+    ],
+    "hook": "useQuery(\"resource\").read(id)",
+    "example": "const { data } = useQuery(\"resource\").read(id);\n// Use in component"
+  }
+}

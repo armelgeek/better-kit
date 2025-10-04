@@ -1,0 +1,24 @@
+{
+  "name": "bulk-export-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button for bulk export",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/bulk-export-button.tsx",
+      "content": "import { Download } from \"lucide-react\";\nimport {\n  RaRecord,\n  Translate,\n  useBulkExport,\n  UseBulkExportOptions,\n} from \"ra-core\";\n\nimport { Button } from \"../ui/button\";\n\n/**\n * Export the selected rows\n *\n * To be used inside the <DataTable bulkActionsButtons> prop.\n *\n * @example // basic usage\n * import { BulkDeleteButton, BulkExportButton, DataTable, List } from '@/components/admin';\n *\n * export const PostList = () => (\n *   <List>\n *     <DataTable\n *       bulkActionsButtons={\n *         <>\n *           <BulkExportButton />\n *           <BulkDeleteButton />\n *         </>\n *       }\n *     >\n *       ...\n *     </DataTable>\n *   </List>\n * );\n */\nexport const BulkExportButton = <T extends RaRecord>({\n  icon = defaultIcon,\n  label = \"ra.action.export\",\n  onClick,\n  ...props\n}: BulkExportButtonProps<T>) => {\n  const bulkExport = useBulkExport(props);\n\n  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {\n    bulkExport();\n    onClick?.(event);\n  };\n\n  return (\n    <Button\n      onClick={handleClick}\n      role=\"button\"\n      variant=\"outline\"\n      size=\"sm\"\n      className=\"flex items-center gap-2 h-9\"\n      {...sanitizeRestProps(props)}\n    >\n      {icon}\n      {label && <Translate i18nKey={label}>{label}</Translate>}\n    </Button>\n  );\n};\n\nconst defaultIcon = <Download className=\"h-4 w-4\" />;\n\nexport type BulkExportButtonProps<T extends RaRecord> =\n  UseBulkExportOptions<T> & {\n    icon?: React.ReactNode;\n    label?: string;\n  } & React.ComponentProps<typeof Button>;\n\nconst sanitizeRestProps = <T extends RaRecord>({\n  resource: _resource,\n  exporter: _exporter,\n  onClick: _onClick,\n  label: _label,\n  icon: _icon,\n  meta: _meta,\n  ...rest\n}: BulkExportButtonProps<T>) => rest;\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

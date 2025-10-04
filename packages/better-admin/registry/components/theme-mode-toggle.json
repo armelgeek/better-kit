@@ -1,0 +1,24 @@
+{
+  "name": "theme-mode-toggle",
+  "type": "components:ui",
+  "category": "ui",
+  "description": "Dark/light mode toggle",
+  "dependencies": {
+    "shadcn": [
+      "dropdown-menu",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/theme-mode-toggle.tsx",
+      "content": "import { Check, Moon, Sun } from \"lucide-react\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from \"@/components/ui/dropdown-menu\";\nimport { cn } from \"@/lib/utils\";\nimport { useTheme } from \"@/components/admin/theme-provider\";\n\nexport function ThemeModeToggle() {\n  const { theme, setTheme } = useTheme();\n\n  return (\n    <DropdownMenu modal={false}>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"ghost\" size=\"icon\" className=\"hidden sm:inline-flex\">\n          <Sun className=\"h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0\" />\n          <Moon className=\"absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100\" />\n          <span className=\"sr-only\">Toggle theme</span>\n        </Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent align=\"end\">\n        <DropdownMenuItem onClick={() => setTheme(\"light\")}>\n          Light\n          <Check className={cn(\"ml-auto\", theme !== \"light\" && \"hidden\")} />\n        </DropdownMenuItem>\n        <DropdownMenuItem onClick={() => setTheme(\"dark\")}>\n          Dark\n          <Check className={cn(\"ml-auto\", theme !== \"dark\" && \"hidden\")} />\n        </DropdownMenuItem>\n        <DropdownMenuItem onClick={() => setTheme(\"system\")}>\n          System\n          <Check className={cn(\"ml-auto\", theme !== \"system\" && \"hidden\")} />\n        </DropdownMenuItem>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

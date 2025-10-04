@@ -1,0 +1,24 @@
+{
+  "name": "export-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to export data",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/export-button.tsx",
+      "content": "import * as React from \"react\";\nimport { useCallback } from \"react\";\nimport { Download } from \"lucide-react\";\nimport {\n  fetchRelatedRecords,\n  useDataProvider,\n  useNotify,\n  useListContext,\n  Exporter,\n  Translate,\n} from \"ra-core\";\nimport { Button } from \"@/components/ui/button\";\n\nexport const ExportButton = (props: ExportButtonProps) => {\n  const {\n    maxResults = 1000,\n    onClick,\n    label = \"ra.action.export\",\n    icon = defaultIcon,\n    exporter: customExporter,\n    meta,\n    className = \"cursor-pointer\",\n  } = props;\n  const {\n    filter,\n    filterValues,\n    resource,\n    sort,\n    exporter: exporterFromContext,\n    total,\n  } = useListContext();\n  const exporter = customExporter || exporterFromContext;\n  const dataProvider = useDataProvider();\n  const notify = useNotify();\n  const handleClick = useCallback(\n    (event: React.MouseEvent<HTMLButtonElement>) => {\n      dataProvider\n        .getList(resource, {\n          sort,\n          filter: filter ? { ...filterValues, ...filter } : filterValues,\n          pagination: { page: 1, perPage: maxResults },\n          meta,\n        })\n        .then(\n          ({ data }) =>\n            exporter &&\n            exporter(\n              data,\n              fetchRelatedRecords(dataProvider),\n              dataProvider,\n              resource,\n            ),\n        )\n        .catch((error) => {\n          console.error(error);\n          notify(\"HTTP Error\", { type: \"error\" });\n        });\n      if (typeof onClick === \"function\") {\n        onClick(event);\n      }\n    },\n    [\n      dataProvider,\n      exporter,\n      filter,\n      filterValues,\n      maxResults,\n      notify,\n      onClick,\n      resource,\n      sort,\n      meta,\n    ],\n  );\n\n  return (\n    <Button\n      variant=\"outline\"\n      onClick={handleClick}\n      disabled={total === 0}\n      className={className}\n    >\n      {icon}\n      <Translate i18nKey={label}>Export</Translate>\n    </Button>\n  );\n};\n\nconst defaultIcon = <Download />;\n\nexport interface ExportButtonProps {\n  className?: string;\n  exporter?: Exporter;\n  icon?: React.ReactNode;\n  label?: string;\n  maxResults?: number;\n  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;\n  resource?: string;\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  meta?: any;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

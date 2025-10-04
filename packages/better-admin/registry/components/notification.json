@@ -1,0 +1,24 @@
+{
+  "name": "notification",
+  "type": "components:ui",
+  "category": "feedback",
+  "description": "Toast notifications",
+  "dependencies": {
+    "shadcn": [
+      "alert",
+      "toast"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/notification.tsx",
+      "content": "import * as React from \"react\";\nimport { useCallback, useEffect } from \"react\";\nimport { Toaster, type ToasterProps, toast } from \"sonner\";\nimport { useTheme } from \"@/components/admin/theme-provider\";\nimport {\n  CloseNotificationContext,\n  useNotificationContext,\n  useTakeUndoableMutation,\n  useTranslate,\n} from \"ra-core\";\n\nexport const Notification = (props: ToasterProps) => {\n  const translate = useTranslate();\n  const { notifications, takeNotification } = useNotificationContext();\n  const takeMutation = useTakeUndoableMutation();\n  const { theme } = useTheme();\n\n  useEffect(() => {\n    if (notifications.length) {\n      const notification = takeNotification();\n      if (notification) {\n        const { message, type = \"info\", notificationOptions } = notification;\n        const { messageArgs, undoable } = notificationOptions || {};\n\n        const beforeunload = (e: BeforeUnloadEvent) => {\n          e.preventDefault();\n          const confirmationMessage = \"\";\n          e.returnValue = confirmationMessage;\n          return confirmationMessage;\n        };\n\n        if (undoable) {\n          window.addEventListener(\"beforeunload\", beforeunload);\n        }\n\n        const handleExited = () => {\n          if (undoable) {\n            const mutation = takeMutation();\n            if (mutation) {\n              mutation({ isUndo: false });\n            }\n            window.removeEventListener(\"beforeunload\", beforeunload);\n          }\n        };\n\n        const handleUndo = () => {\n          const mutation = takeMutation();\n          if (mutation) {\n            mutation({ isUndo: true });\n          }\n          window.removeEventListener(\"beforeunload\", beforeunload);\n        };\n\n        const finalMessage = message\n          ? typeof message === \"string\"\n            ? translate(message, messageArgs)\n            : React.isValidElement(message)\n            ? message\n            : undefined\n          : undefined;\n\n        toast[type](finalMessage, {\n          action: undoable\n            ? {\n                label: translate(\"ra.action.undo\"),\n                onClick: handleUndo,\n              }\n            : undefined,\n          onDismiss: handleExited,\n          onAutoClose: handleExited,\n        });\n      }\n    }\n  }, [notifications, takeMutation, takeNotification, translate]);\n\n  const handleRequestClose = useCallback(() => {\n    // Dismiss all toasts\n    toast.dismiss();\n  }, []);\n\n  return (\n    <CloseNotificationContext.Provider value={handleRequestClose}>\n      <Toaster\n        richColors\n        theme={theme}\n        closeButton\n        position=\"bottom-center\"\n        {...props}\n      />\n    </CloseNotificationContext.Provider>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

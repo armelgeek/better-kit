@@ -1,0 +1,26 @@
+{
+  "name": "authentication",
+  "type": "components:ui",
+  "category": "auth",
+  "description": "Authentication provider",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "button",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/authentication.tsx",
+      "content": "import { Link } from \"react-router\";\nimport { Translate, useHandleAuthCallback, useTranslate } from \"ra-core\";\nimport { CircleAlert, LockIcon } from \"lucide-react\";\nimport { cn } from \"@/lib/utils\";\nimport { Button } from \"@/components/ui/button\";\nimport { Loading } from \"@/components/admin/loading\";\n\n/**\n * A standalone page to be used in a route called by external authentication services (e.g. OAuth)\n * after the user has been authenticated.\n *\n * Copy and adapt this component to implement your own login logic\n * (e.g. to show a different waiting screen, start onboarding procedures, etc.).\n *\n * @example\n *     import MyAuthCallbackPage from './MyAuthCallbackPage';\n *     const App = () => (\n *         <Admin authCallbackPage={MyAuthCallbackPage} authProvider={authProvider}>\n *             ...\n *         </Admin>\n *     );\n */\nexport const AuthCallback = () => {\n  const { error } = useHandleAuthCallback();\n  if (error) {\n    return (\n      <AuthError\n        message={(error as Error) ? (error as Error).message : undefined}\n      />\n    );\n  }\n  return <Loading />;\n};\n\nexport interface AuthErrorProps {\n  className?: string;\n  title?: string;\n  message?: string;\n}\n\nexport const AuthError = (props: AuthErrorProps) => {\n  const {\n    className,\n    title = \"ra.page.error\",\n    message = \"ra.message.auth_error\",\n    ...rest\n  } = props;\n\n  const translate = useTranslate();\n  return (\n    <div\n      className={cn(\n        \"flex flex-col justify-center items-center h-full\",\n        className,\n      )}\n      {...rest}\n    >\n      <h1 className=\"flex items-center text-3xl my-5 gap-3\" role=\"alert\">\n        <CircleAlert className=\"w-2em h-2em\" />\n        <Translate i18nKey={title} />\n      </h1>\n      <p className=\"my-5\">{translate(message, { _: message })}</p>\n      <Button asChild>\n        <Link to=\"/login\">\n          <LockIcon /> {translate(\"ra.auth.sign_in\", { _: \"Sign in\" })}\n        </Link>\n      </Button>\n    </div>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

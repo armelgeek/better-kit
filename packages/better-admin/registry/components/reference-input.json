@@ -1,0 +1,33 @@
+{
+  "name": "reference-input",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Input for selecting related records",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/reference-input.tsx",
+      "content": "import { ReferenceInputBase, ReferenceInputBaseProps } from \"ra-core\";\nimport { AutocompleteInput } from \"./autocomplete-input\";\n\nexport const ReferenceInput = (props: ReferenceInputProps) => {\n  const { children = defaultChildren, ...rest } = props;\n\n  if (props.validate && process.env.NODE_ENV !== \"production\") {\n    throw new Error(\n      \"<ReferenceInput> does not accept a validate prop. Set the validate prop on the child instead.\",\n    );\n  }\n\n  return <ReferenceInputBase {...rest}>{children}</ReferenceInputBase>;\n};\n\nconst defaultChildren = <AutocompleteInput />;\n\nexport interface ReferenceInputProps extends ReferenceInputBaseProps {\n  /**\n   * Call validate on the child component instead\n   */\n  validate?: never;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"reference\").list()",
+    "example": "const { data } = useQuery(\"reference\").list();\n// Use in component"
+  }
+}

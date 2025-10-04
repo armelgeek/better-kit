@@ -1,0 +1,24 @@
+{
+  "name": "error",
+  "type": "components:ui",
+  "category": "feedback",
+  "description": "Error display component",
+  "dependencies": {
+    "shadcn": [
+      "alert",
+      "toast"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/error.tsx",
+      "content": "import type { FallbackProps } from \"react-error-boundary\";\n\nimport { useResetErrorBoundaryOnLocationChange, Translate } from \"ra-core\";\nimport { CircleAlert, History } from \"lucide-react\";\nimport {\n  Accordion,\n  AccordionContent,\n  AccordionItem,\n  AccordionTrigger,\n} from \"@/components/ui/accordion\";\nimport { Button } from \"@/components/ui/button\";\nimport { HtmlHTMLAttributes } from \"react\";\nimport { ErrorInfo } from \"react\";\n\nexport const Error = (props: InternalErrorProps & {}) => {\n  const { error, errorInfo, resetErrorBoundary, ...rest } = props;\n\n  useResetErrorBoundaryOnLocationChange(resetErrorBoundary);\n\n  return (\n    <div className=\"flex flex-col items-center md:p-16 gap-5\" {...rest}>\n      <h1 className=\"flex items-center text-3xl mt-5 mb-5 gap-3\" role=\"alert\">\n        <CircleAlert className=\"w-2em h-2em\" />\n        <Translate i18nKey=\"ra.page.error\" />\n      </h1>\n      <div>\n        <Translate i18nKey=\"ra.message.error\" />\n      </div>\n      {process.env.NODE_ENV !== \"production\" && (\n        <>\n          <Accordion\n            type=\"multiple\"\n            className=\"mt-1 p-2 bg-secondary w-full lg:w-150\"\n          >\n            <AccordionItem value=\"error\">\n              <AccordionTrigger className=\"py-2\">\n                <Translate i18nKey={error.message}>{error.message}</Translate>\n              </AccordionTrigger>\n              <AccordionContent className=\"whitespace-pre-wrap pt-1\">\n                <pre className=\"text-xls\">{errorInfo?.componentStack}</pre>\n              </AccordionContent>\n            </AccordionItem>\n          </Accordion>\n\n          <p className=\"text-center \">\n            Need help with this error? Try the following:\n          </p>\n          <div>\n            <ul className=\"list-disc\">\n              <li>\n                Check the{\" \"}\n                <a\n                  className=\"text-primary underline-offset-4 hover:underline\"\n                  href=\"https://marmelab.com/shadcn-admin-kit/docs\"\n                >\n                  shadcn-admin-kit documentation\n                </a>\n              </li>\n              <li>\n                Search on{\" \"}\n                <a\n                  className=\"text-primary underline-offset-4 hover:underline\"\n                  href=\"https://stackoverflow.com/questions/tagged/shadcn-admin-kit\"\n                >\n                  StackOverflow\n                </a>{\" \"}\n                for community answers\n              </li>\n              <li>\n                Get help from the core team via{\" \"}\n                <a\n                  className=\"text-primary underline-offset-4 hover:underline\"\n                  href=\"https://marmelab.com/shadcn-admin-kit/\"\n                >\n                  Shadcn Enterprise Edition\n                </a>\n              </li>\n            </ul>\n          </div>\n        </>\n      )}\n      <div className=\"mt-8\">\n        <Button onClick={goBack}>\n          <History />\n          <Translate i18nKey=\"ra.action.back\" />\n        </Button>\n      </div>\n    </div>\n  );\n};\n\ninterface InternalErrorProps\n  extends Omit<HtmlHTMLAttributes<HTMLDivElement>, \"title\">,\n    FallbackProps {\n  className?: string;\n  errorInfo?: ErrorInfo;\n}\n\nexport interface ErrorProps extends Pick<FallbackProps, \"error\"> {\n  errorInfo?: ErrorInfo;\n}\n\nfunction goBack() {\n  window.history.go(-1);\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

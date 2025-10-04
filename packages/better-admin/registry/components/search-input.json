@@ -1,0 +1,26 @@
+{
+  "name": "search-input",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Search input with debouncing",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/search-input.tsx",
+      "content": "import { useTranslate } from \"ra-core\";\nimport { Search } from \"lucide-react\";\nimport { TextInput, type TextInputProps } from \"@/components/admin/text-input\";\n\nexport const SearchInput = (inProps: SearchInputProps) => {\n  const { label, ...rest } = inProps;\n\n  const translate = useTranslate();\n\n  if (label) {\n    throw new Error(\n      \"<SearchInput> isn't designed to be used with a label prop. Use <TextInput> if you need a label.\",\n    );\n  }\n\n  return (\n    <div className=\"flex flex-grow relative mt-auto w-fit\">\n      <TextInput\n        label={false}\n        helperText={false}\n        placeholder={translate(\"ra.action.search\")}\n        {...rest}\n      />\n      <Search className=\"absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none\" />\n    </div>\n  );\n};\n\nexport type SearchInputProps = TextInputProps;\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}
