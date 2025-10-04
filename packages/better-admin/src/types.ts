@@ -1,23 +1,11 @@
-export interface ComponentMetadata {
-	name: string;
-	type: "components:ui";
-	description: string;
-	dependencies: {
-		shadcn?: string[];
-		npm?: string[];
-	};
-	registryDependencies?: string[];
-	files: ComponentFile[];
-	tailwind?: {
-		config?: Record<string, any>;
-	};
-}
-
-export interface ComponentFile {
-	path: string;
-	content: string;
-	type: "components:ui";
-}
+// Re-export registry types
+export type {
+	ComponentMetadata,
+	ComponentFile,
+	Registry,
+	ComponentCategory,
+	BetterQueryIntegration,
+} from "./registry/index.js";
 
 export interface BetterAdminConfig {
 	$schema?: string;
@@ -36,8 +24,4 @@ export interface BetterAdminConfig {
 		ui?: string;
 	};
 	registry?: string;
-}
-
-export interface Registry {
-	components: ComponentMetadata[];
 }
