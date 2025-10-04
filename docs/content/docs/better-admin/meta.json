@@ -2,9 +2,11 @@
 	"title": "Better Admin",
 	"pages": [
 		"introduction",
+		"quick-start",
 		"auth-provider",
 		"data-provider",
 		"components",
+		"api-reference",
 		"migration"
 	]
 }
