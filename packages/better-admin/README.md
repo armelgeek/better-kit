@@ -2,15 +2,18 @@
 
 A CLI tool for installing Better Admin components with automatic shadcn/ui dependency resolution and first-class Better Query integration.
 
+**✨ 76 Production-Ready Components** organized into 10 categories, all with Better Query integration.
+
 ## Features
 
 - 🎯 **Better Query Native**: Components designed specifically for Better Query patterns
 - 📦 **Automatic Dependencies**: Auto-installs shadcn/ui components and npm packages
-- 🗂️ **Organized by Category**: Components grouped by purpose (data-display, forms, layout, feedback)
+- 🗂️ **76 Components**: Complete admin component library across 10 categories
 - 🔧 **CLI Installation**: Simple commands to add components to your project
 - 📋 **Component Registry**: Curated collection of production-ready admin components
 - ⚙️ **Configurable**: Customize paths, aliases, and registry sources
 - 🎨 **TypeScript First**: Full type safety with Better Query integration
+- 🚀 **Based on shadcn-admin-kit**: Following proven patterns from marmelab/shadcn-admin-kit
 
 ## Installation
 
@@ -436,6 +439,13 @@ We welcome contributions! To add a component:
 
 See [ADDING_COMPONENTS.md](./ADDING_COMPONENTS.md) for detailed instructions.
 
+## Documentation
+
+- **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** - Comprehensive usage guide with examples for all 76 components
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Architecture and design patterns
+- **[ADDING_COMPONENTS.md](./ADDING_COMPONENTS.md)** - Guide for adding new components
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Implementation details
+
 ## Troubleshooting
 
 ### Config Not Found
@@ -461,6 +471,10 @@ npx better-admin add <component> --overwrite
   "registry": "file:///path/to/local/registry"
 }
 ```
+
+## Inspiration
+
+This project is inspired by [shadcn-admin-kit](https://marmelab.com/shadcn-admin-kit/) and follows similar patterns for admin component architecture while adding deep Better Query integration.
 
 ## License
 
