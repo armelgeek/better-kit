@@ -1,0 +1,26 @@
+{
+  "name": "number-input",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Number input field with formatting",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/number-input.tsx",
+      "content": "import * as React from \"react\";\nimport { useEffect, useState } from \"react\";\nimport {\n  FieldTitle,\n  type InputProps,\n  useInput,\n  useResourceContext,\n} from \"ra-core\";\nimport { FormControl, FormField, FormLabel } from \"@/components/admin/form\";\nimport { Input } from \"@/components/ui/input\";\nimport { FormError } from \"@/components/admin/form\";\nimport { InputHelperText } from \"@/components/admin/input-helper-text\";\n\nexport const NumberInput = (props: NumberInputProps) => {\n  const {\n    label,\n    source,\n    className,\n    resource: resourceProp,\n    validate: _validateProp,\n    format: _formatProp,\n    parse = convertStringToNumber,\n    onFocus,\n    ...rest\n  } = props;\n  const resource = useResourceContext({ resource: resourceProp });\n\n  const { id, field, isRequired } = useInput(props);\n\n  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {\n    const value = event.target.value;\n    const numberValue = parse(value);\n\n    setValue(value);\n    field.onChange(numberValue ?? 0);\n  };\n\n  const [value, setValue] = useState<string | undefined>(\n    field.value?.toString() ?? \"\",\n  );\n\n  const hasFocus = React.useRef(false);\n\n  const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {\n    onFocus?.(event);\n    hasFocus.current = true;\n  };\n\n  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {\n    field.onBlur?.(event);\n    hasFocus.current = false;\n    setValue(field.value?.toString() ?? \"\");\n  };\n\n  useEffect(() => {\n    if (!hasFocus.current) {\n      setValue(field.value?.toString() ?? \"\");\n    }\n  }, [field.value]);\n\n  return (\n    <FormField id={id} className={className} name={field.name}>\n      {label !== false && (\n        <FormLabel>\n          <FieldTitle\n            label={label}\n            source={source}\n            resource={resource}\n            isRequired={isRequired}\n          />\n        </FormLabel>\n      )}\n      <FormControl>\n        <Input\n          {...rest}\n          {...field}\n          type=\"number\"\n          value={value}\n          onChange={handleChange}\n          onFocus={handleFocus}\n          onBlur={handleBlur}\n        />\n      </FormControl>\n      <InputHelperText helperText={props.helperText} />\n      <FormError />\n    </FormField>\n  );\n};\n\nexport interface NumberInputProps\n  extends InputProps,\n    Omit<\n      React.ComponentProps<\"input\">,\n      \"defaultValue\" | \"onBlur\" | \"onChange\" | \"type\"\n    > {\n  parse?: (value: string) => number;\n}\n\nconst convertStringToNumber = (value?: string | null) => {\n  if (value == null || value === \"\") {\n    return null;\n  }\n  const float = parseFloat(value);\n\n  return isNaN(float) ? 0 : float;\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "admin",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Main admin application wrapper",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/admin.tsx",
+      "content": "import {\n  CoreAdminUI,\n  type CoreAdminUIProps,\n  CoreAdminContext,\n  type CoreAdminContextProps,\n  type CoreAdminProps,\n  localStorageStore,\n} from \"ra-core\";\nimport { i18nProvider as defaultI18nProvider } from \"@/lib/i18nProvider\";\nimport { Layout } from \"@/components/admin/layout\";\nimport { LoginPage } from \"@/components/admin/login-page\";\nimport { Ready } from \"@/components/admin/ready\";\nimport { ThemeProvider } from \"@/components/admin/theme-provider\";\nimport { AuthCallback } from \"@/components/admin/authentication\";\n\nconst defaultStore = localStorageStore();\n\nconst AdminContext = (props: CoreAdminContextProps) => (\n  <CoreAdminContext {...props} />\n);\n\nconst AdminUI = (props: CoreAdminUIProps) => (\n  <ThemeProvider>\n    <CoreAdminUI\n      layout={Layout}\n      loginPage={LoginPage}\n      ready={Ready}\n      authCallbackPage={AuthCallback}\n      {...props}\n    />\n  </ThemeProvider>\n);\n\nexport const Admin = (props: CoreAdminProps) => {\n  const {\n    accessDenied,\n    authCallbackPage = AuthCallback,\n    authenticationError,\n    authProvider,\n    basename,\n    catchAll,\n    children,\n    dashboard,\n    dataProvider,\n    disableTelemetry,\n    error,\n    i18nProvider = defaultI18nProvider,\n    layout = Layout,\n    loading,\n    loginPage = LoginPage,\n    queryClient,\n    ready = Ready,\n    requireAuth,\n    store = defaultStore,\n    title = \"Shadcn Admin\",\n  } = props;\n  return (\n    <AdminContext\n      authProvider={authProvider}\n      basename={basename}\n      dataProvider={dataProvider}\n      i18nProvider={i18nProvider}\n      queryClient={queryClient}\n      store={store}\n    >\n      <AdminUI\n        accessDenied={accessDenied}\n        authCallbackPage={authCallbackPage}\n        authenticationError={authenticationError}\n        catchAll={catchAll}\n        dashboard={dashboard}\n        disableTelemetry={disableTelemetry}\n        error={error}\n        layout={layout}\n        loading={loading}\n        loginPage={loginPage}\n        ready={ready}\n        requireAuth={requireAuth}\n        title={title}\n      >\n        {children}\n      </AdminUI>\n    </AdminContext>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "text-field",
+  "type": "components:ui",
+  "category": "data-display",
+  "description": "Display text data in a formatted way",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/text-field.tsx",
+      "content": "/* eslint-disable @typescript-eslint/no-explicit-any */\nimport { HTMLAttributes } from \"react\";\nimport { useFieldValue, useTranslate } from \"ra-core\";\nimport { FieldProps } from \"@/lib/field.type.ts\";\n\nexport const TextField = <\n  RecordType extends Record<string, any> = Record<string, any>,\n>({\n  defaultValue,\n  source,\n  record,\n  empty,\n  ...rest\n}: TextFieldProps<RecordType>) => {\n  const value = useFieldValue({ defaultValue, source, record });\n  const translate = useTranslate();\n\n  if (value == null) {\n    if (!empty) {\n      return null;\n    }\n\n    return (\n      <span {...rest}>\n        {typeof empty === \"string\" ? translate(empty, { _: empty }) : empty}\n      </span>\n    );\n  }\n\n  return (\n    <span {...rest}>\n      {typeof value !== \"string\" ? value.toString() : value}\n    </span>\n  );\n};\n\nexport interface TextFieldProps<\n  RecordType extends Record<string, any> = Record<string, any>,\n> extends FieldProps<RecordType>,\n    HTMLAttributes<HTMLSpanElement> {}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

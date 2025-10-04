@@ -1,0 +1,24 @@
+{
+  "name": "spinner",
+  "type": "components:ui",
+  "category": "feedback",
+  "description": "Loading spinner",
+  "dependencies": {
+    "shadcn": [
+      "alert",
+      "toast"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/spinner.tsx",
+      "content": "import { cn } from \"@/lib/utils\";\nimport { VariantProps, cva } from \"class-variance-authority\";\nimport { Loader2 } from \"lucide-react\";\n\nconst spinnerVariants = cva(\"flex-col items-center justify-center\", {\n  variants: {\n    show: {\n      true: \"flex\",\n      false: \"hidden\",\n    },\n  },\n  defaultVariants: {\n    show: true,\n  },\n});\n\nconst loaderVariants = cva(\"animate-spin text-primary\", {\n  variants: {\n    size: {\n      small: \"size-6\",\n      medium: \"size-8\",\n      large: \"size-12\",\n    },\n  },\n  defaultVariants: {\n    size: \"medium\",\n  },\n});\n\ninterface SpinnerContentProps\n  extends VariantProps<typeof spinnerVariants>,\n    VariantProps<typeof loaderVariants> {\n  className?: string;\n}\n\nexport function Spinner({ size, show, className }: SpinnerContentProps) {\n  return (\n    <span className={spinnerVariants({ show })}>\n      <Loader2 className={cn(loaderVariants({ size }), className)} />\n    </span>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "edit-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to navigate to edit view",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/edit-button.tsx",
+      "content": "import React from \"react\";\nimport { buttonVariants } from \"@/components/ui/button\";\nimport { Pencil } from \"lucide-react\";\nimport {\n  useCreatePath,\n  useRecordContext,\n  useResourceContext,\n  Translate,\n  type RaRecord,\n} from \"ra-core\";\nimport { Link } from \"react-router\";\n\nexport type EditButtonProps = {\n  record?: RaRecord;\n  resource?: string;\n  label?: string;\n};\n\nexport const EditButton = (props: EditButtonProps) => {\n  const resource = useResourceContext(props);\n  const record = useRecordContext(props);\n  const createPath = useCreatePath();\n  const link = createPath({\n    resource,\n    type: \"edit\",\n    id: record?.id,\n  });\n  return (\n    <Link\n      className={buttonVariants({ variant: \"outline\" })}\n      to={link}\n      onClick={stopPropagation}\n    >\n      <Pencil />\n      <Translate i18nKey={props.label ?? \"ra.action.edit\"}>\n        {props.label ?? \"Edit\"}\n      </Translate>\n    </Link>\n  );\n};\n\n// useful to prevent click bubbling in a datagrid with rowClick\nconst stopPropagation = (e: React.MouseEvent) => e.stopPropagation();\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

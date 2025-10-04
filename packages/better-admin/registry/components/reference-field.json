@@ -1,0 +1,23 @@
+{
+  "name": "reference-field",
+  "type": "components:ui",
+  "category": "fields",
+  "description": "Display related record data",
+  "dependencies": {
+    "shadcn": [
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/reference-field.tsx",
+      "content": "import {\n  LinkToType,\n  RaRecord,\n  ReferenceFieldBase,\n  type UseReferenceFieldControllerResult,\n  useFieldValue,\n  useGetRecordRepresentation,\n  useReferenceFieldContext,\n  useTranslate,\n  ExtractRecordPaths,\n} from \"ra-core\";\nimport { MouseEvent, ReactNode } from \"react\";\nimport { Link } from \"react-router\";\nimport { UseQueryOptions } from \"@tanstack/react-query\";\n\nexport const ReferenceField = <\n  RecordType extends RaRecord = RaRecord,\n  ReferenceRecordType extends RaRecord = RaRecord\n>(\n  props: ReferenceFieldProps<RecordType, ReferenceRecordType>\n) => {\n  const { loading, error, empty, render, ...rest } = props;\n  const id = useFieldValue<RecordType>(props);\n  const translate = useTranslate();\n\n  return id == null ? (\n    typeof empty === \"string\" ? (\n      <>{empty && translate(empty, { _: empty })}</>\n    ) : (\n      empty\n    )\n  ) : (\n    <ReferenceFieldBase {...rest}>\n      <ReferenceFieldView<ReferenceRecordType>\n        render={render}\n        loading={loading}\n        error={error}\n        {...rest}\n      />\n    </ReferenceFieldBase>\n  );\n};\n\nexport interface ReferenceFieldProps<\n  RecordType extends RaRecord = RaRecord,\n  ReferenceRecordType extends RaRecord = RaRecord\n> extends Partial<ReferenceFieldViewProps<ReferenceRecordType>> {\n  children?: ReactNode;\n  queryOptions?: UseQueryOptions<RaRecord[], Error> & {\n    // eslint-disable-next-line @typescript-eslint/no-explicit-any\n    meta?: any;\n  };\n  record?: RecordType;\n  reference: string;\n  translateChoice?: ((record: ReferenceRecordType) => string) | boolean;\n  link?: LinkToType;\n  source: ExtractRecordPaths<RecordType>;\n}\n\n// useful to prevent click bubbling in a datagrid with rowClick\nconst stopPropagation = (e: MouseEvent<HTMLAnchorElement>) =>\n  e.stopPropagation();\n\nexport const ReferenceFieldView = <\n  ReferenceRecordType extends RaRecord = RaRecord\n>(\n  props: ReferenceFieldViewProps<ReferenceRecordType>\n) => {\n  const {\n    children,\n    className,\n    empty,\n    error: errorElement,\n    render,\n    reference,\n    loading,\n  } = props;\n  const referenceFieldContext = useReferenceFieldContext();\n  const { error, link, isPending, referenceRecord } = referenceFieldContext;\n  const getRecordRepresentation = useGetRecordRepresentation(reference);\n  const translate = useTranslate();\n\n  if (error && errorElement !== false) {\n    return errorElement;\n  }\n  if (isPending && loading !== false) {\n    return loading;\n  }\n  if (!referenceRecord && empty !== false) {\n    return typeof empty === \"string\" ? (\n      <>{empty && translate(empty, { _: empty })}</>\n    ) : (\n      empty\n    );\n  }\n\n  const child = render\n    ? render(referenceFieldContext)\n    : children || <span>{getRecordRepresentation(referenceRecord)}</span>;\n\n  if (link) {\n    return (\n      <div className={className}>\n        <Link to={link} onClick={stopPropagation}>\n          {child}\n        </Link>\n      </div>\n    );\n  }\n\n  return <>{child}</>;\n};\n\nexport interface ReferenceFieldViewProps<\n  ReferenceRecordType extends RaRecord = RaRecord\n> {\n  children?: ReactNode;\n  className?: string;\n  empty?: ReactNode;\n  loading?: ReactNode;\n  render?: (props: UseReferenceFieldControllerResult) => ReactNode;\n  reference: string;\n  source: string;\n  resource?: string;\n  translateChoice?: ((record: ReferenceRecordType) => string) | boolean;\n  resourceLinkPath?: LinkToType;\n  error?: ReactNode;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

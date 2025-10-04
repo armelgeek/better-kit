@@ -1,0 +1,24 @@
+{
+  "name": "cancel-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to cancel forms",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/cancel-button.tsx",
+      "content": "import { CircleX } from \"lucide-react\";\nimport { Translate } from \"ra-core\";\nimport { useNavigate } from \"react-router\";\n\nimport { Button } from \"../ui/button\";\n\nexport function CancelButton(props: React.ComponentProps<\"button\">) {\n  const navigate = useNavigate();\n  return (\n    <Button\n      type=\"button\"\n      variant=\"ghost\"\n      onClick={() => navigate(-1)}\n      className=\"cursor-pointer\"\n      {...props}\n    >\n      <CircleX />\n      <Translate i18nKey=\"ra.action.cancel\">Cancel</Translate>\n    </Button>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

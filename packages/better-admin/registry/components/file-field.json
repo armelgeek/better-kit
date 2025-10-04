@@ -1,0 +1,24 @@
+{
+  "name": "file-field",
+  "type": "components:ui",
+  "category": "data-display",
+  "description": "Display file information with download links",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/file-field.tsx",
+      "content": "import { HTMLAttributes } from \"react\";\nimport get from \"lodash/get\";\nimport {\n  type ExtractRecordPaths,\n  type HintedString,\n  useFieldValue,\n  useTranslate,\n} from \"ra-core\";\nimport { cn } from \"@/lib/utils\";\nimport type { FieldProps } from \"@/lib/field.type.ts\";\n\n/**\n * Render a link to a file based on a path contained in a record field\n *\n * @example\n * import { FileField } from '@/components/admin/file-field';\n *\n * <FileField source=\"url\" title=\"title\" />\n *\n * // renders the record { id: 123, url: 'doc.pdf', title: 'Presentation' } as\n * <div>\n *     <a href=\"doc.pdf\" title=\"Presentation\">Presentation</a>\n * </div>\n */\nexport const FileField = <\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n>(\n  props: FileFieldProps<RecordType>,\n) => {\n  const {\n    className,\n    empty,\n    title,\n    src,\n    target,\n    download,\n    defaultValue,\n    source,\n    record,\n    ...rest\n  } = props;\n  const sourceValue = useFieldValue({ defaultValue, source, record });\n  const titleValue =\n    useFieldValue({\n      ...props,\n      // @ts-expect-error We ignore here because title might be a custom label or undefined instead of a field name\n      source: title,\n    })?.toString() ?? title;\n  const translate = useTranslate();\n\n  if (\n    sourceValue == null ||\n    (Array.isArray(sourceValue) && sourceValue.length === 0)\n  ) {\n    if (!empty) {\n      return null;\n    }\n\n    return (\n      <div className={cn(\"inline-block\", className)} {...rest}>\n        {typeof empty === \"string\" ? translate(empty, { _: empty }) : empty}\n      </div>\n    );\n  }\n\n  if (Array.isArray(sourceValue)) {\n    return (\n      <ul className={cn(\"inline-block\", className)} {...rest}>\n        {sourceValue.map((file, index) => {\n          const fileTitleValue = title ? get(file, title, title) : title;\n          const srcValue = src ? get(file, src, title) : title;\n\n          return (\n            <li key={index}>\n              <a\n                href={srcValue}\n                title={fileTitleValue}\n                target={target}\n                download={download}\n                // useful to prevent click bubbling in a DataTable with rowClick\n                onClick={(e) => e.stopPropagation()}\n              >\n                {fileTitleValue}\n              </a>\n            </li>\n          );\n        })}\n      </ul>\n    );\n  }\n\n  return (\n    <div className={cn(\"inline-block\", className)} {...rest}>\n      <a\n        href={sourceValue?.toString()}\n        title={titleValue}\n        target={target}\n        download={download}\n        // useful to prevent click bubbling in a DataTable with rowClick\n        onClick={(e) => e.stopPropagation()}\n      >\n        {titleValue}\n      </a>\n    </div>\n  );\n};\n\nexport interface FileFieldProps<\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n> extends FieldProps<RecordType>,\n    HTMLAttributes<HTMLElement> {\n  /**\n   * The source of the link to the file, for an array of files.\n   */\n  src?: string;\n  title?: HintedString<ExtractRecordPaths<RecordType>>;\n  target?: HTMLAnchorElement[\"target\"];\n  download?: HTMLAnchorElement[\"download\"];\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

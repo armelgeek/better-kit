@@ -1,0 +1,24 @@
+{
+  "name": "breadcrumb",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Breadcrumb navigation trail",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/breadcrumb.tsx",
+      "content": "import * as React from \"react\";\nimport { createPortal } from \"react-dom\";\nimport { Separator } from \"@/components/ui/separator\";\nimport {\n  Breadcrumb as BaseBreadcrumb,\n  BreadcrumbEllipsis,\n  BreadcrumbItem,\n  BreadcrumbPage,\n  BreadcrumbList,\n  BreadcrumbSeparator,\n} from \"@/components/ui/breadcrumb\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerFooter,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from \"@/components/ui/drawer\";\nimport { useIsMobile } from \"@/hooks/use-mobile\";\nimport { Translate } from \"ra-core\";\n\nexport const Breadcrumb = ({ children, ref }: BreadcrumbProps) => {\n  const breadcrumbPortal = document.getElementById(\"breadcrumb\");\n  const isMobile = useIsMobile();\n  const [open, setOpen] = React.useState(false);\n  if (!breadcrumbPortal) return null;\n  return createPortal(\n    <>\n      <Separator\n        decorative\n        orientation=\"vertical\"\n        className=\"data-[orientation=vertical]:h-4 mr-4\"\n      />\n      <BaseBreadcrumb ref={ref}>\n        <BreadcrumbList>\n          {isMobile && React.Children.count(children) > 2 ? (\n            <React.Fragment>\n              <BreadcrumbItem>\n                <Drawer open={open} onOpenChange={setOpen}>\n                  <DrawerTrigger aria-label=\"Toggle Menu\">\n                    <BreadcrumbEllipsis className=\"h-4 w-4\" />\n                  </DrawerTrigger>\n                  <DrawerContent>\n                    <DrawerHeader className=\"text-left\">\n                      <DrawerTitle>\n                        <Translate i18nKey=\"ra.navigation.breadcrumb_drawer_title\">\n                          Navigate to\n                        </Translate>\n                      </DrawerTitle>\n                      <DrawerDescription>\n                        <Translate i18nKey=\"ra.navigation.breadcrumb_drawer_instructions\">\n                          Select a page to navigate to.\n                        </Translate>\n                      </DrawerDescription>\n                    </DrawerHeader>\n                    <ol className=\"grid gap-1 px-4\">\n                      {React.Children.toArray(children)\n                        .slice(0, -1)\n                        .map((item) => item)}\n                    </ol>\n                    <DrawerFooter className=\"pt-4\">\n                      <DrawerClose asChild>\n                        <Button variant=\"outline\">\n                          <Translate i18nKey=\"ra.action.close\">Close</Translate>\n                        </Button>\n                      </DrawerClose>\n                    </DrawerFooter>\n                  </DrawerContent>\n                </Drawer>\n              </BreadcrumbItem>\n              <BreadcrumbSeparator />\n              {React.Children.toArray(children).slice(-1)}\n            </React.Fragment>\n          ) : (\n            React.Children.map(children, (child, index) => (\n              <React.Fragment key={index}>\n                {child}\n                {index < React.Children.count(children) - 1 ? (\n                  <BreadcrumbSeparator />\n                ) : null}\n              </React.Fragment>\n            ))\n          )}\n        </BreadcrumbList>\n      </BaseBreadcrumb>\n    </>,\n    breadcrumbPortal\n  );\n};\n\nexport { BreadcrumbItem, BreadcrumbPage };\n\nexport type BreadcrumbProps = React.ComponentProps<\"nav\">;\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

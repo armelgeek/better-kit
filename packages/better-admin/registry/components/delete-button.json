@@ -1,0 +1,31 @@
+{
+  "name": "delete-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to delete records with confirmation",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/delete-button.tsx",
+      "content": "import * as React from \"react\";\nimport { Trash } from \"lucide-react\";\nimport { Button } from \"@/components/ui/button\";\nimport { humanize, singularize } from \"inflection\";\nimport {\n  useDeleteWithUndoController,\n  useGetRecordRepresentation,\n  useResourceTranslation,\n  useRecordContext,\n  useResourceContext,\n  useTranslate,\n  type UseDeleteOptions,\n  type RedirectionSideEffect,\n} from \"ra-core\";\n\nexport type DeleteButtonProps = {\n  label?: string;\n  size?: \"default\" | \"sm\" | \"lg\" | \"icon\";\n  onClick?: React.ReactEventHandler<HTMLButtonElement>;\n  mutationOptions?: UseDeleteOptions;\n  redirect?: RedirectionSideEffect;\n  resource?: string;\n  successMessage?: string;\n  className?: string;\n  variant?:\n    | \"default\"\n    | \"destructive\"\n    | \"outline\"\n    | \"secondary\"\n    | \"ghost\"\n    | \"link\";\n};\n\nexport const DeleteButton = (props: DeleteButtonProps) => {\n  const {\n    label: labelProp,\n    onClick,\n    size,\n    mutationOptions,\n    redirect = \"list\",\n    successMessage,\n    variant = \"outline\",\n    className = \"cursor-pointer hover:bg-destructive/10! text-destructive! border-destructive! focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40\",\n  } = props;\n  const record = useRecordContext(props);\n  const resource = useResourceContext(props);\n\n  const { isPending, handleDelete } = useDeleteWithUndoController({\n    record,\n    resource,\n    redirect,\n    onClick,\n    mutationOptions,\n    successMessage,\n  });\n  const translate = useTranslate();\n  const getRecordRepresentation = useGetRecordRepresentation(resource);\n  let recordRepresentation = getRecordRepresentation(record);\n  const resourceName = translate(`resources.${resource}.forcedCaseName`, {\n    smart_count: 1,\n    _: humanize(\n      translate(`resources.${resource}.name`, {\n        smart_count: 1,\n        _: resource ? singularize(resource) : undefined,\n      }),\n      true,\n    ),\n  });\n  // We don't support React elements for this\n  if (React.isValidElement(recordRepresentation)) {\n    recordRepresentation = `#${record?.id}`;\n  }\n  const label = useResourceTranslation({\n    resourceI18nKey: `resources.${resource}.action.delete`,\n    baseI18nKey: \"ra.action.delete\",\n    options: {\n      name: resourceName,\n      recordRepresentation,\n    },\n    userText: labelProp,\n  });\n\n  return (\n    <Button\n      variant={variant}\n      type=\"button\"\n      onClick={handleDelete}\n      disabled={isPending}\n      aria-label={typeof label === \"string\" ? label : undefined}\n      size={size}\n      className={className}\n    >\n      <Trash />\n      {label}\n    </Button>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "delete"
+    ],
+    "hook": "useQuery(\"resource\").delete(id)",
+    "example": "const { data } = useQuery(\"resource\").delete(id);\n// Use in component"
+  }
+}

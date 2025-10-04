@@ -1,0 +1,24 @@
+{
+  "name": "loading",
+  "type": "components:ui",
+  "category": "feedback",
+  "description": "Loading spinner and states",
+  "dependencies": {
+    "shadcn": [
+      "alert",
+      "toast"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/loading.tsx",
+      "content": "import { Translate, useTimeout } from \"ra-core\";\nimport { Spinner } from \"./spinner\";\n\nexport const Loading = (props: LoadingProps) => {\n  const {\n    loadingPrimary = \"ra.page.loading\",\n    loadingSecondary = \"ra.message.loading\",\n    delay = 1000,\n    ...rest\n  } = props;\n  const oneSecondHasPassed = useTimeout(delay);\n  return oneSecondHasPassed ? (\n    <div className=\"flex flex-col justify-center items-center h-full\" {...rest}>\n      <div className=\"text-center font-sans color-muted pt-1 pb-1\">\n        <Spinner size=\"large\" className=\"width-9 height-9\" />\n        <h5 className=\"mt-3 text-2xl text-secondary-foreground\">\n          <Translate i18nKey={loadingPrimary}>{loadingPrimary}</Translate>\n        </h5>\n        <p className=\"text-primary\">\n          <Translate i18nKey={loadingSecondary}>{loadingSecondary}</Translate>\n        </p>\n      </div>\n    </div>\n  ) : null;\n};\n\nexport interface LoadingProps {\n  loadingPrimary?: string;\n  loadingSecondary?: string;\n  delay?: number;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

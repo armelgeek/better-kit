@@ -1,0 +1,24 @@
+{
+  "name": "email-field",
+  "type": "components:ui",
+  "category": "data-display",
+  "description": "Display email addresses with mailto links",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/email-field.tsx",
+      "content": "import { useFieldValue, useTranslate } from \"ra-core\";\nimport React, { AnchorHTMLAttributes } from \"react\";\n\nimport { cn } from \"@/lib/utils\";\nimport { genericMemo } from \"@/lib/genericMemo\";\nimport { FieldProps } from \"@/lib/field.type.ts\";\n\nconst EmailFieldImpl = <\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n>(\n  inProps: EmailFieldProps<RecordType>,\n) => {\n  const { className, empty, defaultValue, source, record, ...rest } = inProps;\n  const value = useFieldValue({ defaultValue, source, record });\n  const translate = useTranslate();\n\n  if (value == null) {\n    if (!empty) {\n      return null;\n    }\n\n    return (\n      <span className={className} {...rest}>\n        {typeof empty === \"string\" ? translate(empty, { _: empty }) : empty}\n      </span>\n    );\n  }\n\n  return (\n    <a\n      className={cn(\"underline hover:no-underline\", className)}\n      href={`mailto:${value}`}\n      onClick={stopPropagation}\n      {...rest}\n    >\n      {value}\n    </a>\n  );\n};\nEmailFieldImpl.displayName = \"EmailFieldImpl\";\n\nexport const EmailField = genericMemo(EmailFieldImpl);\n\nexport interface EmailFieldProps<\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\n  RecordType extends Record<string, any> = Record<string, any>,\n> extends FieldProps<RecordType>,\n    AnchorHTMLAttributes<HTMLAnchorElement> {}\n\n// useful to prevent click bubbling in a DataTable with rowClick\nconst stopPropagation = (e: React.MouseEvent<HTMLAnchorElement>) =>\n  e.stopPropagation();\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "locales-menu-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Language selection menu",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/locales-menu-button.tsx",
+      "content": "import { Check } from \"lucide-react\";\nimport { Button } from \"@/components/ui/button\";\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from \"@/components/ui/dropdown-menu\";\nimport { cn } from \"@/lib/utils\";\nimport { useLocales, useLocaleState } from \"ra-core\";\n\nexport function LocalesMenuButton() {\n  const languages = useLocales();\n  const [locale, setLocale] = useLocaleState();\n\n  const getNameForLocale = (locale: string): string => {\n    const language = languages.find((language) => language.locale === locale);\n    return language ? language.name : \"\";\n  };\n\n  const changeLocale = (locale: string) => (): void => {\n    setLocale(locale);\n  };\n\n  if (languages.length <= 1) {\n    return null; // No need to render the dropdown if there's only one language\n  }\n  return (\n    <DropdownMenu modal={false}>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"ghost\" size=\"icon\" className=\"hidden sm:inline-flex\">\n          {locale.toUpperCase()}\n        </Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent align=\"end\">\n        {languages.map((language) => (\n          <DropdownMenuItem\n            key={language.locale}\n            onClick={changeLocale(language.locale)}\n          >\n            {getNameForLocale(language.locale)}\n            <Check\n              className={cn(\"ml-auto\", locale !== language.locale && \"hidden\")}\n            />\n          </DropdownMenuItem>\n        ))}\n      </DropdownMenuContent>\n    </DropdownMenu>\n  );\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

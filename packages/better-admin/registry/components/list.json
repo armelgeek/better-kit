@@ -1,0 +1,31 @@
+{
+  "name": "list",
+  "type": "components:ui",
+  "category": "data-display",
+  "description": "List view component with filtering, pagination, and export",
+  "dependencies": {
+    "shadcn": [
+      "table",
+      "card"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/list.tsx",
+      "content": "import {\n  Breadcrumb,\n  BreadcrumbItem,\n  BreadcrumbPage,\n} from \"@/components/admin/breadcrumb\";\nimport {\n  ListBase,\n  ListBaseProps,\n  type ListControllerResult,\n  RaRecord,\n  Translate,\n  useGetResourceLabel,\n  useHasDashboard,\n  useResourceContext,\n  useResourceDefinition,\n  useTranslate,\n} from \"ra-core\";\nimport { ReactElement, ReactNode } from \"react\";\nimport { Link } from \"react-router\";\nimport { cn } from \"@/lib/utils.ts\";\nimport { FilterContext, FilterElementProps } from \"@/hooks/filter-context.tsx\";\nimport { CreateButton } from \"@/components/admin/create-button\";\nimport { ExportButton } from \"@/components/admin/export-button\";\nimport { ListPagination } from \"@/components/admin/list-pagination\";\nimport { FilterForm } from \"@/components/admin/filter-form.tsx\";\n\nexport const List = <RecordType extends RaRecord = RaRecord>(\n  props: ListProps<RecordType>,\n) => {\n  const {\n    debounce,\n    disableAuthentication,\n    disableSyncWithLocation,\n    exporter,\n    filter,\n    filterDefaultValues,\n    loading,\n    perPage,\n    queryOptions,\n    resource,\n    sort,\n    storeKey,\n    ...rest\n  } = props;\n\n  return (\n    <ListBase<RecordType>\n      debounce={debounce}\n      disableAuthentication={disableAuthentication}\n      disableSyncWithLocation={disableSyncWithLocation}\n      exporter={exporter}\n      filter={filter}\n      filterDefaultValues={filterDefaultValues}\n      loading={loading}\n      perPage={perPage}\n      queryOptions={queryOptions}\n      resource={resource}\n      sort={sort}\n      storeKey={storeKey}\n    >\n      <ListView<RecordType> {...rest} />\n    </ListBase>\n  );\n};\n\nexport interface ListProps<RecordType extends RaRecord = RaRecord>\n  extends ListBaseProps<RecordType>,\n    ListViewProps<RecordType> {}\n\nexport const ListView = <RecordType extends RaRecord = RaRecord>(\n  props: ListViewProps<RecordType>,\n) => {\n  const {\n    filters,\n    pagination = defaultPagination,\n    title,\n    children,\n    actions,\n  } = props;\n  const translate = useTranslate();\n  const resource = useResourceContext();\n  if (!resource) {\n    throw new Error(\n      \"The ListView component must be used within a ResourceContextProvider\",\n    );\n  }\n  const getResourceLabel = useGetResourceLabel();\n  const resourceLabel = getResourceLabel(resource, 2);\n  const finalTitle =\n    title !== undefined\n      ? title\n      : translate(\"ra.page.list\", {\n          name: resourceLabel,\n        });\n  const { hasCreate } = useResourceDefinition({ resource });\n  const hasDashboard = useHasDashboard();\n\n  return (\n    <>\n      <Breadcrumb>\n        {hasDashboard && (\n          <BreadcrumbItem>\n            <Link to=\"/\">\n              <Translate i18nKey=\"ra.page.dashboard\">Home</Translate>\n            </Link>\n          </BreadcrumbItem>\n        )}\n        <BreadcrumbPage>{resourceLabel}</BreadcrumbPage>\n      </Breadcrumb>\n\n      <FilterContext.Provider value={filters}>\n        <div className=\"flex justify-between items-start flex-wrap gap-2 my-2\">\n          <h2 className=\"text-2xl font-bold tracking-tight mb-2\">\n            {finalTitle}\n          </h2>\n          {actions ?? (\n            <div className=\"flex items-center gap-2\">\n              {hasCreate ? <CreateButton /> : null}\n              {<ExportButton />}\n            </div>\n          )}\n        </div>\n        <FilterForm />\n\n        <div className={cn(\"my-2\", props.className)}>{children}</div>\n        {pagination}\n      </FilterContext.Provider>\n    </>\n  );\n};\n\nconst defaultPagination = <ListPagination />;\n\nexport interface ListViewProps<RecordType extends RaRecord = RaRecord> {\n  children?: ReactNode;\n  render?: (props: ListControllerResult<RecordType, Error>) => ReactNode;\n  actions?: ReactElement | false;\n  filters?: ReactElement<FilterElementProps>[];\n  pagination?: ReactNode;\n  title?: ReactNode | string | false;\n  className?: string;\n}\n\nexport type FiltersType =\n  | ReactElement<FilterElementProps>\n  | ReactElement<FilterElementProps>[];\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  },
+  "betterQuery": {
+    "operations": [
+      "list"
+    ],
+    "hook": "useQuery(\"resource\").list()",
+    "example": "const { data } = useQuery(\"resource\").list();\n// Use in component"
+  }
+}

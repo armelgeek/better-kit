@@ -1,0 +1,26 @@
+{
+  "name": "text-input",
+  "type": "components:ui",
+  "category": "forms",
+  "description": "Text input field with validation",
+  "dependencies": {
+    "shadcn": [
+      "form",
+      "input",
+      "label",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/text-input.tsx",
+      "content": "import {\n  type InputProps,\n  useInput,\n  useResourceContext,\n  FieldTitle,\n} from \"ra-core\";\nimport {\n  FormControl,\n  FormError,\n  FormField,\n  FormLabel,\n} from \"@/components/admin/form\";\nimport { Input } from \"@/components/ui/input\";\nimport { Textarea } from \"@/components/ui/textarea\";\nimport { InputHelperText } from \"@/components/admin/input-helper-text\";\n\nexport type TextInputProps = InputProps & {\n  multiline?: boolean;\n} & React.ComponentProps<\"textarea\"> &\n  React.ComponentProps<\"input\">;\n\nexport const TextInput = (props: TextInputProps) => {\n  const resource = useResourceContext(props);\n  const {\n    label,\n    source,\n    multiline,\n    className,\n    validate: _validateProp,\n    format: _formatProp,\n    ...rest\n  } = props;\n  const { id, field, isRequired } = useInput(props);\n\n  return (\n    <FormField id={id} className={className} name={field.name}>\n      {label !== false && (\n        <FormLabel>\n          <FieldTitle\n            label={label}\n            source={source}\n            resource={resource}\n            isRequired={isRequired}\n          />\n        </FormLabel>\n      )}\n      <FormControl>\n        {multiline ? (\n          <Textarea {...rest} {...field} />\n        ) : (\n          <Input {...rest} {...field} />\n        )}\n      </FormControl>\n      <InputHelperText helperText={props.helperText} />\n      <FormError />\n    </FormField>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

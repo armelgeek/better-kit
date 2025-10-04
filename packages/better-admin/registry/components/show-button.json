@@ -1,0 +1,24 @@
+{
+  "name": "show-button",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Button to navigate to show view",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/show-button.tsx",
+      "content": "import React from \"react\";\nimport { Link } from \"react-router\";\nimport { buttonVariants } from \"@/components/ui/button\";\nimport { Eye } from \"lucide-react\";\nimport {\n  Translate,\n  useCreatePath,\n  useRecordContext,\n  useResourceContext,\n} from \"ra-core\";\n\nexport type ShowButtonProps = {\n  label?: string;\n  icon?: React.ReactNode;\n} & React.AnchorHTMLAttributes<HTMLAnchorElement>;\n\nexport const ShowButton = (props: ShowButtonProps) => {\n  const resource = useResourceContext();\n  const record = useRecordContext();\n  const createPath = useCreatePath();\n  const link = createPath({\n    resource,\n    type: \"show\",\n    id: record?.id,\n  });\n  const { label, icon, ...rest } = props;\n  return (\n    <Link\n      className={buttonVariants({ variant: \"outline\" })}\n      to={link}\n      onClick={stopPropagation}\n      {...rest}\n    >\n      {icon ?? <Eye />}\n      <Translate i18nKey={label ?? \"ra.action.show\"}>\n        {label ?? \"Show\"}\n      </Translate>\n    </Link>\n  );\n};\n\n// useful to prevent click bubbling in a datagrid with rowClick\nconst stopPropagation = (e: React.MouseEvent) => e.stopPropagation();\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

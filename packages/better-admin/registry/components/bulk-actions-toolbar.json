@@ -1,0 +1,24 @@
+{
+  "name": "bulk-actions-toolbar",
+  "type": "components:ui",
+  "category": "toolbars",
+  "description": "Toolbar for bulk actions",
+  "dependencies": {
+    "shadcn": [
+      "toolbar",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/bulk-actions-toolbar.tsx",
+      "content": "import type { ReactNode } from \"react\";\nimport { useListContext, Translate } from \"ra-core\";\nimport { Card } from \"@/components/ui/card\";\nimport { Button } from \"@/components/ui/button\";\nimport { BulkDeleteButton } from \"@/components/admin/bulk-delete-button\";\nimport { X } from \"lucide-react\";\nimport { BulkExportButton } from \"./bulk-export-button\";\n\nexport function BulkActionsToolbarChildren() {\n  return (\n    <>\n      <BulkExportButton />\n      <BulkDeleteButton />\n    </>\n  );\n}\n\nexport const BulkActionsToolbar = ({\n  children = <BulkActionsToolbarChildren />,\n}: {\n  children?: ReactNode;\n}) => {\n  const { selectedIds, onUnselectItems } = useListContext();\n  if (!selectedIds?.length) {\n    return null;\n  }\n  const handleUnselectAll = (e: React.MouseEvent) => {\n    e.stopPropagation();\n    onUnselectItems();\n  };\n  return (\n    <Card className=\"flex flex-col gap-2 md:gap-6 md:flex-row items-stretch sm:items-center p-2 px-4 w-[90%] sm:w-fit mx-auto fixed bottom-2 left-0 right-0 z-10 bg-zinc-100 dark:bg-zinc-900\">\n      <div className=\"flex items-center gap-2\">\n        <Button\n          variant=\"ghost\"\n          className=\"has-[>svg]:px-0\"\n          onClick={handleUnselectAll}\n        >\n          <X />\n        </Button>\n        <span className=\"text-sm text-muted-foreground\">\n          <Translate\n            i18nKey=\"ra.action.bulk_actions\"\n            options={{ smart_count: selectedIds.length }}\n          >\n            {selectedIds.length} rows selected\n          </Translate>\n        </span>\n      </div>\n      {children}\n    </Card>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

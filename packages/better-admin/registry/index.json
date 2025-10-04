@@ -20,24 +20,342 @@
 			"id": "feedback",
 			"name": "Feedback",
 			"description": "Loading states, notifications, and error handling"
+		},
+		{
+			"id": "buttons",
+			"name": "Buttons",
+			"description": "Action buttons for common operations"
+		},
+		{
+			"id": "fields",
+			"name": "Fields",
+			"description": "Field components for displaying and editing data"
+		},
+		{
+			"id": "views",
+			"name": "Views",
+			"description": "Auto-generated view components"
+		},
+		{
+			"id": "auth",
+			"name": "Authentication",
+			"description": "Authentication and login components"
+		},
+		{
+			"id": "ui",
+			"name": "UI Components",
+			"description": "Common UI components and utilities"
+		},
+		{
+			"id": "toolbars",
+			"name": "Toolbars",
+			"description": "Toolbar and action bar components"
 		}
 	],
 	"components": [
 		{
 			"name": "data-table",
-			"description": "A powerful data table component with sorting, filtering, and pagination"
+			"description": "A powerful data table with sorting, filtering, pagination, and bulk actions"
 		},
 		{
-			"name": "crud-form",
-			"description": "A flexible CRUD form builder with validation"
+			"name": "list",
+			"description": "List view component with filtering, pagination, and export"
 		},
 		{
-			"name": "resource-list",
-			"description": "A reusable list component for displaying resources"
+			"name": "list-guesser",
+			"description": "Automatically generates list views based on data structure"
 		},
 		{
-			"name": "example-card",
-			"description": "A simple example card component with no dependencies"
+			"name": "text-field",
+			"description": "Display text data in a formatted way"
+		},
+		{
+			"name": "number-field",
+			"description": "Display numeric data with formatting options"
+		},
+		{
+			"name": "date-field",
+			"description": "Display dates with formatting and localization"
+		},
+		{
+			"name": "email-field",
+			"description": "Display email addresses with mailto links"
+		},
+		{
+			"name": "url-field",
+			"description": "Display URLs with clickable links"
+		},
+		{
+			"name": "badge-field",
+			"description": "Display status badges and tags"
+		},
+		{
+			"name": "file-field",
+			"description": "Display file information with download links"
+		},
+		{
+			"name": "record-field",
+			"description": "Display nested record data"
+		},
+		{
+			"name": "form",
+			"description": "Base form component with validation and submission"
+		},
+		{
+			"name": "simple-form",
+			"description": "Simplified form layout for common use cases"
+		},
+		{
+			"name": "text-input",
+			"description": "Text input field with validation"
+		},
+		{
+			"name": "number-input",
+			"description": "Number input field with formatting"
+		},
+		{
+			"name": "boolean-input",
+			"description": "Checkbox/toggle for boolean values"
+		},
+		{
+			"name": "select-input",
+			"description": "Dropdown select input"
+		},
+		{
+			"name": "radio-button-group-input",
+			"description": "Radio button group for single selection"
+		},
+		{
+			"name": "file-input",
+			"description": "File upload input with preview"
+		},
+		{
+			"name": "array-input",
+			"description": "Input for array/list data"
+		},
+		{
+			"name": "autocomplete-input",
+			"description": "Autocomplete search input"
+		},
+		{
+			"name": "autocomplete-array-input",
+			"description": "Autocomplete for multiple selections"
+		},
+		{
+			"name": "reference-input",
+			"description": "Input for selecting related records"
+		},
+		{
+			"name": "reference-array-input",
+			"description": "Input for selecting multiple related records"
+		},
+		{
+			"name": "simple-form-iterator",
+			"description": "Repeatable form fields for arrays"
+		},
+		{
+			"name": "filter-form",
+			"description": "Form for filtering list data"
+		},
+		{
+			"name": "search-input",
+			"description": "Search input with debouncing"
+		},
+		{
+			"name": "field-toggle",
+			"description": "Toggle field visibility"
+		},
+		{
+			"name": "admin",
+			"description": "Main admin application wrapper"
+		},
+		{
+			"name": "layout",
+			"description": "Base layout component with sidebar and navigation"
+		},
+		{
+			"name": "app-sidebar",
+			"description": "Collapsible sidebar navigation"
+		},
+		{
+			"name": "breadcrumb",
+			"description": "Breadcrumb navigation trail"
+		},
+		{
+			"name": "list-pagination",
+			"description": "Pagination controls for lists"
+		},
+		{
+			"name": "show",
+			"description": "Show/detail view component"
+		},
+		{
+			"name": "simple-show-layout",
+			"description": "Simplified show layout"
+		},
+		{
+			"name": "create",
+			"description": "Create/new record view"
+		},
+		{
+			"name": "edit",
+			"description": "Edit record view"
+		},
+		{
+			"name": "loading",
+			"description": "Loading spinner and states"
+		},
+		{
+			"name": "error",
+			"description": "Error display component"
+		},
+		{
+			"name": "notification",
+			"description": "Toast notifications"
+		},
+		{
+			"name": "spinner",
+			"description": "Loading spinner"
+		},
+		{
+			"name": "confirm",
+			"description": "Confirmation dialog"
+		},
+		{
+			"name": "create-button",
+			"description": "Button to navigate to create view"
+		},
+		{
+			"name": "edit-button",
+			"description": "Button to navigate to edit view"
+		},
+		{
+			"name": "show-button",
+			"description": "Button to navigate to show view"
+		},
+		{
+			"name": "delete-button",
+			"description": "Button to delete records with confirmation"
+		},
+		{
+			"name": "export-button",
+			"description": "Button to export data"
+		},
+		{
+			"name": "refresh-button",
+			"description": "Button to refresh data"
+		},
+		{
+			"name": "cancel-button",
+			"description": "Button to cancel forms"
+		},
+		{
+			"name": "bulk-delete-button",
+			"description": "Button for bulk delete operations"
+		},
+		{
+			"name": "bulk-export-button",
+			"description": "Button for bulk export"
+		},
+		{
+			"name": "sort-button",
+			"description": "Button to sort columns"
+		},
+		{
+			"name": "toggle-filter-button",
+			"description": "Button to toggle filter visibility"
+		},
+		{
+			"name": "columns-button",
+			"description": "Button to toggle column visibility"
+		},
+		{
+			"name": "icon-button-with-tooltip",
+			"description": "Icon button with tooltip"
+		},
+		{
+			"name": "locales-menu-button",
+			"description": "Language selection menu"
+		},
+		{
+			"name": "reference-field",
+			"description": "Display related record data"
+		},
+		{
+			"name": "reference-array-field",
+			"description": "Display multiple related records"
+		},
+		{
+			"name": "reference-many-field",
+			"description": "Display many-to-many relationships"
+		},
+		{
+			"name": "reference-many-count",
+			"description": "Count of related records"
+		},
+		{
+			"name": "array-field",
+			"description": "Display array data"
+		},
+		{
+			"name": "select-field",
+			"description": "Display select/enum values"
+		},
+		{
+			"name": "single-field-list",
+			"description": "List with single field display"
+		},
+		{
+			"name": "count",
+			"description": "Display count of records"
+		},
+		{
+			"name": "input-helper-text",
+			"description": "Helper text for inputs"
+		},
+		{
+			"name": "edit-guesser",
+			"description": "Auto-generate edit views"
+		},
+		{
+			"name": "list-guesser",
+			"description": "Automatically generates list views based on data structure"
+		},
+		{
+			"name": "show-guesser",
+			"description": "Auto-generate show views"
+		},
+		{
+			"name": "authentication",
+			"description": "Authentication provider"
+		},
+		{
+			"name": "login-page",
+			"description": "Login page component"
+		},
+		{
+			"name": "theme-provider",
+			"description": "Theme context provider"
+		},
+		{
+			"name": "theme-mode-toggle",
+			"description": "Dark/light mode toggle"
+		},
+		{
+			"name": "user-menu",
+			"description": "User profile menu"
+		},
+		{
+			"name": "saved-queries",
+			"description": "Saved query filters"
+		},
+		{
+			"name": "bulk-actions-toolbar",
+			"description": "Toolbar for bulk actions"
+		},
+		{
+			"name": "ready",
+			"description": "Ready state indicator"
 		}
 	]
 }

@@ -1,0 +1,24 @@
+{
+  "name": "icon-button-with-tooltip",
+  "type": "components:ui",
+  "category": "buttons",
+  "description": "Icon button with tooltip",
+  "dependencies": {
+    "shadcn": [
+      "button",
+      "tooltip"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/icon-button-with-tooltip.tsx",
+      "content": "import { useTranslate } from \"ra-core\";\nimport * as React from \"react\";\nimport { MouseEvent } from \"react\";\n\nimport { Button } from \"@/components/ui/button\";\nimport {\n  Tooltip,\n  TooltipContent,\n  TooltipProvider,\n  TooltipTrigger,\n} from \"@/components/ui/tooltip\";\n\n/**\n * A Button with a tooltip which ensures the tooltip is closed on click to avoid ghost tooltips\n * when the button position changes.\n */\nexport const IconButtonWithTooltip = ({\n  label,\n  onClick,\n  children,\n  disabled,\n  ...props\n}: IconButtonWithTooltipProps) => {\n  const translate = useTranslate();\n  const [open, setOpen] = React.useState(false);\n\n  const handleClose = () => {\n    setOpen(false);\n  };\n\n  const handleOpen = () => {\n    setOpen(true);\n  };\n\n  let translatedLabel = label;\n  if (typeof label === \"string\") {\n    translatedLabel = translate(label, { _: label });\n  }\n\n  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {\n    handleClose();\n    onClick?.(event);\n  };\n\n  return (\n    <TooltipProvider>\n      <Tooltip open={open} onOpenChange={setOpen}>\n        <TooltipTrigger asChild>\n          <Button\n            type=\"button\"\n            variant=\"ghost\"\n            size=\"icon\"\n            aria-label={\n              typeof translatedLabel === \"string\" ? translatedLabel : undefined\n            }\n            onClick={handleClick}\n            disabled={disabled}\n            onMouseEnter={handleOpen}\n            onMouseLeave={handleClose}\n            {...props}\n          >\n            {children}\n          </Button>\n        </TooltipTrigger>\n        <TooltipContent>\n          <p>{translatedLabel}</p>\n        </TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  );\n};\n\nexport interface IconButtonWithTooltipProps\n  extends React.ComponentProps<\"button\"> {\n  label: React.ReactNode;\n  children: React.ReactNode;\n}\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

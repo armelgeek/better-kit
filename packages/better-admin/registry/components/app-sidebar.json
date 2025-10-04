@@ -1,0 +1,24 @@
+{
+  "name": "app-sidebar",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Collapsible sidebar navigation",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/app-sidebar.tsx",
+      "content": "import { createElement } from \"react\";\nimport {\n  useCanAccess,\n  useCreatePath,\n  useGetResourceLabel,\n  useHasDashboard,\n  useResourceDefinitions,\n  useTranslate,\n} from \"ra-core\";\nimport { Link, useMatch } from \"react-router\";\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarFooter,\n  SidebarGroup,\n  SidebarGroupContent,\n  SidebarHeader,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  useSidebar,\n} from \"@/components/ui/sidebar\";\nimport { Skeleton } from \"@/components/ui/skeleton\";\nimport { House, List, Shell } from \"lucide-react\";\n\nexport function AppSidebar() {\n  const hasDashboard = useHasDashboard();\n  const resources = useResourceDefinitions();\n  const { openMobile, setOpenMobile } = useSidebar();\n  const handleClick = () => {\n    if (openMobile) {\n      setOpenMobile(false);\n    }\n  };\n  return (\n    <Sidebar variant=\"floating\" collapsible=\"icon\">\n      <SidebarHeader>\n        <SidebarMenu>\n          <SidebarMenuItem>\n            <SidebarMenuButton\n              asChild\n              className=\"data-[slot=sidebar-menu-button]:!p-1.5\"\n            >\n              <Link to=\"/\">\n                <Shell className=\"!size-5\" />\n                <span className=\"text-base font-semibold\">Acme Inc.</span>\n              </Link>\n            </SidebarMenuButton>\n          </SidebarMenuItem>\n        </SidebarMenu>\n      </SidebarHeader>\n      <SidebarContent>\n        <SidebarGroup>\n          <SidebarGroupContent>\n            <SidebarMenu>\n              {hasDashboard ? (\n                <DashboardMenuItem onClick={handleClick} />\n              ) : null}\n              {Object.keys(resources)\n                .filter((name) => resources[name].hasList)\n                .map((name) => (\n                  <ResourceMenuItem\n                    key={name}\n                    name={name}\n                    onClick={handleClick}\n                  />\n                ))}\n            </SidebarMenu>\n          </SidebarGroupContent>\n        </SidebarGroup>\n      </SidebarContent>\n      <SidebarFooter />\n    </Sidebar>\n  );\n}\n\nexport const DashboardMenuItem = ({ onClick }: { onClick?: () => void }) => {\n  const translate = useTranslate();\n  const label = translate(\"ra.page.dashboard\", {\n    _: \"Dashboard\",\n  });\n  const match = useMatch({ path: \"/\", end: true });\n  return (\n    <SidebarMenuItem>\n      <SidebarMenuButton asChild isActive={!!match}>\n        <Link to=\"/\" onClick={onClick}>\n          <House />\n          {label}\n        </Link>\n      </SidebarMenuButton>\n    </SidebarMenuItem>\n  );\n};\n\nexport const ResourceMenuItem = ({\n  name,\n  onClick,\n}: {\n  name: string;\n  onClick?: () => void;\n}) => {\n  const { canAccess, isPending } = useCanAccess({\n    resource: name,\n    action: \"list\",\n  });\n  const resources = useResourceDefinitions();\n  const getResourceLabel = useGetResourceLabel();\n  const createPath = useCreatePath();\n  const to = createPath({\n    resource: name,\n    type: \"list\",\n  });\n  const match = useMatch({ path: to, end: false });\n\n  if (isPending) {\n    return <Skeleton className=\"h-8 w-full\" />;\n  }\n\n  if (!resources || !resources[name] || !canAccess) return null;\n\n  return (\n    <SidebarMenuItem>\n      <SidebarMenuButton asChild isActive={!!match}>\n        <Link to={to} state={{ _scrollToTop: true }} onClick={onClick}>\n          {resources[name].icon ? (\n            createElement(resources[name].icon)\n          ) : (\n            <List />\n          )}\n          {getResourceLabel(name, 2)}\n        </Link>\n      </SidebarMenuButton>\n    </SidebarMenuItem>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

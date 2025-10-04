@@ -1,0 +1,24 @@
+{
+  "name": "layout",
+  "type": "components:ui",
+  "category": "layout",
+  "description": "Base layout component with sidebar and navigation",
+  "dependencies": {
+    "shadcn": [
+      "card",
+      "separator"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/layout.tsx",
+      "content": "import { Suspense, useState, type ErrorInfo } from \"react\";\nimport { cn } from \"@/lib/utils\";\nimport { CoreLayoutProps } from \"ra-core\";\nimport { ErrorBoundary } from \"react-error-boundary\";\nimport { SidebarProvider, SidebarTrigger } from \"@/components/ui/sidebar\";\nimport { UserMenu } from \"@/components/admin/user-menu\";\nimport { ThemeModeToggle } from \"@/components/admin/theme-mode-toggle\";\nimport { Notification } from \"@/components/admin/notification\";\nimport { AppSidebar } from \"@/components/admin/app-sidebar\";\nimport { RefreshButton } from \"@/components/admin/refresh-button\";\nimport { LocalesMenuButton } from \"@/components/admin/locales-menu-button\";\nimport { Error } from \"@/components/admin/error\";\nimport { Loading } from \"@/components/admin/loading\";\n\nexport const Layout = (props: CoreLayoutProps) => {\n  const [errorInfo, setErrorInfo] = useState<ErrorInfo | undefined>(undefined);\n  const handleError = (_: Error, info: ErrorInfo) => {\n    setErrorInfo(info);\n  };\n  return (\n    <SidebarProvider>\n      <AppSidebar />\n      <main\n        className={cn(\n          \"ml-auto w-full max-w-full\",\n          \"peer-data-[state=collapsed]:w-[calc(100%-var(--sidebar-width-icon)-1rem)]\",\n          \"peer-data-[state=expanded]:w-[calc(100%-var(--sidebar-width))]\",\n          \"sm:transition-[width] sm:duration-200 sm:ease-linear\",\n          \"flex h-svh flex-col\",\n          \"group-data-[scroll-locked=1]/body:h-full\",\n          \"has-[main.fixed-main]:group-data-[scroll-locked=1]/body:h-svh\",\n        )}\n      >\n        <header className=\"flex h-16 md:h-12 shrink-0 items-center gap-2 px-4\">\n          <SidebarTrigger className=\"scale-125 sm:scale-100\" />\n          <div className=\"flex-1 flex items-center\" id=\"breadcrumb\" />\n          <LocalesMenuButton />\n          <ThemeModeToggle />\n          <RefreshButton />\n          <UserMenu />\n        </header>\n        <ErrorBoundary\n          onError={handleError}\n          fallbackRender={({ error, resetErrorBoundary }) => (\n            <Error\n              error={error}\n              errorInfo={errorInfo}\n              resetErrorBoundary={resetErrorBoundary}\n            />\n          )}\n        >\n          <Suspense fallback={<Loading />}>\n            <div className=\"flex flex-1 flex-col px-4 \">{props.children}</div>\n          </Suspense>\n        </ErrorBoundary>\n      </main>\n      <Notification />\n    </SidebarProvider>\n  );\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}

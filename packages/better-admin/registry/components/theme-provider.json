@@ -1,0 +1,24 @@
+{
+  "name": "theme-provider",
+  "type": "components:ui",
+  "category": "ui",
+  "description": "Theme context provider",
+  "dependencies": {
+    "shadcn": [
+      "dropdown-menu",
+      "button"
+    ],
+    "npm": []
+  },
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "components/admin/theme-provider.tsx",
+      "content": "import { createContext, useContext, useEffect } from \"react\";\nimport { useStore } from \"ra-core\";\n\ntype Theme = \"dark\" | \"light\" | \"system\";\n\ntype ThemeProviderProps = {\n  children: React.ReactNode;\n  defaultTheme?: Theme;\n  storageKey?: string;\n};\n\ntype ThemeProviderState = {\n  theme: Theme;\n  setTheme: (theme: Theme) => void;\n};\n\nconst initialState: ThemeProviderState = {\n  theme: \"system\",\n  setTheme: () => null,\n};\n\nconst ThemeProviderContext = createContext<ThemeProviderState>(initialState);\n\nexport function ThemeProvider({\n  children,\n  defaultTheme = \"system\",\n  storageKey = \"theme\",\n  ...props\n}: ThemeProviderProps) {\n  const [theme, setTheme] = useStore<Theme>(storageKey, defaultTheme);\n\n  useEffect(() => {\n    const root = window.document.documentElement;\n\n    root.classList.remove(\"light\", \"dark\");\n\n    if (theme === \"system\") {\n      const systemTheme = window.matchMedia(\"(prefers-color-scheme: dark)\")\n        .matches\n        ? \"dark\"\n        : \"light\";\n\n      root.classList.add(systemTheme);\n      return;\n    }\n\n    root.classList.add(theme);\n  }, [theme]);\n\n  const value = {\n    theme,\n    setTheme,\n  };\n\n  return (\n    <ThemeProviderContext.Provider {...props} value={value}>\n      {children}\n    </ThemeProviderContext.Provider>\n  );\n}\n\nexport const useTheme = () => {\n  const context = useContext(ThemeProviderContext);\n\n  if (context === undefined)\n    throw new Error(\"useTheme must be used within a ThemeProvider\");\n\n  return context;\n};\n",
+      "type": "components:ui"
+    }
+  ],
+  "tailwind": {
+    "config": {}
+  }
+}
