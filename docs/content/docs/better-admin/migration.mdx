@@ -1,0 +1,521 @@
+---
+title: Migration from react-admin
+description: Guide for migrating from react-admin to better-admin
+---
+
+# Migration from react-admin
+
+This guide helps you migrate from react-admin (ra-core) to better-admin with better-auth and better-query.
+
+## Overview
+
+Better Admin replaces:
+- **ra-core** → better-admin with better-auth and better-query
+- **ra-data-simple-rest** → better-query data provider
+- **AuthProvider (ra-core)** → better-auth provider
+
+## Key Differences
+
+| Feature | react-admin | better-admin |
+|---------|-------------|--------------|
+| **Authentication** | ra-core AuthProvider | better-auth |
+| **Data Layer** | ra-core dataProvider | better-query |
+| **Type Safety** | Limited | Full TypeScript inference |
+| **Backend** | REST API required | Direct DB or any backend |
+| **State Management** | Redux/Context | React Query |
+| **Bundle Size** | Large | Smaller (tree-shakeable) |
+
+## Migration Steps
+
+### 1. Install Dependencies
+
+```bash title="Terminal"
+# Remove react-admin dependencies
+npm uninstall react-admin ra-core ra-data-simple-rest ra-ui-materialui
+
+# Install better-admin dependencies
+npm install better-auth better-query better-admin
+```
+
+### 2. Replace Auth Provider
+
+**Before (react-admin):**
+
+```typescript title="authProvider.ts"
+import { AuthProvider } from "ra-core";
+
+export const authProvider: AuthProvider = {
+  login: async ({ username, password }) => {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+    if (response.ok) {
+      const { token } = await response.json();
+      localStorage.setItem("token", token);
+      return Promise.resolve();
+    }
+    return Promise.reject();
+  },
+  logout: () => {
+    localStorage.removeItem("token");
+    return Promise.resolve();
+  },
+  checkAuth: () => {
+    return localStorage.getItem("token")
+      ? Promise.resolve()
+      : Promise.reject();
+  },
+  checkError: (error) => {
+    if (error.status === 401 || error.status === 403) {
+      localStorage.removeItem("token");
+      return Promise.reject();
+    }
+    return Promise.resolve();
+  },
+  getIdentity: async () => {
+    const response = await fetch("/api/me", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    const user = await response.json();
+    return Promise.resolve(user);
+  },
+  getPermissions: () => Promise.resolve(),
+};
+```
+
+**After (better-admin):**
+
+```typescript title="lib/auth.ts"
+import { betterAuth } from "better-auth";
+import { db } from "./db";
+
+export const auth = betterAuth({
+  database: db,
+  emailAndPassword: {
+    enabled: true,
+  },
+});
+```
+
+```typescript title="lib/auth-client.ts"
+import { createAuthClient } from "better-auth/react";
+
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL,
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;
+```
+
+```typescript title="lib/admin-auth.ts"
+import { createBetterAuthProvider } from "better-admin";
+import { authClient } from "./auth-client";
+
+export const authProvider = createBetterAuthProvider({
+  authClient,
+});
+```
+
+### 3. Replace Data Provider
+
+**Before (react-admin):**
+
+```typescript title="dataProvider.ts"
+import simpleRestProvider from "ra-data-simple-rest";
+
+export const dataProvider = simpleRestProvider("http://api.example.com");
+```
+
+**After (better-admin):**
+
+```typescript title="lib/query.ts"
+import { betterQuery, createResource } from "better-query";
+import { auth } from "./auth";
+import Database from "better-sqlite3";
+
+const db = new Database("app.db");
+
+const userResource = createResource({
+  name: "user",
+  schema: {
+    id: { type: "string", primary: true },
+    name: { type: "string", required: true },
+    email: { type: "string", required: true },
+    role: { type: "string" },
+  },
+  middlewares: [
+    {
+      handler: async (context) => {
+        const session = await auth.api.getSession({
+          headers: context.request.headers,
+        });
+        if (session) context.user = session.user;
+      },
+    },
+  ],
+});
+
+export const query = betterQuery({
+  database: db,
+  resources: [userResource],
+});
+```
+
+```typescript title="lib/admin-data.ts"
+import { createBetterQueryProvider } from "better-admin";
+import { query } from "./query";
+
+export const dataProvider = createBetterQueryProvider({
+  queryClient: query,
+});
+```
+
+### 4. Update Admin Component
+
+**Before (react-admin):**
+
+```tsx title="App.tsx"
+import { Admin, Resource } from "react-admin";
+import { authProvider } from "./authProvider";
+import { dataProvider } from "./dataProvider";
+import { UserList, UserEdit, UserCreate } from "./users";
+
+export const App = () => (
+  <Admin authProvider={authProvider} dataProvider={dataProvider}>
+    <Resource
+      name="users"
+      list={UserList}
+      edit={UserEdit}
+      create={UserCreate}
+    />
+  </Admin>
+);
+```
+
+**After (better-admin):**
+
+```tsx title="app/admin/layout.tsx"
+"use client";
+
+import { authProvider } from "@/lib/admin-auth";
+import { dataProvider } from "@/lib/admin-data";
+import { ReactNode } from "react";
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return (
+    <div>
+      {/* Add your layout components */}
+      {children}
+    </div>
+  );
+}
+```
+
+```tsx title="app/admin/users/page.tsx"
+// Your list page
+```
+
+```tsx title="app/admin/users/create/page.tsx"
+// Your create page
+```
+
+```tsx title="app/admin/users/[id]/edit/page.tsx"
+// Your edit page
+```
+
+### 5. Update List Components
+
+**Before (react-admin):**
+
+```tsx title="UserList.tsx"
+import {
+  List,
+  Datagrid,
+  TextField,
+  EmailField,
+  EditButton,
+  DeleteButton,
+} from "react-admin";
+
+export const UserList = () => (
+  <List>
+    <Datagrid>
+      <TextField source="id" />
+      <TextField source="name" />
+      <EmailField source="email" />
+      <TextField source="role" />
+      <EditButton />
+      <DeleteButton />
+    </Datagrid>
+  </List>
+);
+```
+
+**After (better-admin):**
+
+```tsx title="app/admin/users/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+export default function UsersPage() {
+  const { list, remove } = useBetterQuery("user", query);
+  const { data, isLoading } = list.useQuery();
+
+  const columns = [
+    { accessorKey: "id", header: "ID" },
+    { accessorKey: "name", header: "Name" },
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "role", header: "Role" },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link href={`/admin/users/${row.original.id}/edit`}>Edit</Link>
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={async () => {
+              if (confirm("Delete this user?")) {
+                await remove.mutateAsync({ where: { id: row.original.id } });
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between mb-4">
+        <h1>Users</h1>
+        <Button asChild>
+          <Link href="/admin/users/create">Create User</Link>
+        </Button>
+      </div>
+      <DataTable columns={columns} data={data || []} />
+    </div>
+  );
+}
+```
+
+### 6. Update Form Components
+
+**Before (react-admin):**
+
+```tsx title="UserEdit.tsx"
+import {
+  Edit,
+  SimpleForm,
+  TextInput,
+  SelectInput,
+} from "react-admin";
+
+export const UserEdit = () => (
+  <Edit>
+    <SimpleForm>
+      <TextInput source="name" />
+      <TextInput source="email" type="email" />
+      <SelectInput
+        source="role"
+        choices={[
+          { id: "user", name: "User" },
+          { id: "admin", name: "Admin" },
+        ]}
+      />
+    </SimpleForm>
+  </Edit>
+);
+```
+
+**After (better-admin):**
+
+```tsx title="app/admin/users/[id]/edit/page.tsx"
+"use client";
+
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+import { CrudForm } from "@/components/ui/crud-form";
+import { useRouter } from "next/navigation";
+
+export default function UserEditPage({ params }: { params: { id: string } }) {
+  const { get, update } = useBetterQuery("user", query);
+  const { data, isLoading } = get.useQuery({ where: { id: params.id } });
+  const router = useRouter();
+
+  if (isLoading) return <div>Loading...</div>;
+
+  const fields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      options: [
+        { value: "user", label: "User" },
+        { value: "admin", label: "Admin" },
+      ],
+    },
+  ];
+
+  return (
+    <div>
+      <h1>Edit User</h1>
+      <CrudForm
+        fields={fields}
+        defaultValues={data}
+        onSubmit={async (formData) => {
+          await update.mutateAsync({
+            where: { id: params.id },
+            data: formData,
+          });
+          router.push("/admin/users");
+        }}
+        submitLabel="Update User"
+      />
+    </div>
+  );
+}
+```
+
+### 7. Update Hooks
+
+**Before (react-admin):**
+
+```tsx
+import { useGetList, useUpdate, useDelete } from "react-admin";
+
+const { data, isLoading } = useGetList("users");
+const [update] = useUpdate();
+const [deleteOne] = useDelete();
+```
+
+**After (better-admin):**
+
+```tsx
+import { useBetterQuery } from "better-admin";
+import { query } from "@/lib/query";
+
+const { list, update, remove } = useBetterQuery("user", query);
+const { data, isLoading } = list.useQuery();
+// update.mutateAsync({ where: { id }, data })
+// remove.mutateAsync({ where: { id } })
+```
+
+## Feature Mapping
+
+### Filters
+
+**Before:**
+
+```tsx
+<List filters={<SearchInput source="q" alwaysOn />}>
+  <Datagrid>...</Datagrid>
+</List>
+```
+
+**After:**
+
+```tsx
+const [search, setSearch] = useState("");
+const { list } = useBetterQuery("user", query);
+const { data } = list.useQuery({
+  where: search ? { name: { contains: search } } : {},
+});
+```
+
+### Pagination
+
+**Before:**
+
+```tsx
+<List perPage={25}>
+  <Datagrid>...</Datagrid>
+</List>
+```
+
+**After:**
+
+```tsx
+const [page, setPage] = useState(1);
+const perPage = 25;
+const { list } = useBetterQuery("user", query);
+const { data } = list.useQuery({
+  skip: (page - 1) * perPage,
+  take: perPage,
+});
+```
+
+### Sorting
+
+**Before:**
+
+```tsx
+<List sort={{ field: "name", order: "ASC" }}>
+  <Datagrid>...</Datagrid>
+</List>
+```
+
+**After:**
+
+```tsx
+const { list } = useBetterQuery("user", query);
+const { data } = list.useQuery({
+  orderBy: { name: "asc" },
+});
+```
+
+### Relationships
+
+**Before:**
+
+```tsx
+<ReferenceField source="authorId" reference="users">
+  <TextField source="name" />
+</ReferenceField>
+```
+
+**After:**
+
+```tsx
+const { get: getUser } = useBetterQuery("user", query);
+const { data: author } = getUser.useQuery({
+  where: { id: post.authorId },
+});
+```
+
+## Benefits of Migration
+
+1. **Type Safety**: Full TypeScript inference from schema to UI
+2. **Performance**: Direct database access, no REST overhead
+3. **Flexibility**: Not tied to REST API patterns
+4. **Modern Stack**: React Query, better-auth, modern React patterns
+5. **Smaller Bundle**: Tree-shakeable, no Material-UI dependency
+6. **Better DX**: Improved developer experience with better tooling
+
+## Common Pitfalls
+
+1. **Don't mix ra-core and better-admin** - Complete the migration
+2. **Update all imports** - Change from `react-admin` to `better-admin`
+3. **Schema Definition** - Define proper schemas for type safety
+4. **Permission Logic** - Implement permissions in resource definitions
+5. **Client-Side Routing** - Use Next.js App Router or your preferred router
+
+## Next Steps
+
+- [Auth Provider](/docs/better-admin/auth-provider) - Learn about authentication
+- [Data Provider](/docs/better-admin/data-provider) - Learn about data operations
+- [Components](/docs/better-admin/components) - Browse available components

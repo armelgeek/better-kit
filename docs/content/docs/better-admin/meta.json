@@ -1,4 +1,10 @@
 {
 	"title": "Better Admin",
-	"pages": ["introduction"]
+	"pages": [
+		"introduction",
+		"auth-provider",
+		"data-provider",
+		"components",
+		"migration"
+	]
 }
